@@ -21,6 +21,23 @@ mod storage_tracker;
 use eyre::Context;
 
 fn main() {
+    // Explicit evaluation boundary for Option A. Legacy remains the default so
+    // historical scripts are not relabelled. Until the execution-only oracle
+    // is wired end-to-end, asking for official mode must fail before any
+    // benchmark execution occurs.
+    let raw_evaluation_mode = std::env::var("BRIDGESENTRY_EVALUATION_MODE").ok();
+    let evaluation_mode = match evidence::parse_evaluation_mode(raw_evaluation_mode.as_deref()) {
+        Ok(mode) => mode,
+        Err(e) => {
+            eprintln!("ERROR: {e}");
+            std::process::exit(1);
+        }
+    };
+    if let Err(e) = evidence::preflight_evaluation_mode(evaluation_mode) {
+        eprintln!("ERROR: {e}");
+        std::process::exit(1);
+    }
+
     let ctx = match config::parse_and_load() {
         Ok(ctx) => ctx,
         Err(e) => {
