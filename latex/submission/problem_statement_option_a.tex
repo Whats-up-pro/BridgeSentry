@@ -1,0 +1,38 @@
+% Option-A replacement for the Problem Statement subsection.
+% Insert under the existing Problem Formulation section after the threat model.
+
+\subsection{Problem Statement}\label{sec:problem-statement}
+
+BridgeSentry distinguishes \emph{historical exploit reconstruction} from \emph{generalization under restricted knowledge}. These tasks share an execution harness but differ in what historical information is available to the guidance mechanism and therefore support different scientific claims.
+
+\paragraph{Historical exploit reconstruction.}
+Let $\mathcal{B}$ denote a bridge instance with executable source- and destination-domain artifacts, relay or validator semantics, a capability model $\mathcal{C}$, and a set of protocol properties $\Phi$. Let $\mathcal{K}_r$ denote the historical-knowledge corpus exposed under retrieval regime $r$. In the reconstruction task, $\mathcal{K}_r$ may contain the target incident or closely related incidents. BridgeSentry seeks an executable action sequence $\pi$ whose observed runtime behavior violates a target property $\phi\in\Phi$ and satisfies the exploit-validity conditions below. The retrieval regime is part of the result provenance; success under full knowledge is interpreted as target-aware reconstruction rather than evidence of unseen-vulnerability discovery.
+
+\paragraph{Generalization under restricted knowledge.}
+For the generalization task, $\mathcal{K}_r$ is restricted before execution so that target information is excluded at a pre-specified level. We consider nested regimes that remove (i) the exact target incident, (ii) the target bridge family, and (iii) the target vulnerability class together with incidents newer than a temporal cutoff. The empirical question is whether semantic and historical guidance still improves valid exploit reconstruction after these exclusions. We make no inference from full-knowledge success to restricted-knowledge performance.
+
+\paragraph{Fail-closed exploit evidence.}
+An invariant trigger is an intermediate pipeline event, not by itself evidence of an exploit. For an observed trace $\pi$, BridgeSentry defines valid exploit evidence as
+
+\begin{equation}
+\operatorname{Valid}(\pi)
+= B(\pi)\land C(\pi)\land M(\pi)\land A(\pi)\land R(\pi)\land I(\pi)\land P(\pi),
+\label{eq:valid-exploit}
+\end{equation}
+
+where:
+
+\begin{itemize}
+    \item $B(\pi)$: the target bridge bytecode is actually executed;
+    \item $C(\pi)$: the trace follows a valid source--relay--destination causal path for the same canonical transfer or message identity;
+    \item $M(\pi)$: the relevant execution commits a material state change rather than only reverting, halting, or satisfying a vacuous boundary condition;
+    \item $A(\pi)$: all attacker actions and relay manipulations are permitted by the fixture's stated capability model;
+    \item $R(\pi)$: the trace is reproducible under the recorded fork, seed, configuration, and environment;
+    \item $I(\pi)$: the trace demonstrates the security or financial impact associated with the target property; and
+    \item $P(\pi)$: the same trace is rejected, rendered non-exploitable, or otherwise fails the target validity criterion on a paired patched revision.
+\end{itemize}
+
+Each gate is represented as \emph{pass}, \emph{fail}, or \emph{unknown}. Equation~\ref{eq:valid-exploit} evaluates to true only when every required gate is observed as pass. A missing runtime observation therefore makes the trace unevaluable for Valid Exploit Rate (VER); it is never promoted to a successful exploit by default.
+
+\paragraph{Guidance--evidence separation.}
+Attack descriptions, retrieved incidents, ATG-derived waypoints, and generated scenarios may influence seed selection and search. They must not directly instantiate oracle facts such as observed locked or minted value, message-verification status, message-consumption state, transaction success, or committed balance changes in the official evaluation path. Those facts must be derived from the executable runtime, relay state, or protocol-specific observation adapters. This separation prevents a target-aware scenario from satisfying the oracle merely because its description already encodes the expected exploit.
