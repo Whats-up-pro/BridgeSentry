@@ -1,10 +1,13 @@
 //! Evidence provenance and fail-closed evaluation metadata.
 //!
 //! These types intentionally separate legacy/synthetic reconstruction from
-//! execution-derived evidence. They are a vocabulary layer only; later A1
-//! tasks wire them into runtime results and the official eligibility gate.
+//! execution-derived evidence. Legacy runtime DTOs remain backward-compatible;
+//! result serialization adds an explicit evidence envelope instead of silently
+//! upgrading historical structs to official evidence.
 
 use serde::{Deserialize, Serialize};
+
+use crate::types::FuzzingResults;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -73,13 +76,42 @@ impl Default for ExploitEvidenceGates {
     }
 }
 
+/// Decorate a legacy `FuzzingResults` value with explicit fail-closed evidence
+/// metadata for JSON output. This deliberately does not mutate the legacy DTO:
+/// old fixtures remain readable, while every newly serialized run states that
+/// it is legacy/ineligible until later A1 tasks provide execution-derived gates.
+pub fn serialize_results_with_evidence(results: &FuzzingResults) -> serde_json::Result<String> {
+    let mut value = serde_json::to_value(results)?;
+    let Some(root) = value.as_object_mut() else {
+        unreachable!("FuzzingResults always serializes as a JSON object");
+    };
+
+    root.insert(
+        "evidence".to_string(),
+        serde_json::to_value(RunEvidenceProvenance::default())?,
+    );
+
+    if let Some(violations) = root.get_mut("violations").and_then(|v| v.as_array_mut()) {
+        for violation in violations {
+            if let Some(obj) = violation.as_object_mut() {
+                obj.insert(
+                    "evidence".to_string(),
+                    serde_json::to_value(ExploitEvidenceGates::default())?,
+                );
+            }
+        }
+    }
+
+    serde_json::to_string_pretty(&value)
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
-        EvaluationMode, EvidenceSource, ExploitEvidenceGates, ObservationStatus,
-        RunEvidenceProvenance,
+        serialize_results_with_evidence, EvaluationMode, EvidenceSource, ExploitEvidenceGates,
+        ObservationStatus, RunEvidenceProvenance,
     };
-    use crate::types::{FuzzingResults, Violation};
+    use crate::types::FuzzingResults;
 
     #[test]
     fn evaluation_vocabulary_serializes_to_stable_snake_case() {
@@ -166,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn legacy_results_deserialize_with_fail_closed_evidence_defaults() {
+    fn legacy_results_serialize_with_fail_closed_evidence_defaults() {
         let result: FuzzingResults = serde_json::from_value(serde_json::json!({
             "bridge_name": "legacy_fixture",
             "run_id": 0,
@@ -188,15 +220,21 @@ mod tests {
                 "snapshots_captured": 1,
                 "mutations_applied": 0
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
-        assert_eq!(result.evidence.evaluation_mode, EvaluationMode::Legacy);
-        assert!(!result.evidence.official_eligible);
-        let violation: &Violation = &result.violations[0];
+        let rendered = serialize_results_with_evidence(&result).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        assert_eq!(value["evidence"]["evaluation_mode"], "legacy");
+        assert_eq!(value["evidence"]["oracle_state_source"], "mixed");
+        assert_eq!(value["evidence"]["official_eligible"], false);
         assert_eq!(
-            violation.evidence.target_bytecode_executed,
-            ObservationStatus::Unknown
+            value["violations"][0]["evidence"]["target_bytecode_executed"],
+            "unknown"
         );
-        assert_eq!(violation.evidence.patched_rejected, ObservationStatus::Unknown);
+        assert_eq!(
+            value["violations"][0]["evidence"]["patched_rejected"],
+            "unknown"
+        );
     }
 }
