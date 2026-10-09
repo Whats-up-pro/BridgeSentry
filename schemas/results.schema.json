@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bridgesentry.local/schemas/results.schema.json",
   "title": "FuzzingResults",
-  "description": "Module 3 fuzzer output; consumed by orchestrator. Primary schema ownership: Member B (Rust types::FuzzingResults).",
+  "description": "Module 3 fuzzer output; consumed by orchestrator. Evidence fields are emitted by current binaries but remain optional here so retained legacy result fixtures stay readable.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,9 +28,61 @@
       "items": { "$ref": "#/$defs/violation" }
     },
     "coverage": { "$ref": "#/$defs/coverage" },
-    "stats": { "$ref": "#/$defs/fuzzingStats" }
+    "stats": { "$ref": "#/$defs/fuzzingStats" },
+    "evidence": { "$ref": "#/$defs/runEvidence" }
   },
   "$defs": {
+    "observationStatus": {
+      "type": "string",
+      "enum": ["pass", "fail", "unknown"]
+    },
+    "runEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evaluation_mode",
+        "oracle_state_source",
+        "official_eligible",
+        "ineligibility_reasons"
+      ],
+      "properties": {
+        "evaluation_mode": {
+          "type": "string",
+          "enum": ["legacy", "official"]
+        },
+        "oracle_state_source": {
+          "type": "string",
+          "enum": ["execution", "synthetic_scenario", "mixed"]
+        },
+        "official_eligible": { "type": "boolean" },
+        "ineligibility_reasons": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "exploitEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_bytecode_executed",
+        "causal_path_valid",
+        "material_state_change",
+        "capability_compliant",
+        "replayable",
+        "impact_demonstrated",
+        "patched_rejected"
+      ],
+      "properties": {
+        "target_bytecode_executed": { "$ref": "#/$defs/observationStatus" },
+        "causal_path_valid": { "$ref": "#/$defs/observationStatus" },
+        "material_state_change": { "$ref": "#/$defs/observationStatus" },
+        "capability_compliant": { "$ref": "#/$defs/observationStatus" },
+        "replayable": { "$ref": "#/$defs/observationStatus" },
+        "impact_demonstrated": { "$ref": "#/$defs/observationStatus" },
+        "patched_rejected": { "$ref": "#/$defs/observationStatus" }
+      }
+    },
     "violation": {
       "type": "object",
       "additionalProperties": false,
@@ -54,7 +106,8 @@
           "type": "object",
           "additionalProperties": { "type": "string" },
           "description": "Key-value state delta for reporting"
-        }
+        },
+        "evidence": { "$ref": "#/$defs/exploitEvidence" }
       }
     },
     "coverage": {
@@ -98,6 +151,22 @@
         "mutations_applied": {
           "type": "integer",
           "minimum": 0
+        },
+        "corpus_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "snapshot_pool_peak": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contracts_scanned": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "deployment_plan_log": {
+          "type": "array",
+          "items": { "type": "string" }
         }
       }
     }
