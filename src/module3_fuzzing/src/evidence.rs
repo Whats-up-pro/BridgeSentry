@@ -1,8 +1,52 @@
 //! Evidence provenance and fail-closed evaluation metadata.
 //!
-//! This module is introduced test-first. The tests below pin the public JSON
-//! vocabulary required by the Option-A evaluation contract before the runtime
-//! starts producing official results.
+//! These types intentionally separate legacy/synthetic reconstruction from
+//! execution-derived evidence. They are a vocabulary layer only; later A1
+//! tasks wire them into runtime results and the official eligibility gate.
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EvaluationMode {
+    Legacy,
+    Official,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceSource {
+    Execution,
+    SyntheticScenario,
+    Mixed,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ObservationStatus {
+    Pass,
+    Fail,
+    Unknown,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RunEvidenceProvenance {
+    pub evaluation_mode: EvaluationMode,
+    pub oracle_state_source: EvidenceSource,
+    pub official_eligible: bool,
+    pub ineligibility_reasons: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExploitEvidenceGates {
+    pub target_bytecode_executed: ObservationStatus,
+    pub causal_path_valid: ObservationStatus,
+    pub material_state_change: ObservationStatus,
+    pub capability_compliant: ObservationStatus,
+    pub replayable: ObservationStatus,
+    pub impact_demonstrated: ObservationStatus,
+    pub patched_rejected: ObservationStatus,
+}
 
 #[cfg(test)]
 mod tests {
