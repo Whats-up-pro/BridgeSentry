@@ -69,6 +69,7 @@ impl OfficialOracleInput {
 mod tests {
     use super::OfficialOracleInput;
     use crate::dual_evm::TxOutcome;
+    use crate::evidence::ObservationStatus;
     use crate::execution_observation::from_runtime_outcome;
     use crate::types::{ChainState, GlobalState, RelaySnapshot};
     use revm::primitives::Address;
@@ -185,5 +186,38 @@ mod tests {
         after.dest_state.timestamp += 12;
         let input = OfficialOracleInput::from_execution(before, after, vec![]);
         assert!(!input.material_state_change_observed());
+    }
+
+    #[test]
+    fn relay_mode_switch_alone_is_not_material_exploit_impact() {
+        let before = global("10", "0");
+        let mut after = global("10", "0");
+        after.relay_state.mode = "tampered".to_string();
+        let input = OfficialOracleInput::from_execution(before, after, vec![]);
+        assert!(!input.material_state_change_observed());
+    }
+
+    #[test]
+    fn runtime_oracle_only_populates_observable_base_gates() {
+        let obs = from_runtime_outcome(
+            "source",
+            Address::from([0x11; 20]),
+            &outcome(true, "ok"),
+            true,
+            vec![],
+            100,
+            1_700_000_000,
+        );
+        let input = OfficialOracleInput::from_execution(global("10", "0"), global("9", "1"), vec![obs]);
+        let gates = input.base_evidence_gates();
+
+        assert_eq!(gates.target_bytecode_executed, ObservationStatus::Pass);
+        assert_eq!(gates.material_state_change, ObservationStatus::Pass);
+        assert_eq!(gates.causal_path_valid, ObservationStatus::Unknown);
+        assert_eq!(gates.capability_compliant, ObservationStatus::Unknown);
+        assert_eq!(gates.replayable, ObservationStatus::Unknown);
+        assert_eq!(gates.impact_demonstrated, ObservationStatus::Unknown);
+        assert_eq!(gates.patched_rejected, ObservationStatus::Unknown);
+        assert!(!gates.is_valid_exploit());
     }
 }
