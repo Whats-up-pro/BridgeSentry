@@ -16,6 +16,29 @@ pub enum EvaluationMode {
     Official,
 }
 
+pub fn parse_evaluation_mode(raw: Option<&str>) -> Result<EvaluationMode, String> {
+    match raw.map(str::trim).filter(|value| !value.is_empty()) {
+        None | Some("legacy") => Ok(EvaluationMode::Legacy),
+        Some("official") => Ok(EvaluationMode::Official),
+        Some(other) => Err(format!(
+            "unknown evaluation mode `{other}`; expected `legacy` or `official`"
+        )),
+    }
+}
+
+/// Fail closed while the stock fuzzing loop still builds oracle state from
+/// `scenario_sim::global_state_from_scenario`. Task A1.2 will remove this
+/// guard only after the official path is execution-only end to end.
+pub fn preflight_evaluation_mode(mode: EvaluationMode) -> Result<(), String> {
+    match mode {
+        EvaluationMode::Legacy => Ok(()),
+        EvaluationMode::Official => Err(
+            "official evaluation is disabled until an execution-only oracle is available"
+                .to_string(),
+        ),
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EvidenceSource {
