@@ -22,8 +22,32 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect changed test domains
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      python: ${{ steps.filter.outputs.python }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'src/module3_fuzzing/**'
+              - '.github/workflows/ci.yml'
+            python:
+              - 'src/**/*.py'
+              - 'tests/**'
+              - 'schemas/**'
+              - 'requirements.txt'
+              - '.github/workflows/ci.yml'
+
   python-tests:
     name: Python offline tests
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -45,6 +69,8 @@ jobs:
 
   rust-tests:
     name: Rust Module 3 tests
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
