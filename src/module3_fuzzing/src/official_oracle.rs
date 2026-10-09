@@ -1,7 +1,69 @@
 //! Official execution-only oracle input for Option A.
 //!
-//! Tests are committed before production definitions. The API intentionally
-//! accepts runtime observations and snapshots only; `Scenario` is not an input.
+//! The API intentionally accepts runtime observations and before/after runtime
+//! snapshots only. It does not accept `Scenario`, waypoint predicates, or
+//! scenario-simulator state, so intended actions cannot become oracle facts by
+//! construction.
+
+use crate::execution_observation::ActionObservation;
+use crate::types::GlobalState;
+
+#[derive(Debug, Clone)]
+pub struct OfficialOracleInput {
+    pub before: GlobalState,
+    pub after: GlobalState,
+    pub actions: Vec<ActionObservation>,
+}
+
+impl OfficialOracleInput {
+    pub fn from_execution(
+        before: GlobalState,
+        after: GlobalState,
+        actions: Vec<ActionObservation>,
+    ) -> Self {
+        Self {
+            before,
+            after,
+            actions,
+        }
+    }
+
+    /// At least one runtime inspector explicitly observed target bytecode.
+    /// Transaction success or scenario intent is insufficient.
+    pub fn target_bytecode_executed(&self) -> bool {
+        self.actions
+            .iter()
+            .any(|observation| observation.target_bytecode_executed)
+    }
+
+    /// Conservative material-change predicate derived from committed runtime
+    /// facts. Block-height/timestamp progression alone is intentionally ignored.
+    pub fn material_state_change_observed(&self) -> bool {
+        if self
+            .actions
+            .iter()
+            .any(ActionObservation::material_state_change_observed)
+        {
+            return true;
+        }
+
+        if self.before.source_state.balances != self.after.source_state.balances
+            || self.before.dest_state.balances != self.after.dest_state.balances
+            || self.before.source_state.storage != self.after.source_state.storage
+            || self.before.dest_state.storage != self.after.dest_state.storage
+        {
+            return true;
+        }
+
+        match (
+            serde_json::to_value(&self.before.relay_state),
+            serde_json::to_value(&self.after.relay_state),
+        ) {
+            (Ok(before), Ok(after)) => before != after,
+            _ => false,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -111,5 +173,17 @@ mod tests {
         after.relay_state.processed_set.push("msg-1".to_string());
         let input = OfficialOracleInput::from_execution(before, after, vec![]);
         assert!(input.material_state_change_observed());
+    }
+
+    #[test]
+    fn block_or_timestamp_progression_alone_is_not_material_impact() {
+        let before = global("10", "0");
+        let mut after = global("10", "0");
+        after.source_state.block_number += 1;
+        after.source_state.timestamp += 12;
+        after.dest_state.block_number += 1;
+        after.dest_state.timestamp += 12;
+        let input = OfficialOracleInput::from_execution(before, after, vec![]);
+        assert!(!input.material_state_change_observed());
     }
 }
