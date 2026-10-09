@@ -56,10 +56,8 @@ def test_invariant_synthesizer_outputs_core_categories():
     assert "uniqueness" in categories
 
 
-def test_invariant_synth_fallback_without_api():
-    """Offline conftest clears env vars; fallback must return core 4 categories."""
-    synth = InvariantSynthesizer()
-    atg = {
+def _lock_mint_atg() -> dict:
+    return {
         "bridge_name": "test",
         "nodes": [],
         "edges": [
@@ -67,9 +65,41 @@ def test_invariant_synth_fallback_without_api():
             {"edge_id": "e2", "label": "mint", "src": "b", "dst": "u"},
         ],
     }
-    invariants = synth.synthesize(atg)
+
+
+def test_invariant_synth_fallback_without_api_uses_only_admissible_core_categories():
+    """Offline fallback must not invent a timeout/refund policy."""
+    synth = InvariantSynthesizer()
+    invariants = synth.synthesize(_lock_mint_atg())
     categories = {inv["category"] for inv in invariants}
-    assert {"asset_conservation", "authorization", "uniqueness", "timeliness"} <= categories
+    assert {"asset_conservation", "authorization", "uniqueness"} <= categories
+    assert "timeliness" not in categories
+
+
+def test_timeliness_requires_explicit_timeout_and_refund_semantics():
+    synth = InvariantSynthesizer()
+    atg = _lock_mint_atg()
+    atg["protocol_semantics"] = {
+        "timeout_refund": {
+            "timeout_seconds": 3600,
+            "refund_function": "refund(bytes32)",
+        }
+    }
+
+    invariants = synth.synthesize(atg)
+    timeliness = [inv for inv in invariants if inv["category"] == "timeliness"]
+    assert len(timeliness) == 1
+    assert timeliness[0]["metadata"]["prerequisite"] == "explicit_timeout_refund"
+    assert timeliness[0]["metadata"]["timeout_seconds"] == 3600
+    assert timeliness[0]["metadata"]["refund_function"] == "refund(bytes32)"
+
+
+def test_partial_timeout_semantics_do_not_enable_timeliness():
+    synth = InvariantSynthesizer()
+    atg = _lock_mint_atg()
+    atg["protocol_semantics"] = {"timeout_refund": {"timeout_seconds": 3600}}
+    invariants = synth.synthesize(atg)
+    assert "timeliness" not in {inv["category"] for inv in invariants}
 
 
 def test_invariant_synth_consistency_drops_duplicates():
