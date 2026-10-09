@@ -16,6 +16,7 @@ pub mod execution_observation;
 pub mod fuzz_loop;
 pub mod mock_relay;
 pub mod mutator;
+pub mod official_capability;
 pub mod official_oracle;
 pub mod official_semantics;
 pub mod official_validator;
