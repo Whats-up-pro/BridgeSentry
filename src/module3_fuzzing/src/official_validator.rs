@@ -1,8 +1,58 @@
 //! Fail-closed valid-exploit aggregation for Option-A official evaluation.
 //!
-//! Tests first. Runtime-observable base gates come from OfficialOracleInput;
+//! Runtime-observable base gates come from `OfficialOracleInput`;
 //! causal/capability/replay/impact/patched-control evidence is supplied only by
-//! dedicated validators/control runs.
+//! dedicated validators/control runs. Contradictory evidence is fail-dominant.
+
+use crate::evidence::{ExploitEvidenceGates, ObservationStatus};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SupplementalExploitEvidence {
+    pub causal_path_valid: ObservationStatus,
+    pub capability_compliant: ObservationStatus,
+    pub replayable: ObservationStatus,
+    pub impact_demonstrated: ObservationStatus,
+    pub patched_rejected: ObservationStatus,
+}
+
+impl Default for SupplementalExploitEvidence {
+    fn default() -> Self {
+        Self {
+            causal_path_valid: ObservationStatus::Unknown,
+            capability_compliant: ObservationStatus::Unknown,
+            replayable: ObservationStatus::Unknown,
+            impact_demonstrated: ObservationStatus::Unknown,
+            patched_rejected: ObservationStatus::Unknown,
+        }
+    }
+}
+
+/// Merge independently produced evidence without allowing a later Pass to
+/// erase an earlier Fail. Unknown contributes no positive evidence. Runtime
+/// base gates are never owned by the supplemental structure and therefore
+/// cannot be upgraded here.
+pub fn finalize_exploit_evidence(
+    mut base: ExploitEvidenceGates,
+    supplemental: SupplementalExploitEvidence,
+) -> ExploitEvidenceGates {
+    base.causal_path_valid = merge_status(base.causal_path_valid, supplemental.causal_path_valid);
+    base.capability_compliant =
+        merge_status(base.capability_compliant, supplemental.capability_compliant);
+    base.replayable = merge_status(base.replayable, supplemental.replayable);
+    base.impact_demonstrated =
+        merge_status(base.impact_demonstrated, supplemental.impact_demonstrated);
+    base.patched_rejected = merge_status(base.patched_rejected, supplemental.patched_rejected);
+    base
+}
+
+fn merge_status(left: ObservationStatus, right: ObservationStatus) -> ObservationStatus {
+    use ObservationStatus::{Fail, Pass, Unknown};
+    match (left, right) {
+        (Fail, _) | (_, Fail) => Fail,
+        (Pass, _) | (_, Pass) => Pass,
+        (Unknown, Unknown) => Unknown,
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -74,9 +124,18 @@ mod tests {
         let mut base = base_pass();
         base.causal_path_valid = ObservationStatus::Fail;
         let gates = finalize_exploit_evidence(base, supplemental_all_pass());
-        // A prior fail is sticky: a later validator cannot overwrite contrary
-        // evidence simply by reporting Pass.
         assert_eq!(gates.causal_path_valid, ObservationStatus::Fail);
+        assert!(!gates.is_valid_exploit());
+    }
+
+    #[test]
+    fn conflicting_independent_evidence_is_fail_dominant() {
+        let mut base = base_pass();
+        base.patched_rejected = ObservationStatus::Pass;
+        let mut supplemental = supplemental_all_pass();
+        supplemental.patched_rejected = ObservationStatus::Fail;
+        let gates = finalize_exploit_evidence(base, supplemental);
+        assert_eq!(gates.patched_rejected, ObservationStatus::Fail);
         assert!(!gates.is_valid_exploit());
     }
 }
