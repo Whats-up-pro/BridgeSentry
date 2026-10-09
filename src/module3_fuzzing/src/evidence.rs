@@ -37,6 +37,17 @@ pub struct RunEvidenceProvenance {
     pub ineligibility_reasons: Vec<String>,
 }
 
+impl Default for RunEvidenceProvenance {
+    fn default() -> Self {
+        Self {
+            evaluation_mode: EvaluationMode::Legacy,
+            oracle_state_source: EvidenceSource::Mixed,
+            official_eligible: false,
+            ineligibility_reasons: vec!["unvalidated_legacy_or_mixed_evidence".to_string()],
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExploitEvidenceGates {
     pub target_bytecode_executed: ObservationStatus,
@@ -46,6 +57,20 @@ pub struct ExploitEvidenceGates {
     pub replayable: ObservationStatus,
     pub impact_demonstrated: ObservationStatus,
     pub patched_rejected: ObservationStatus,
+}
+
+impl Default for ExploitEvidenceGates {
+    fn default() -> Self {
+        Self {
+            target_bytecode_executed: ObservationStatus::Unknown,
+            causal_path_valid: ObservationStatus::Unknown,
+            material_state_change: ObservationStatus::Unknown,
+            capability_compliant: ObservationStatus::Unknown,
+            replayable: ObservationStatus::Unknown,
+            impact_demonstrated: ObservationStatus::Unknown,
+            patched_rejected: ObservationStatus::Unknown,
+        }
+    }
 }
 
 #[cfg(test)]
