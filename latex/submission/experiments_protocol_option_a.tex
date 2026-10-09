@@ -1,0 +1,71 @@
+% Option-A replacement for the opening of the Experiments section.
+% This fragment defines the evaluation contract without inventing results.
+
+\section{Experiments}\label{sec:experiments}
+
+\subsection{Evaluation Status and Research Questions}
+
+The repository contains a legacy target-aware reconstruction workflow and partial infrastructure for a stricter evaluation. The legacy results are retained as diagnostic evidence, but they are not relabelled as Valid Exploit Rate (VER) and are not used to infer zero-day capability. The official evaluation is organized around four questions that separate semantic fidelity, guidance generalization, exploit validity, and component attribution.
+
+\begin{itemize}
+    \item \textbf{RQ1 --- Semantic fidelity:} How accurately does BridgeSentry recover security-relevant bridge entities, roles, cross-domain ATG edges, and semantically admissible invariants from bridge artifacts?
+
+    \item \textbf{RQ2 --- Guidance generalization:} Does semantic and retrieval-based guidance improve valid exploit reconstruction when target-specific historical knowledge is excluded at the incident, bridge-family, vulnerability-class, and temporal levels?
+
+    \item \textbf{RQ3 --- Exploit validity and precision:} Can BridgeSentry distinguish vulnerable implementations from paired patched revisions, benign systems, and hard negatives under the fail-closed exploit criterion of Eq.~\ref{eq:valid-exploit}?
+
+    \item \textbf{RQ4 --- Component attribution:} Holding the harness, oracle, target population, capability model, budget, and seed set fixed, what incremental effect do semantic extraction, historical retrieval, LLM enrichment, and---where specifically tested---synchronized snapshots have on valid exploit evidence and false reports?
+\end{itemize}
+
+\subsection{Evaluation Populations and Knowledge Regimes}
+
+The historical incidents used in the legacy study are reconstruction fixtures rather than an independent discovery benchmark. The official evaluation separates four types of test instances:
+
+\begin{enumerate}
+    \item \textbf{Vulnerable targets}: implementations with a documented, reproducible vulnerability and sufficient public provenance to define the affected runtime and expected security impact.
+    \item \textbf{Paired patched controls}: revisions or minimally changed variants that remove the target vulnerability while preserving the surrounding bridge functionality required by the replay.
+    \item \textbf{Benign controls}: bridge implementations or protocol paths for which the target property is expected to hold under the tested capability model.
+    \item \textbf{Hard negatives}: instances that resemble a vulnerable path in structure or observable events but preserve the security property, designed to expose vacuous or over-generalized oracles.
+\end{enumerate}
+
+For retrieval-guided configurations, every run records the knowledge-base snapshot and retrieved incident identifiers. We evaluate four nested regimes:
+
+\begin{enumerate}
+    \item \textbf{Full knowledge}: the target incident or closely related records may be retrieved. This regime is diagnostic and measures reconstruction capacity only.
+    \item \textbf{Leave-one-incident-out}: the exact target incident is excluded before indexing/retrieval.
+    \item \textbf{Leave-one-bridge-family-out}: all incidents belonging to the target bridge family are excluded.
+    \item \textbf{Class + temporal holdout}: the target vulnerability class is excluded together with records newer than a pre-specified cutoff. This is the most restrictive regime used to study generalization.
+\end{enumerate}
+
+The exclusion rule is applied before any target run and is retained in the experiment manifest. Retrieval relevance is evaluated independently using labelled Recall@$k$, MRR, and nDCG where a meaningful relevance set can be defined.
+
+\subsection{Metrics}
+
+We use a metric hierarchy that prevents intermediate predicate satisfaction from being interpreted as exploit discovery.
+
+\paragraph{Valid Exploit Rate (VER).}
+VER is the fraction of eligible vulnerable targets for which at least one trace satisfies every gate in Eq.~\ref{eq:valid-exploit}. A target is not counted as a success when a required gate is unknown. Results are also reported per run for stochastic configurations.
+
+\paragraph{Patched-control rejection and false-report metrics.}
+For paired vulnerable/patched instances, we record whether the exploit-valid trace is rejected by the patched revision. Benign and hard-negative populations are used to estimate false-positive rate, specificity, and precision after report deduplication. We separately report report-level noise when multiple traces correspond to the same root cause.
+
+\paragraph{Time to first valid exploit (TTVE).}
+TTVE is measured from the pre-specified experiment start point to the first trace satisfying the complete exploit-validity criterion. Non-triggers are retained as right-censored observations. We report survival curves, success probabilities with confidence intervals, and medians/interquartile ranges when the median is estimable. Fuzzing-only latency may be reported separately as an engineering measure but is not substituted for end-to-end TTVE.
+
+\paragraph{Semantic-fidelity metrics.}
+RQ1 reports precision, recall, and F1 for labelled entities/roles and ATG edges. Candidate invariants are evaluated for semantic correctness, vacuity, redundancy, executability/observability, and abstention. Generated or schema-valid properties are not counted as empirically validated properties.
+
+\paragraph{Coverage and intermediate diagnostics.}
+Target-bytecode coverage is normalized using a common instrumentation layer where possible. Invariant-trigger rate is retained only as an intermediate pipeline diagnostic. ATG-derived cross-chain coverage is self-referential because BridgeSentry contributes its denominator and is therefore reported only as an internal progress measure.
+
+\subsection{Statistical Protocol}
+
+For paired stochastic comparisons, configurations use the same pre-specified seed set, hardware allocation, time budget, fork state, target population, capability matrix, and oracle implementation. Model/provider identifiers, prompts, retrieval corpus, and decoding settings are pinned for configurations that use an LLM. Failed and non-triggering runs are retained rather than discarded. Confidence intervals and effect sizes are reported alongside point estimates; time-to-event outcomes retain right censoring rather than averaging only successful runs.
+
+No benchmark label, retrieval exclusion rule, oracle criterion, or target inclusion decision is changed after inspecting the official outcome of that target.
+
+\subsection{Legacy Reconstruction Results}
+
+The legacy study remains useful for identifying construct-validity failures in the original evaluation. It contains 12 target-aware historical fixtures and reaches all 12 target predicates under full-knowledge guidance. Eleven fixtures execute target bytecode, while one scenario-layer case does not. The previously reported 1.66-second value is a mean fuzzing-only trigger time conditioned on successful legacy trigger runs. These values are reported as historical diagnostics only and are not used as VER, precision, or generalization estimates.
+
+The legacy ablations further show that invariant-trigger rate can remain saturated even when a configuration executes no target bytecode. We therefore treat the earlier 12/12 trigger result as evidence that the legacy predicate metric is too permissive for component attribution, not as evidence that every ablated system remains effective. Similarly, the legacy synchronization ablation shows no measurable benefit on the current reconstruction fixtures; synchronized snapshots remain an implementation mechanism unless dedicated rollback, reorganization, finality, or relay-state controls demonstrate a distinct effect.
