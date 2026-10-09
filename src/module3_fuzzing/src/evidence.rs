@@ -126,8 +126,9 @@ pub fn serialize_results_with_evidence(results: &FuzzingResults) -> serde_json::
 #[cfg(test)]
 mod tests {
     use super::{
-        serialize_results_with_evidence, EvaluationMode, EvidenceSource, ExploitEvidenceGates,
-        ObservationStatus, RunEvidenceProvenance,
+        parse_evaluation_mode, preflight_evaluation_mode, serialize_results_with_evidence,
+        EvaluationMode, EvidenceSource, ExploitEvidenceGates, ObservationStatus,
+        RunEvidenceProvenance,
     };
     use crate::types::FuzzingResults;
 
@@ -228,6 +229,22 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn evaluation_mode_parser_defaults_to_legacy_and_rejects_unknown_values() {
+        assert_eq!(parse_evaluation_mode(None).unwrap(), EvaluationMode::Legacy);
+        assert_eq!(parse_evaluation_mode(Some("legacy")).unwrap(), EvaluationMode::Legacy);
+        assert_eq!(parse_evaluation_mode(Some("official")).unwrap(), EvaluationMode::Official);
+        assert!(parse_evaluation_mode(Some("auto")).is_err());
+    }
+
+    #[test]
+    fn official_mode_is_rejected_until_execution_only_oracle_is_available() {
+        assert!(preflight_evaluation_mode(EvaluationMode::Legacy).is_ok());
+        let err = preflight_evaluation_mode(EvaluationMode::Official).unwrap_err();
+        assert!(err.contains("execution-only oracle"));
+        assert!(err.contains("official"));
     }
 
     #[test]
