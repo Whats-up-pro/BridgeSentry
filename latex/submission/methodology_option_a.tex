@@ -1,0 +1,96 @@
+% Option-A replacement for Section 4 (Methodology).
+% This fragment distinguishes current legacy behavior from the fail-closed official protocol.
+
+\section{Methodology}\label{sec:methodology}
+
+BridgeSentry consists of three stages: (1) hybrid semantic extraction and candidate-property synthesis, (2) provenance-aware historical guidance, and (3) dual-EVM execution with an explicit relay. The central methodological distinction in the revised design is between \emph{guidance} and \emph{evidence}. ATGs, retrieved incidents, generated scenarios, and semantic waypoints may guide execution; a reported exploit, however, must be supported by observations produced by successful runtime execution and by the corresponding control experiments. Historical simulator-backed results are retained as legacy reconstruction evidence and are not retroactively upgraded to valid-exploit evidence.
+
+\subsection{Module 1: Hybrid Semantic Extraction and Candidate Properties}
+
+Module~1 accepts bridge artifacts from the source and destination domains and, when available, relay or protocol documentation. The implementation first attempts structured extraction through Slither IR, falls back to deterministic parsing when the contract cannot be processed by Slither, and may apply LLM enrichment when a configured provider is available. This ordering is intentional: the LLM is an optional semantic enrichment stage rather than the sole parser.
+
+For each artifact, the extractor identifies contract entities, externally reachable functions, candidate asset/message flows, and guards such as authorization checks, nonce checks, signature verification, and timelock conditions. These fields are compiled into an Atomic Transfer Graph
+\begin{equation}
+    G=(N,A,\Lambda),
+\end{equation}
+where nodes represent users, contracts, or relay components and labeled arcs represent protocol-relevant asset or message transitions. Protocol properties $\Phi$ are maintained separately from $G$ so that an inferred graph is not implicitly treated as a validated specification.
+
+Candidate properties follow a four-stage lifecycle:
+\begin{enumerate}
+    \item \textbf{Generated}: emitted by deterministic rules or an LLM from the extracted semantics;
+    \item \textbf{Schema-valid}: the candidate satisfies the structural property schema;
+    \item \textbf{Semantically admissible}: the required protocol semantics are present and no known protocol rule contradicts the candidate;
+    \item \textbf{Empirically validated}: the candidate has passed labelled normal/violating traces, vacuity checks, and paired patched controls where applicable.
+\end{enumerate}
+The current legacy artifact contains generated and structurally checked candidates but does not provide an independently labelled property corpus sufficient to report stage-4 precision or recall. We therefore use \emph{candidate invariant/property} unless the empirical-validation conditions have actually been met.
+
+The main property families are asset conservation, authorization, uniqueness, and protocol-specific timeliness. Asset and authorization properties are indexed by a canonical transfer/message key $\kappa$ rather than by global aggregates. Timeliness/refundability is not generated as a universal bridge invariant: it is admissible only when the target protocol exposes an explicit timeout and refund/recovery rule. Likewise, fee, rebasing, fee-on-transfer, or related accounting adjustments require deterministic protocol-specific evidence; otherwise the corresponding property is marked unsupported rather than assigned a guessed adjustment.
+
+\subsection{Module 2: Provenance-Aware Historical Guidance}
+
+Module~2 retrieves documented bridge incidents from a frozen knowledge-base snapshot. An entry may contain incident metadata, vulnerability class, affected protocol stage, a high-level attack trace, and root-cause information. The retrieval corpus is treated as both a source of useful domain knowledge and a potential source of target leakage.
+
+For each candidate property, BridgeSentry constructs a semantic query and retrieves the top-$k$ entries under the configured embedding model. The generator then combines the target ATG, the candidate property, and the retrieved descriptions to produce a bounded action sequence. We refer to the output as a \emph{threat-model-constrained adversarial action sequence}; we do not assume a formal economic utility function or claim that the generator implements a rational economic adversary.
+
+Every scenario retains its retrieval provenance, including the knowledge-base snapshot identity and the retrieved incident identifiers. This enables four evaluation regimes:
+\begin{enumerate}
+    \item full-knowledge retrieval, used only as a reconstruction diagnostic;
+    \item leave-one-incident-out;
+    \item leave-one-bridge-family-out;
+    \item leave-vulnerability-class-out with a temporal cutoff.
+\end{enumerate}
+Only the latter regimes can support claims about restricted-knowledge generalization. Full-knowledge reconstruction cannot establish unseen-vulnerability discovery because the target incident, family, or vulnerability template may be directly available to retrieval.
+
+Each generated scenario additionally provides semantic waypoints $W=\{w_1,\ldots,w_p\}$. Waypoints are guidance signals only. In particular, a waypoint derived from the intended scenario is not itself evidence that the corresponding runtime action succeeded or that a security property was violated.
+
+\subsection{Module 3: Dual-EVM Execution and Evidence Separation}
+
+\subsubsection{Execution Environment}
+
+Module~3 maintains a source EVM $\mathrm{EVM}_S$, a destination EVM $\mathrm{EVM}_D$, and an explicit relay state $\mathcal{R}_{\mathrm{mock}}$. The relay supports faithful and delayed delivery and may expose tamper/replay modes for controlled fault injection. Tamper and replay are not generic attacker capabilities. A fixture must explicitly authorize the corresponding capability before such an action can contribute to exploit evidence.
+
+The harness retains a global snapshot
+\begin{equation}
+    \mathcal{S}=(S_{\mathrm{EVM}_S},S_{\mathrm{EVM}_D},S_{\mathcal{R}}).
+\end{equation}
+Snapshotting is an implementation mechanism for consistent backtracking across the local harness. We do not treat synchronization as an independently established research contribution unless targeted rollback, reorganization, or finality experiments demonstrate a measurable effect.
+
+\subsubsection{Guidance Reward}
+
+The legacy fuzzer combines code/edge coverage, waypoint progress, and property-distance guidance:
+\begin{equation}
+    R(\sigma)=\alpha\,\mathrm{cov}(\sigma)
+      +\beta\,\frac{|W_{\mathrm{reached}}(\sigma)|}{\max(1,|W|)}
+      +\gamma\,\frac{1}{|\Phi|}\sum_{\phi_i\in\Phi}\frac{1}{1+d_i(\sigma)}.
+\end{equation}
+This reward is a search heuristic rather than a correctness criterion. The parameters $(\alpha,\beta,\gamma)$ and their adaptive redistribution are implementation choices whose benefit must be evaluated on non-saturated held-out outcomes before they can support a contribution claim.
+
+For asset conservation, let
+\begin{equation}
+    h_{\kappa}=L_{\kappa}-f_{\kappa}+\delta_{\kappa}-M_{\kappa},
+    \qquad
+    q_{\kappa}=\max\left(1,|L_{\kappa}-f_{\kappa}+\delta_{\kappa}|\right).
+\end{equation}
+The violation-oriented distance is
+\begin{equation}
+ d_{\mathrm{asset}}(\sigma)=
+ \begin{cases}
+  0, & h_{\kappa}<0,\\[3pt]
+  1+\dfrac{h_{\kappa}}{q_{\kappa}}, & h_{\kappa}\ge 0.
+ \end{cases}
+\end{equation}
+Thus a negative conservation margin maps to zero (violation), whereas safe equality maps to one. This distance is used only when the quantities for the same canonical transfer are actually observable under the selected evidence mode.
+
+\subsubsection{Legacy and Official Evidence Modes}
+
+The repository retains legacy reconstruction paths in which scenario-derived semantic state may be used for simulator-backed guidance and historical diagnostics. These paths are labelled \texttt{legacy} and are ineligible for Valid Exploit Rate (VER).
+
+The official evaluation protocol is fail closed. Scenario descriptions may select or mutate actions, but they may not create oracle facts such as observed locked/minted values, message verification, nonce consumption, successful calls, or material balance changes. These facts must instead be derived from transaction outcomes, executed target bytecode, committed logs and storage writes, before/after runtime state, and the real relay snapshot. If a fixture does not expose a deterministic mapping from runtime observations to a required semantic field, the corresponding property is \emph{unknown/unevaluable} rather than implicitly safe or violated.
+
+A candidate report is eligible as a valid exploit only when all required evidence gates pass: target bytecode execution, same-message cross-chain causal validity, material state change, threat-model/capability compliance, replayability, concrete security impact, and rejection by the paired patched revision. A failed or unknown required gate makes the candidate ineligible. This distinction prevents vacuous invariant triggers and early-revert paths from being aggregated with exploit evidence.
+
+\subsubsection{Mutation and Execution Loop}
+
+The fuzzer selects a scenario from the corpus, applies ATG-aware mutations, checks the fixture capability matrix before executing relay fault-injection actions, restores a compatible snapshot, executes the action sequence across the source, relay, and destination domains, and updates its corpus from the resulting guidance reward. Mutations may reorder causally compatible actions, replace arguments with boundary values, select neighboring ATG functions, and vary timing where the fixture supports such behavior.
+
+For legacy reconstruction, the historical simulator-backed checker remains available for backward compatibility. For official evaluation, however, only execution-derived observations are admissible to the exploit validator. This mode boundary is also recorded in the result artifact so that historical invariant-trigger results cannot be silently relabelled as VER.
