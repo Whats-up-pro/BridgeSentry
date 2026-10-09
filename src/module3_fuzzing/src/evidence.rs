@@ -62,6 +62,24 @@ pub struct ExploitEvidenceGates {
     pub patched_rejected: ObservationStatus,
 }
 
+impl ExploitEvidenceGates {
+    /// A candidate is a valid exploit only when every required Option-A gate
+    /// is positively observed. Both `Fail` and `Unknown` are ineligible.
+    pub fn is_valid_exploit(&self) -> bool {
+        [
+            self.target_bytecode_executed,
+            self.causal_path_valid,
+            self.material_state_change,
+            self.capability_compliant,
+            self.replayable,
+            self.impact_demonstrated,
+            self.patched_rejected,
+        ]
+        .into_iter()
+        .all(|status| status == ObservationStatus::Pass)
+    }
+}
+
 impl Default for ExploitEvidenceGates {
     fn default() -> Self {
         Self {
