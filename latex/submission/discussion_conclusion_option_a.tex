@@ -1,0 +1,54 @@
+% Option-A replacement for Discussion / Threats to Validity / Conclusion.
+% Keep statements tied to retained legacy evidence until A2/A3 results exist.
+
+\section{Discussion}\label{sec:discussion}
+
+\subsection{What the current evidence establishes}
+
+The retained experiments establish a limited but useful result: under a full-knowledge historical-reconstruction setting, BridgeSentry can transform semantic guidance into executions that trigger the target predicates for the 12 retained fixtures, and 11 of those fixtures reach target bytecode. This is evidence that the integrated representation--guidance--execution workflow can reproduce documented failure patterns under target-aware conditions. It is not, by itself, evidence of general vulnerability discovery, precision on benign software, or generalization to an incident whose solution is unavailable to retrieval.
+
+The legacy ablations also reveal an important negative result. Removing semantic extraction or historical guidance can still trigger the same high-level predicates while executing no target bytecode in the affected configurations. We interpret these cases as \emph{hollow detections}: they show that an invariant trigger is an intermediate pipeline event rather than a sufficient security finding. This observation motivates the fail-closed exploit-evidence definition used in the revised evaluation protocol.
+
+A second negative result concerns synchronized snapshots. On the retained positive-only reconstruction fixtures, removing synchronization does not materially change the invariant-trigger set or the reported internal coverage measures. The current data therefore do not establish synchronization as an effectiveness contribution. In this paper, synchronized snapshots are treated as an implementation mechanism unless targeted rollback, reorganization, relay-queue, or finality controls demonstrate a measurable effect.
+
+\subsection{Leakage, memorization, and the meaning of generalization}
+
+Historical security knowledge can improve guidance while simultaneously confounding evaluation. The legacy retrieval corpus may contain the target incident, a closely related incident from the same bridge family, or the same vulnerability class. Full-knowledge retrieval is therefore useful for reconstruction diagnostics but cannot support an unseen-vulnerability claim. The revised evaluation separates exact-incident, family, vulnerability-class, and temporal exclusions and retains retrieved incident identifiers for every run.
+
+Restricting retrieval does not eliminate all contamination. Foundation models may have encountered public exploit reports, vulnerable source code, or post-mortem analyses during pretraining. This parametric contamination is distinct from explicit RAG leakage. We therefore interpret restricted-knowledge results conservatively and, where practical, compare LLM-enriched runs against parser-only/deterministic configurations and models with documented training cutoffs. A holdout result is evidence about the tested knowledge restrictions, not proof that the model had no prior exposure to the underlying vulnerability.
+
+\subsection{Semantic-property validity}
+
+BridgeSentry uses inferred protocol properties as search objectives and security oracles. This creates a construct-validity risk: an incorrectly inferred, vacuous, redundant, or overly generic property can produce a trigger without representing a real security failure. The revised methodology therefore distinguishes generated, schema-valid, semantically admissible, and empirically validated properties. The current legacy corpus does not provide enough independently labelled property ground truth to report stage-4 property precision or recall; those measurements belong to RQ1 of the official evaluation.
+
+Protocol-specific semantics are especially important for accounting and time-dependent properties. Fees, rebasing, fee-on-transfer behavior, partial fills, liquidity accounting, and refund rules cannot be assigned a universal default without risking false conclusions. When the fixture does not provide a deterministic semantic mapping, the official evaluator abstains instead of silently treating a guessed value as ground truth.
+
+\subsection{Execution-model limitations}
+
+The dual-EVM harness deliberately abstracts away parts of live multi-chain operation. Real networks progress asynchronously, have chain-specific finality and reorganization behavior, and may expose validator incentives, ordering effects, or non-EVM semantics that cannot be reproduced by two local EVM instances and a mock relay. The harness is therefore a controlled testing environment rather than a faithful simulator of every cross-chain deployment.
+
+The retained Wormhole fixture further illustrates this boundary: an EVM surrogate cannot validate the original Solana instruction/account semantics. Such a fixture may test a reconstructed failure pattern but must not be aggregated as a faithful native replay. Likewise, off-chain key compromise or validator compromise is a valid fixture capability only when the benchmark explicitly grants it; direct injection of an already-known compromised authority is not evidence that the system discovered the compromise.
+
+\subsection{Operational and reproducibility considerations}
+
+LLM-assisted stages introduce provider/version drift, stochastic generation, API failure, fallback behavior, cost, and latency. For official runs, the artifact records the resolved provider and immutable model identifier where available, prompt hash, decoding parameters, retries, fallback/generation mode, knowledge-base snapshot, retrieved identifiers, and fuzzer seed. A deterministic fallback is reported as a different generation mode rather than silently included in an LLM-guided aggregate.
+
+The official campaign also retains unsuccessful and censored runs. Time-to-valid-exploit is measured from the declared evaluation start point and non-triggers are treated as right-censored observations; mean time over successful runs alone is not used as a discovery-performance metric.
+
+\subsection{Threats to Validity}
+
+\textbf{Internal validity.} Historical reconstruction depends on correct fork blocks, contract addresses, compiler/EVM versions, adapters, and incident mappings. Fixture metadata and raw traces are therefore part of the evaluation evidence. Any run missing mandatory provenance is ineligible for primary results.
+
+\textbf{Construct validity.} Invariant-trigger rate and ATG-derived path coverage are internal progress measures. They are not equivalent to exploit validity and cannot substitute for execution-derived evidence, patched-control rejection, or independent coverage. The official Valid Exploit Rate requires all fail-closed evidence gates to pass.
+
+\textbf{External validity.} The retained historical set is small, positive-only, and biased toward incidents that can be reconstructed from public artifacts. Results on EVM bridges do not automatically transfer to Solana, Cosmos IBC, or other heterogeneous execution models. Generalization claims are restricted to the explicitly tested holdout regimes and target architectures.
+
+\textbf{Statistical validity.} Fuzzing outcomes are stochastic and time-to-event observations may be censored. Paired configurations use a pre-specified common seed set, budget, hardware allocation, fork state, and evaluation population. Primary reporting uses success proportions with confidence intervals and time-to-event summaries/survival analysis rather than success-conditioned means.
+
+\section{Conclusion}\label{sec:conclusion}
+
+BridgeSentry studies how cross-chain bridge artifacts can be converted into explicit source--relay--destination semantics, historical guidance, and executable tests while keeping guidance separate from exploit evidence. The system combines a semantic intermediate representation, provenance-aware incident retrieval, and a dual-EVM execution harness with an explicit relay.
+
+The retained legacy study demonstrates target-aware reconstruction of documented failure predicates on 12 historical fixtures and exposes a central methodological lesson: predicate triggering alone is too weak to represent a valid exploit. Hollow detections in the legacy ablations and the null synchronization result motivate a stricter evaluation in which findings must execute target bytecode, follow a valid cross-chain causal path, remain within the threat model, cause material impact, reproduce, and be rejected by paired patched controls.
+
+Accordingly, this work does not infer zero-day capability, precision, or unrestricted vulnerability-discovery performance from the legacy 12/12 trigger result. The research contribution is instead evaluated through four separable questions: semantic fidelity, guidance under leakage-controlled holdouts, exploit validity against positive and negative controls, and component attribution under a fixed harness. Stronger generalization claims are made only to the extent supported by those experiments.
