@@ -1,7 +1,145 @@
 //! Fixture-specific runtime-to-semantic mapping for Option-A official evaluation.
 //!
-//! Tests first: missing or unresolved mappings must produce Unknown, never a
-//! synthetic/default semantic value.
+//! Missing, ambiguous, or unresolved mappings produce `Unknown`. This module
+//! never invents zero/false defaults and never consumes a `Scenario`.
+
+use std::collections::HashMap;
+
+use crate::official_oracle::OfficialOracleInput;
+use crate::types::ChainState;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChainSide {
+    Source,
+    Destination,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RuntimeLocator {
+    Balance {
+        chain: ChainSide,
+        address: String,
+    },
+    StorageSlot {
+        chain: ChainSide,
+        address: String,
+        slot: String,
+    },
+    RelayProcessedContains {
+        message_key: String,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SemanticFieldMapping {
+    pub semantic_field: String,
+    pub locator: RuntimeLocator,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SemanticFactStatus {
+    Observed,
+    Unknown,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SemanticFact {
+    pub status: SemanticFactStatus,
+    pub value: Option<String>,
+    pub reason: Option<String>,
+}
+
+impl SemanticFact {
+    fn observed(value: impl Into<String>) -> Self {
+        Self {
+            status: SemanticFactStatus::Observed,
+            value: Some(value.into()),
+            reason: None,
+        }
+    }
+
+    fn unknown(reason: impl Into<String>) -> Self {
+        Self {
+            status: SemanticFactStatus::Unknown,
+            value: None,
+            reason: Some(reason.into()),
+        }
+    }
+}
+
+/// Resolve exactly the semantic fields requested by the official validator.
+/// A field needs one and only one deterministic mapping. Missing or duplicate
+/// mappings abstain instead of choosing an arbitrary source.
+pub fn resolve_required_facts(
+    oracle: &OfficialOracleInput,
+    mappings: &[SemanticFieldMapping],
+    required_fields: &[String],
+) -> HashMap<String, SemanticFact> {
+    let mut out = HashMap::new();
+
+    for field in required_fields {
+        let candidates: Vec<&SemanticFieldMapping> = mappings
+            .iter()
+            .filter(|mapping| mapping.semantic_field == *field)
+            .collect();
+
+        let fact = match candidates.as_slice() {
+            [] => SemanticFact::unknown("missing_runtime_mapping"),
+            [mapping] => resolve_locator(oracle, &mapping.locator),
+            _ => SemanticFact::unknown("ambiguous_runtime_mapping"),
+        };
+        out.insert(field.clone(), fact);
+    }
+
+    out
+}
+
+fn resolve_locator(oracle: &OfficialOracleInput, locator: &RuntimeLocator) -> SemanticFact {
+    match locator {
+        RuntimeLocator::Balance { chain, address } => {
+            let state = selected_chain(&oracle.after, *chain);
+            match lookup_case_insensitive(&state.balances, address) {
+                Some(value) => SemanticFact::observed(value.clone()),
+                None => SemanticFact::unknown("runtime_balance_not_observed"),
+            }
+        }
+        RuntimeLocator::StorageSlot {
+            chain,
+            address,
+            slot,
+        } => {
+            let state = selected_chain(&oracle.after, *chain);
+            let Some(storage) = lookup_case_insensitive(&state.storage, address) else {
+                return SemanticFact::unknown("runtime_storage_address_not_observed");
+            };
+            match lookup_case_insensitive(storage, slot) {
+                Some(value) => SemanticFact::observed(value.clone()),
+                None => SemanticFact::unknown("runtime_storage_slot_not_observed"),
+            }
+        }
+        RuntimeLocator::RelayProcessedContains { message_key } => SemanticFact::observed(
+            oracle
+                .after
+                .relay_state
+                .processed_set
+                .iter()
+                .any(|item| item == message_key)
+                .to_string(),
+        ),
+    }
+}
+
+fn selected_chain(state: &crate::types::GlobalState, chain: ChainSide) -> &ChainState {
+    match chain {
+        ChainSide::Source => &state.source_state,
+        ChainSide::Destination => &state.dest_state,
+    }
+}
+
+fn lookup_case_insensitive<'a, V>(map: &'a HashMap<String, V>, key: &str) -> Option<&'a V> {
+    map.get(key)
+        .or_else(|| map.iter().find(|(candidate, _)| candidate.eq_ignore_ascii_case(key)).map(|(_, value)| value))
+}
 
 #[cfg(test)]
 mod tests {
