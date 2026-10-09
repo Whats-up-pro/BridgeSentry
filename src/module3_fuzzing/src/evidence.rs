@@ -120,4 +120,22 @@ mod tests {
         assert_eq!(value["material_state_change"], "fail");
         assert_eq!(value["patched_rejected"], "unknown");
     }
+
+    #[test]
+    fn defaults_are_fail_closed_and_legacy() {
+        let run = RunEvidenceProvenance::default();
+        assert_eq!(run.evaluation_mode, EvaluationMode::Legacy);
+        assert_eq!(run.oracle_state_source, EvidenceSource::Mixed);
+        assert!(!run.official_eligible);
+        assert!(!run.ineligibility_reasons.is_empty());
+
+        let gates = ExploitEvidenceGates::default();
+        assert_eq!(gates.target_bytecode_executed, ObservationStatus::Unknown);
+        assert_eq!(gates.causal_path_valid, ObservationStatus::Unknown);
+        assert_eq!(gates.material_state_change, ObservationStatus::Unknown);
+        assert_eq!(gates.capability_compliant, ObservationStatus::Unknown);
+        assert_eq!(gates.replayable, ObservationStatus::Unknown);
+        assert_eq!(gates.impact_demonstrated, ObservationStatus::Unknown);
+        assert_eq!(gates.patched_rejected, ObservationStatus::Unknown);
+    }
 }
