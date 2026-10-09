@@ -17,6 +17,7 @@ pub mod fuzz_loop;
 pub mod mock_relay;
 pub mod mutator;
 pub mod official_oracle;
+pub mod official_semantics;
 pub mod scenario_sim;
 pub mod snapshot;
 pub mod storage_tracker;
