@@ -6,6 +6,7 @@
 pub mod types;
 pub mod config;
 mod evidence;
+mod execution_observation;
 mod baselines;
 mod contract_loader;
 mod coverage_tracker;
