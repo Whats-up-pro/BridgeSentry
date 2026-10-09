@@ -63,8 +63,12 @@ fn write_results(path: &str, results: &types::FuzzingResults) -> eyre::Result<()
         }
     }
 
-    let content = serde_json::to_string_pretty(results)
-        .wrap_err("Failed to serialize results to JSON")?;
+    // Until the official execution-derived path is wired, every newly
+    // produced stock result is explicitly labelled legacy/mixed and every
+    // per-violation exploit gate defaults to unknown. This prevents old
+    // predicate triggers from being silently reinterpreted as VER evidence.
+    let content = evidence::serialize_results_with_evidence(results)
+        .wrap_err("Failed to serialize results with evidence provenance")?;
     std::fs::write(output_path, content)
         .wrap_err_with(|| format!("Failed to write output file: {}", output_path.display()))?;
     Ok(())
