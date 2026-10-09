@@ -1,7 +1,34 @@
 //! Threat-model capability gate for Option-A official relay actions.
 //!
-//! Tests first. Fault-injection modes must be explicitly authorized by the
-//! fixture before execution; faithful delivery is the only default capability.
+//! Fault-injection modes must be explicitly authorized by the fixture before
+//! execution. Faithful delivery is the only default capability.
+
+use crate::mock_relay::RelayMode;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct RelayCapabilityPolicy {
+    pub allow_delay: bool,
+    pub allow_tamper: bool,
+    pub allow_replay: bool,
+}
+
+/// Authorize a relay mode before execution. This is intentionally a preflight
+/// check: unauthorized fault injection must never run and then be filtered from
+/// results after the fact.
+pub fn authorize_relay_mode(
+    policy: &RelayCapabilityPolicy,
+    mode: RelayMode,
+) -> Result<(), String> {
+    match mode {
+        RelayMode::Faithful => Ok(()),
+        RelayMode::Delayed { .. } if policy.allow_delay => Ok(()),
+        RelayMode::Tampered if policy.allow_tamper => Ok(()),
+        RelayMode::Replayed if policy.allow_replay => Ok(()),
+        RelayMode::Delayed { .. } => Err("relay delay is not authorized by fixture threat model".to_string()),
+        RelayMode::Tampered => Err("relay tamper is not authorized by fixture threat model".to_string()),
+        RelayMode::Replayed => Err("relay replay is not authorized by fixture threat model".to_string()),
+    }
+}
 
 #[cfg(test)]
 mod tests {
