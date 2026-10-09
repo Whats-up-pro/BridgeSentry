@@ -1,7 +1,88 @@
 //! Execution-derived observation record for Option-A official evaluation.
 //!
-//! Tests are written first. Production definitions are added in the following
-//! RED→GREEN commit.
+//! This module records facts obtained from runtime execution. It deliberately
+//! accepts `target_bytecode_executed` as an explicit observation rather than
+//! inferring it from scenario intent or transaction success.
+
+use revm::primitives::{Address, Log};
+
+use crate::dual_evm::TxOutcome;
+use crate::storage_tracker::StorageWrite;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExecutionDisposition {
+    Success,
+    Revert,
+    Halt,
+    UnknownFailure,
+}
+
+#[derive(Debug, Clone)]
+pub struct ActionObservation {
+    pub chain: String,
+    pub target: Address,
+    pub disposition: ExecutionDisposition,
+    pub target_bytecode_executed: bool,
+    pub committed_logs: Vec<Log>,
+    pub committed_storage_writes: Vec<StorageWrite>,
+    pub output: Vec<u8>,
+    pub gas_used: u64,
+    pub status: String,
+    pub block_number: u64,
+    pub block_timestamp: u64,
+}
+
+impl ActionObservation {
+    /// Conservative first material-change signal. Balance deltas and other
+    /// fixture-specific semantic observations will be added by the runtime
+    /// adapter; logs/storage count only when the transaction committed.
+    pub fn material_state_change_observed(&self) -> bool {
+        self.disposition == ExecutionDisposition::Success
+            && (!self.committed_logs.is_empty() || !self.committed_storage_writes.is_empty())
+    }
+}
+
+pub fn from_runtime_outcome(
+    chain: &str,
+    target: Address,
+    outcome: &TxOutcome,
+    target_bytecode_executed: bool,
+    observed_storage_writes: Vec<StorageWrite>,
+    block_number: u64,
+    block_timestamp: u64,
+) -> ActionObservation {
+    let disposition = if outcome.success {
+        ExecutionDisposition::Success
+    } else if outcome.status.starts_with("reverted") {
+        ExecutionDisposition::Revert
+    } else if outcome.status.starts_with("halted") {
+        ExecutionDisposition::Halt
+    } else {
+        ExecutionDisposition::UnknownFailure
+    };
+
+    // Only committed success can contribute logs or storage mutations to
+    // exploit evidence. Callers may still retain output/status for diagnosis.
+    let (committed_logs, committed_storage_writes) = if outcome.success {
+        (outcome.logs.clone(), observed_storage_writes)
+    } else {
+        (Vec::new(), Vec::new())
+    };
+
+    ActionObservation {
+        chain: chain.to_string(),
+        target,
+        disposition,
+        target_bytecode_executed,
+        committed_logs,
+        committed_storage_writes,
+        output: outcome.output.clone(),
+        gas_used: outcome.gas_used,
+        status: outcome.status.clone(),
+        block_number,
+        block_timestamp,
+    }
+}
 
 #[cfg(test)]
 mod tests {
