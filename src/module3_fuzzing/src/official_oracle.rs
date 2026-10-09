@@ -5,8 +5,9 @@
 //! scenario-simulator state, so intended actions cannot become oracle facts by
 //! construction.
 
+use crate::evidence::{ExploitEvidenceGates, ObservationStatus};
 use crate::execution_observation::ActionObservation;
-use crate::types::GlobalState;
+use crate::types::{GlobalState, RelaySnapshot};
 
 #[derive(Debug, Clone)]
 pub struct OfficialOracleInput {
@@ -37,7 +38,8 @@ impl OfficialOracleInput {
     }
 
     /// Conservative material-change predicate derived from committed runtime
-    /// facts. Block-height/timestamp progression alone is intentionally ignored.
+    /// facts. Block-height/timestamp progression and harness mode switches are
+    /// intentionally ignored: neither demonstrates exploit impact by itself.
     pub fn material_state_change_observed(&self) -> bool {
         if self
             .actions
@@ -55,14 +57,42 @@ impl OfficialOracleInput {
             return true;
         }
 
-        match (
-            serde_json::to_value(&self.before.relay_state),
-            serde_json::to_value(&self.after.relay_state),
-        ) {
-            (Ok(before), Ok(after)) => before != after,
-            _ => false,
+        relay_material_projection(&self.before.relay_state)
+            != relay_material_projection(&self.after.relay_state)
+    }
+
+    /// Populate only gates that can be concluded from this runtime observation
+    /// boundary alone. Cross-chain causality, capability compliance,
+    /// replayability, impact semantics, and patched rejection require their own
+    /// validators/control runs and remain Unknown until those modules supply
+    /// evidence.
+    pub fn base_evidence_gates(&self) -> ExploitEvidenceGates {
+        ExploitEvidenceGates {
+            target_bytecode_executed: bool_status(self.target_bytecode_executed()),
+            material_state_change: bool_status(self.material_state_change_observed()),
+            ..ExploitEvidenceGates::default()
         }
     }
+}
+
+fn bool_status(value: bool) -> ObservationStatus {
+    if value {
+        ObservationStatus::Pass
+    } else {
+        ObservationStatus::Fail
+    }
+}
+
+/// Material relay state excludes `mode`: switching the local harness from
+/// faithful to tampered/replay/delayed is a control setting, not a protocol
+/// state transition or security impact. Message queue/processed-state changes
+/// are runtime facts and may count as material cross-chain state changes.
+fn relay_material_projection(relay: &RelaySnapshot) -> serde_json::Value {
+    serde_json::json!({
+        "pending_messages": &relay.pending_messages,
+        "processed_set": &relay.processed_set,
+        "message_count": relay.message_count,
+    })
 }
 
 #[cfg(test)]
