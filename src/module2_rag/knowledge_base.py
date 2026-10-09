@@ -1,21 +1,21 @@
-"""
-Exploit Knowledge Base — Manages structured records of 51 documented cross-chain bridge exploits.
+"""Exploit Knowledge Base — structured documented cross-chain bridge incidents.
 
-Each record contains:
-- Attack metadata (bridge, date, loss, chains)
-- Vulnerability class (access_control, fake_deposit, reentrancy, signature_forgery, init_flaw, oracle_manipulation)
-- Attack stage (source_chain, off_chain, destination_chain)
-- Attack trace (sequence of high-level actions)
-- Root cause analysis
+Each record may contain attack metadata, vulnerability class, attack stage,
+high-level trace, and root-cause analysis. Evaluation code must treat the
+loaded records as a frozen snapshot and retain its content hash; manuscript
+record counts are reported from the actual frozen evaluation snapshot rather
+than duplicated as a source-code constant here.
 """
 
 import json
 from pathlib import Path
 from typing import Any
 
+from src.common.generation_provenance import knowledge_base_snapshot_sha256
+
 
 class ExploitKnowledgeBase:
-    """Load, manage, and query the exploit knowledge base."""
+    """Load, manage, query, and fingerprint the exploit knowledge base."""
 
     def __init__(self, data_dir: str = "src/module2_rag/data"):
         root = Path(__file__).resolve().parents[2]
@@ -50,8 +50,14 @@ class ExploitKnowledgeBase:
                             item.setdefault("exploit_id", f"{path.stem}_{idx}")
                             self.exploits.append(item)
             except json.JSONDecodeError:
-                # Skip malformed records to keep pipeline robust during early data collection.
+                # Malformed records are excluded from the loaded snapshot.
+                # Official preflight will separately require a frozen snapshot
+                # manifest so silent corpus drift cannot enter primary results.
                 continue
+
+    def snapshot_sha256(self) -> str:
+        """Stable content hash of the currently loaded KB snapshot."""
+        return knowledge_base_snapshot_sha256(self.exploits)
 
     def get_by_vuln_class(self, vuln_class: str) -> list[dict]:
         """Filter exploits by vulnerability class."""
