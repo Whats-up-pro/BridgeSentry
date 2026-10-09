@@ -79,6 +79,7 @@ mod tests {
         EvaluationMode, EvidenceSource, ExploitEvidenceGates, ObservationStatus,
         RunEvidenceProvenance,
     };
+    use crate::types::{FuzzingResults, Violation};
 
     #[test]
     fn evaluation_vocabulary_serializes_to_stable_snake_case() {
@@ -162,5 +163,40 @@ mod tests {
         assert_eq!(gates.replayable, ObservationStatus::Unknown);
         assert_eq!(gates.impact_demonstrated, ObservationStatus::Unknown);
         assert_eq!(gates.patched_rejected, ObservationStatus::Unknown);
+    }
+
+    #[test]
+    fn legacy_results_deserialize_with_fail_closed_evidence_defaults() {
+        let result: FuzzingResults = serde_json::from_value(serde_json::json!({
+            "bridge_name": "legacy_fixture",
+            "run_id": 0,
+            "time_budget_s": 1,
+            "violations": [{
+                "invariant_id": "inv_legacy",
+                "detected_at_s": 0.1,
+                "trigger_scenario": "s1",
+                "trigger_trace": [],
+                "state_diff": {}
+            }],
+            "coverage": {
+                "xcc_atg": 0.0,
+                "basic_blocks_source": 0,
+                "basic_blocks_dest": 0
+            },
+            "stats": {
+                "total_iterations": 1,
+                "snapshots_captured": 1,
+                "mutations_applied": 0
+            }
+        })).unwrap();
+
+        assert_eq!(result.evidence.evaluation_mode, EvaluationMode::Legacy);
+        assert!(!result.evidence.official_eligible);
+        let violation: &Violation = &result.violations[0];
+        assert_eq!(
+            violation.evidence.target_bytecode_executed,
+            ObservationStatus::Unknown
+        );
+        assert_eq!(violation.evidence.patched_rejected, ObservationStatus::Unknown);
     }
 }
