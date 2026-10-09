@@ -113,32 +113,26 @@ mod tests {
     };
     use crate::types::FuzzingResults;
 
+    fn all_pass() -> ExploitEvidenceGates {
+        ExploitEvidenceGates {
+            target_bytecode_executed: ObservationStatus::Pass,
+            causal_path_valid: ObservationStatus::Pass,
+            material_state_change: ObservationStatus::Pass,
+            capability_compliant: ObservationStatus::Pass,
+            replayable: ObservationStatus::Pass,
+            impact_demonstrated: ObservationStatus::Pass,
+            patched_rejected: ObservationStatus::Pass,
+        }
+    }
+
     #[test]
     fn evaluation_vocabulary_serializes_to_stable_snake_case() {
-        assert_eq!(
-            serde_json::to_string(&EvaluationMode::Official).unwrap(),
-            "\"official\""
-        );
-        assert_eq!(
-            serde_json::to_string(&EvaluationMode::Legacy).unwrap(),
-            "\"legacy\""
-        );
-        assert_eq!(
-            serde_json::to_string(&EvidenceSource::Execution).unwrap(),
-            "\"execution\""
-        );
-        assert_eq!(
-            serde_json::to_string(&EvidenceSource::SyntheticScenario).unwrap(),
-            "\"synthetic_scenario\""
-        );
-        assert_eq!(
-            serde_json::to_string(&EvidenceSource::Mixed).unwrap(),
-            "\"mixed\""
-        );
-        assert_eq!(
-            serde_json::to_string(&ObservationStatus::Unknown).unwrap(),
-            "\"unknown\""
-        );
+        assert_eq!(serde_json::to_string(&EvaluationMode::Official).unwrap(), "\"official\"");
+        assert_eq!(serde_json::to_string(&EvaluationMode::Legacy).unwrap(), "\"legacy\"");
+        assert_eq!(serde_json::to_string(&EvidenceSource::Execution).unwrap(), "\"execution\"");
+        assert_eq!(serde_json::to_string(&EvidenceSource::SyntheticScenario).unwrap(), "\"synthetic_scenario\"");
+        assert_eq!(serde_json::to_string(&EvidenceSource::Mixed).unwrap(), "\"mixed\"");
+        assert_eq!(serde_json::to_string(&ObservationStatus::Unknown).unwrap(), "\"unknown\"");
     }
 
     #[test]
@@ -149,15 +143,11 @@ mod tests {
             official_eligible: false,
             ineligibility_reasons: vec!["synthetic_or_mixed_oracle_state".to_string()],
         };
-
         let value = serde_json::to_value(provenance).unwrap();
         assert_eq!(value["evaluation_mode"], "legacy");
         assert_eq!(value["oracle_state_source"], "mixed");
         assert_eq!(value["official_eligible"], false);
-        assert_eq!(
-            value["ineligibility_reasons"],
-            serde_json::json!(["synthetic_or_mixed_oracle_state"])
-        );
+        assert_eq!(value["ineligibility_reasons"], serde_json::json!(["synthetic_or_mixed_oracle_state"]));
     }
 
     #[test]
@@ -171,7 +161,6 @@ mod tests {
             impact_demonstrated: ObservationStatus::Unknown,
             patched_rejected: ObservationStatus::Unknown,
         };
-
         let value = serde_json::to_value(gates).unwrap();
         assert_eq!(value["target_bytecode_executed"], "pass");
         assert_eq!(value["causal_path_valid"], "unknown");
@@ -198,6 +187,32 @@ mod tests {
     }
 
     #[test]
+    fn valid_exploit_requires_every_gate_to_pass() {
+        let passing = all_pass();
+        assert!(passing.is_valid_exploit());
+
+        for gate_index in 0..7 {
+            for status in [ObservationStatus::Fail, ObservationStatus::Unknown] {
+                let mut gates = all_pass();
+                match gate_index {
+                    0 => gates.target_bytecode_executed = status,
+                    1 => gates.causal_path_valid = status,
+                    2 => gates.material_state_change = status,
+                    3 => gates.capability_compliant = status,
+                    4 => gates.replayable = status,
+                    5 => gates.impact_demonstrated = status,
+                    6 => gates.patched_rejected = status,
+                    _ => unreachable!(),
+                }
+                assert!(
+                    !gates.is_valid_exploit(),
+                    "gate {gate_index} with {status:?} must fail closed"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn legacy_results_serialize_with_fail_closed_evidence_defaults() {
         let result: FuzzingResults = serde_json::from_value(serde_json::json!({
             "bridge_name": "legacy_fixture",
@@ -210,31 +225,16 @@ mod tests {
                 "trigger_trace": [],
                 "state_diff": {}
             }],
-            "coverage": {
-                "xcc_atg": 0.0,
-                "basic_blocks_source": 0,
-                "basic_blocks_dest": 0
-            },
-            "stats": {
-                "total_iterations": 1,
-                "snapshots_captured": 1,
-                "mutations_applied": 0
-            }
-        }))
-        .unwrap();
+            "coverage": {"xcc_atg": 0.0, "basic_blocks_source": 0, "basic_blocks_dest": 0},
+            "stats": {"total_iterations": 1, "snapshots_captured": 1, "mutations_applied": 0}
+        })).unwrap();
 
         let rendered = serialize_results_with_evidence(&result).unwrap();
         let value: serde_json::Value = serde_json::from_str(&rendered).unwrap();
         assert_eq!(value["evidence"]["evaluation_mode"], "legacy");
         assert_eq!(value["evidence"]["oracle_state_source"], "mixed");
         assert_eq!(value["evidence"]["official_eligible"], false);
-        assert_eq!(
-            value["violations"][0]["evidence"]["target_bytecode_executed"],
-            "unknown"
-        );
-        assert_eq!(
-            value["violations"][0]["evidence"]["patched_rejected"],
-            "unknown"
-        );
+        assert_eq!(value["violations"][0]["evidence"]["target_bytecode_executed"], "unknown");
+        assert_eq!(value["violations"][0]["evidence"]["patched_rejected"], "unknown");
     }
 }
