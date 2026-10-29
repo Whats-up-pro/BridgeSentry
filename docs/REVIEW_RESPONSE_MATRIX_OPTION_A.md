@@ -6,8 +6,8 @@
 
 | # | Review concern | Severity | Manuscript status | Artifact / experiment status | Current verdict |
 |---|---|---:|---|---|---|
-| 1 | Full-knowledge RAG leaks the target incident/family/class | Fatal | Option-A Related Work, Methodology and Experiment Protocol define full-KB as diagnostic only and specify incident/family/class+temporal exclusions | Stable prompt/KB/retrieval provenance primitives exist; scenario-level provenance wiring and official holdout campaign still pending | **Open — experiment required** |
-| 2 | LLM/ATG/RAG pipeline not reproducibly end-to-end | Fatal | Methodology describes hybrid parsing, optional LLM enrichment, explicit fallback and provenance | Current orchestrator connects Modules 1→2→3; generation/KB hash types are implemented and tested; scenario-level provenance still needs wiring | **Partial** |
+| 1 | Full-knowledge RAG leaks the target incident/family/class | Fatal | Option-A Related Work, Methodology and Experiment Protocol define full-KB as diagnostic only and specify incident/family/class+temporal exclusions | Scenario-level prompt/KB/retrieval IDs are retained in the A1 provenance branch; exclusion enforcement and official holdout campaign still pending | **Open — experiment required** |
+| 2 | LLM/ATG/RAG pipeline not reproducibly end-to-end | Fatal | Methodology describes hybrid parsing, optional LLM enrichment, explicit fallback and provenance | Current orchestrator connects Modules 1→2→3; scenario-level provenance now records actual retrieved IDs, KB hash, model identity, prompt hash and explicit fallback, but end-to-end official execution provenance remains incomplete | **Partial** |
 | 3 | Invariant formalization / distance oracle inconsistent | Fatal | Option-A problem/methodology use per-transfer/message semantics and violation-oriented distance; timeliness is protocol-specific | Timeliness generation is gated on explicit timeout+refund semantics; official runtime semantic adapter now abstains (`Unknown`) when deterministic mapping is missing/ambiguous; fixture mappings still need population | **Partial — core primitives GREEN** |
 | 4 | 12/12 predicate triggers include hollow detections | Fatal | Discussion treats zero-bytecode/vacuous triggers as hollow and ITR as an intermediate metric | Seven fail-closed exploit gates, execution-derived action observations, execution-only oracle input, runtime base-gate derivation and fail-closed evidence aggregation are implemented/tested; official execution loop still not wired | **Partial — validator primitives GREEN** |
 | 5 | Baselines are scientifically non-comparable | Major | Experiment protocol separates native tools, adapted harness modes and project reimplementations; BridgeFuzz is primary dynamic comparison | Common-subset official baseline campaign not run | **Open — experiment required** |
@@ -30,6 +30,7 @@
 - `src/module1_semantic/invariant_synth.py` — protocol-specific timeliness gating and explicit candidate-property lifecycle language.
 - `src/common/generation_provenance.py` — stable prompt/KB hashes and distinct LLM vs deterministic-fallback provenance.
 - `src/module2_rag/knowledge_base.py` — stable loaded-KB snapshot hash.
+- `src/module2_rag/scenario_gen.py` — preserves actual retrieved incident IDs rather than accepting LLM-echoed IDs; records per-scenario generation and KB provenance (new A1 branch, pending integration review).
 
 ## Paper state
 
