@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from src.common.generation_provenance import GenerationProvenance
 from src.common.llm_client import chat_completion_json, get_llm_client
 
 from .embedder import ExploitEmbedder
@@ -51,6 +52,7 @@ class AttackScenarioGenerator:
     def generate(self, atg: dict, invariants: list[dict]) -> list[dict]:
         """Generate one scenario per invariant (LLM or template fallback)."""
         self._ensure_kb()
+        kb_sha256 = self.kb.snapshot_sha256()
         scenarios: list[dict[str, Any]] = []
 
         nodes = atg.get("nodes", [])
@@ -64,11 +66,48 @@ class AttackScenarioGenerator:
                 if self._kb_ready
                 else []
             )
-            scenario = self._try_llm_generate(atg, inv, retrieved)
-            if not self._scenario_usable(scenario):
+            # Record the actual retrieval set, never IDs claimed by generated text.
+            actual_ids = [
+                record["exploit_id"]
+                for record in retrieved
+                if isinstance(record.get("exploit_id"), str) and record["exploit_id"]
+            ]
+            prompt = load_prompt("system_adversary.txt") + "\n" + self._build_prompt(
+                atg, inv, retrieved
+            )
+            provider = get_llm_client()
+            scenario = self._try_llm_generate(
+                atg, inv, retrieved, provider=provider
+            )
+            llm_usable = self._scenario_usable(scenario)
+            if not llm_usable:
                 scenario = self._fallback_scenario(
                     idx, inv, retrieved, default_contract, bridge_name
                 )
+            if llm_usable and provider is not None:
+                provenance = GenerationProvenance.llm(
+                    provider=provider.provider_name,
+                    model=provider.model,
+                    prompt=prompt,
+                    temperature=self.temperature,
+                    retrieved_incident_ids=actual_ids,
+                    kb_snapshot_sha256=kb_sha256,
+                    # The shared client retries internally without per-call
+                    # telemetry. Unknown must not be represented as zero.
+                    retry_count=None,
+                )
+            else:
+                provenance = GenerationProvenance.deterministic_fallback(
+                    prompt=prompt,
+                    retrieved_incident_ids=actual_ids,
+                    kb_snapshot_sha256=kb_sha256,
+                    reason=(
+                        "provider_unavailable" if provider is None
+                        else "llm_invalid_or_failed"
+                    ),
+                )
+            scenario["retrieved_exploits"] = actual_ids
+            scenario["generation_provenance"] = provenance.to_dict()
             scenario["waypoints"] = self._extract_waypoints(scenario)
             scenarios.append(scenario)
 
@@ -77,9 +116,9 @@ class AttackScenarioGenerator:
     # ---------------------------------------------------------- LLM generation
 
     def _try_llm_generate(
-        self, atg: dict, invariant: dict, retrieved: list[dict]
+        self, atg: dict, invariant: dict, retrieved: list[dict], *,
+        provider: Any,
     ) -> dict[str, Any] | None:
-        provider = get_llm_client()
         if provider is None:
             return None
 

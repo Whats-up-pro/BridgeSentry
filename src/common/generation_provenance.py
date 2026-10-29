@@ -61,7 +61,7 @@ class GenerationProvenance:
     model: str | None
     prompt_sha256: str
     temperature: float | None
-    retry_count: int
+    retry_count: int | None
     retrieved_incident_ids: tuple[str, ...]
     kb_snapshot_sha256: str
     fallback_reason: str | None = None
@@ -76,13 +76,13 @@ class GenerationProvenance:
         temperature: float,
         retrieved_incident_ids: Iterable[str],
         kb_snapshot_sha256: str,
-        retry_count: int = 0,
+        retry_count: int | None = None,
     ) -> "GenerationProvenance":
         if not provider.strip():
             raise ValueError("resolved LLM provider is required")
         if not model.strip():
             raise ValueError("resolved LLM model is required")
-        if retry_count < 0:
+        if retry_count is not None and retry_count < 0:
             raise ValueError("retry_count must be non-negative")
         return cls(
             generation_mode="llm",
