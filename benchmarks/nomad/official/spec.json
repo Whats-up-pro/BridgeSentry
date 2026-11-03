@@ -1,0 +1,28 @@
+{
+  "fixture_id": "nomad_2022",
+  "notes": "Root cause: Replica.initialize(updater, 0x00, ...) pre-confirmed the zero root, so every unproven message (messages[h] == 0x00) passed acceptableRoot. Source side (NomadHome) locks canonical tokens; the relayer (updater) proves dispatched message hashes on the destination Replica; NomadBridgeRouter mints the representation token. Patched: zero root is never confirmed/accepted.",
+  "variants": {"vulnerable": "official/vulnerable", "patched": "official/patched"},
+  "cross_chain": true,
+  "deploy": [
+    {"name": "SrcToken", "contract": "OfficialToken", "side": "source", "args": ["Nomad canonical token"]},
+    {"name": "NomadHome", "contract": "NomadHome", "side": "source", "args": ["$SrcToken"]},
+    {"name": "NomadReplica", "contract": "NomadReplica", "side": "dest", "args": []},
+    {"name": "Representation", "contract": "OfficialToken", "side": "dest", "args": ["Nomad representation token"]},
+    {"name": "NomadBridgeRouter", "contract": "NomadBridgeRouter", "side": "dest", "args": ["$NomadReplica", "$Representation"]}
+  ],
+  "victims": ["0x000000000000000000000000000000000000Ab01"],
+  "setup": [
+    {"from": "deployer", "to": "$Representation", "fn": "setMinter", "args": ["$NomadBridgeRouter", true]},
+    {"from": "deployer", "to": "$NomadReplica", "fn": "initialize", "args": ["relayer", "0x00", "0"]},
+    {"from": "deployer", "to": "$SrcToken", "fn": "mint", "args": ["0x000000000000000000000000000000000000Ab01", "1000e18"]},
+    {"from": "deployer", "to": "$SrcToken", "fn": "mint", "args": ["attacker", "100e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$SrcToken", "fn": "approve", "args": ["$NomadHome", "1000e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$NomadHome", "fn": "send", "args": ["0x000000000000000000000000000000000000Ab01", "500e18"]}
+  ],
+  "relay": [
+    {"emitter": "NomadHome", "event": "Dispatch", "to": "NomadReplica", "fn": "prove",
+     "args": ["ev:messageHash", "0x00000000000000000000000000000000000000000000000000000000000000aa"]}
+  ],
+  "asset_pairs": [["SrcToken", "Representation"]],
+  "release_entrypoints": ["NomadBridgeRouter.processAndRelease"]
+}

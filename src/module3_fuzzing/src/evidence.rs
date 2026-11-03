@@ -26,16 +26,14 @@ pub fn parse_evaluation_mode(raw: Option<&str>) -> Result<EvaluationMode, String
     }
 }
 
-/// Fail closed while the stock fuzzing loop still builds oracle state from
-/// `scenario_sim::global_state_from_scenario`. Task A1.2 will remove this
-/// guard only after the official path is execution-only end to end.
+/// Official mode is served by `official_mode::run_official`, which never
+/// consumes `scenario_sim` state: oracle facts come only from committed EVM
+/// execution (Transfer logs, executed relay deliveries, coverage). The legacy
+/// loop keeps building checker state from scenario text and therefore stays
+/// labelled legacy/ineligible.
 pub fn preflight_evaluation_mode(mode: EvaluationMode) -> Result<(), String> {
     match mode {
-        EvaluationMode::Legacy => Ok(()),
-        EvaluationMode::Official => Err(
-            "official evaluation is disabled until an execution-only oracle is available"
-                .to_string(),
-        ),
+        EvaluationMode::Legacy | EvaluationMode::Official => Ok(()),
     }
 }
 
@@ -263,11 +261,9 @@ mod tests {
     }
 
     #[test]
-    fn official_mode_is_rejected_until_execution_only_oracle_is_available() {
+    fn official_mode_is_served_by_the_execution_only_path() {
         assert!(preflight_evaluation_mode(EvaluationMode::Legacy).is_ok());
-        let err = preflight_evaluation_mode(EvaluationMode::Official).unwrap_err();
-        assert!(err.contains("execution-only oracle"));
-        assert!(err.contains("official"));
+        assert!(preflight_evaluation_mode(EvaluationMode::Official).is_ok());
     }
 
     #[test]

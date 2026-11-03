@@ -1,0 +1,25 @@
+{
+  "fixture_id": "qubit_2022",
+  "notes": "Root cause: QBridgeETH.deposit accepted the native-token address without verifying msg.value, still emitting Deposit(amount). The relayer faithfully relays every Deposit event to QBridgeBSC.process, which mints xQubit. Patched: require(msg.value == amount) on the native path.",
+  "variants": {"vulnerable": "official/vulnerable", "patched": "official/patched"},
+  "cross_chain": true,
+  "deploy": [
+    {"name": "Qubit", "contract": "OfficialToken", "side": "source", "args": ["Qubit (ETH)"]},
+    {"name": "QBridgeETH", "contract": "QBridgeETH", "side": "source", "args": []},
+    {"name": "xQubit", "contract": "OfficialToken", "side": "dest", "args": ["xQubit (BSC)"]},
+    {"name": "QBridgeBSC", "contract": "QBridgeBSC", "side": "dest", "args": ["$xQubit", "relayer"]}
+  ],
+  "victims": ["0x000000000000000000000000000000000000Ab01"],
+  "setup": [
+    {"from": "deployer", "to": "$xQubit", "fn": "setMinter", "args": ["$QBridgeBSC", true]},
+    {"from": "deployer", "to": "$Qubit", "fn": "mint", "args": ["0x000000000000000000000000000000000000Ab01", "1000e18"]},
+    {"from": "deployer", "to": "$Qubit", "fn": "mint", "args": ["attacker", "100e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$Qubit", "fn": "approve", "args": ["$QBridgeETH", "1000e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$QBridgeETH", "fn": "deposit", "args": ["$Qubit", "500e18", "0x000000000000000000000000000000000000Ab01"]}
+  ],
+  "relay": [
+    {"emitter": "QBridgeETH", "event": "Deposit", "to": "QBridgeBSC", "fn": "process", "args": ["ev:recipient", "ev:amount", "ev:nonce"]}
+  ],
+  "asset_pairs": [["Qubit", "xQubit"]],
+  "release_entrypoints": ["QBridgeBSC.process"]
+}

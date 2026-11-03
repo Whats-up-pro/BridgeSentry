@@ -18,6 +18,8 @@ mod mutator;
 mod checker;
 mod scenario_sim;
 mod storage_tracker;
+mod official_validator;
+mod official_mode;
 
 use eyre::Context;
 
@@ -48,6 +50,27 @@ fn main() {
     };
 
     ctx.print_summary();
+
+    if evaluation_mode == evidence::EvaluationMode::Official {
+        match official_mode::run_official(&ctx) {
+            Ok(report) => {
+                let text = serde_json::to_string_pretty(&report).expect("serialize official report");
+                if let Err(e) = std::fs::write(&ctx.config.output_path, text) {
+                    eprintln!("ERROR: Failed to write official report: {e}");
+                    std::process::exit(2);
+                }
+                println!(
+                    "\nOfficial run completed. variant={} candidates={} valid_exploits={} Output={}",
+                    report["variant"], report["candidates_total"], report["valid_exploits"], ctx.config.output_path
+                );
+                return;
+            }
+            Err(e) => {
+                eprintln!("ERROR: official run failed: {e:#}");
+                std::process::exit(1);
+            }
+        }
+    }
 
     let results = match fuzz_loop::run(&ctx) {
         Ok(r) => r,
