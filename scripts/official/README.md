@@ -1,12 +1,13 @@
 # Official-oracle runners
 
-Reusable scripts for `BRIDGESENTRY_EVALUATION_MODE=official` campaigns. The
-round-1 artifact in `experiments/official_20261103/` keeps the exact scripts
-that produced its numbers; use this directory for new runs.
+Reusable scripts for `BRIDGESENTRY_EVALUATION_MODE=official` campaigns. This is the
+canonical runner: use it for every new campaign. The scripts inside
+`experiments/official_*/` are frozen records of what produced each round's
+numbers; do not edit them and do not use them for new runs.
 
 | File | Purpose |
 | --- | --- |
-| `run_official.sh` | One job: `<bench> <vulnerable\|patched> <llm\|random> <seed> <budget_s> [out_root]`. Repo root from `git rev-parse`, fork block from `benchmarks/<bench>/metadata.json`. |
+| `run_official.sh` | One job: `<bench> <vulnerable\|patched> <llm\|random> <seed> <budget_s> [out_root]`. Repo root from `git rev-parse`; source block from `fork.block_number`, destination block from `fork.dest_block_number` (falls back to `fork.block_number`). |
 | `run_matrix.sh` | `<out_root> <budget_s> <parallel_jobs> <bench>...`: runs {vulnerable, patched} × {llm, random} × `$SEEDS` and aggregates. |
 | `aggregate_official.py` | `<runs_root>` → `<runs_root>/summary_official.csv` (same columns as round 1; non-triggering runs are right-censored at the budget). |
 | `empty_rpc.py` | JSON-RPC stub serving an empty chain state. |
