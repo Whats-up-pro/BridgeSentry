@@ -1,0 +1,2300 @@
+{
+  "bridge_name": "pgala",
+  "coverage": {
+    "basic_blocks_dest": 0,
+    "basic_blocks_source": 0,
+    "xcc_atg": 1.0
+  },
+  "evidence": {
+    "evaluation_mode": "legacy",
+    "ineligibility_reasons": [
+      "unvalidated_legacy_or_mixed_evidence"
+    ],
+    "official_eligible": false,
+    "oracle_state_source": "mixed"
+  },
+  "run_id": 0,
+  "stats": {
+    "contracts_scanned": 2,
+    "corpus_size": 256,
+    "deployment_plan_log": [
+      "benchmark_dir=/home/claude/whats-up-pro/bridgesentry/benchmarks/pgala",
+      "contracts_dir=/home/claude/whats-up-pro/bridgesentry/benchmarks/pgala/contracts",
+      "contracts_scan: 2 .sol files",
+      "source=LegacyCustodian.sol",
+      "source=pGALAToken.sol",
+      "node=LegacyCustodian target=deployed_address_placeholder",
+      "node=pGALAToken target=pGALAAddr_parameter",
+      "node=pGALAToken target=pGALAAddr_parameter",
+      "deploy_helper_status=planned_only (compile/deploy hook pending)"
+    ],
+    "mutations_applied": 249238,
+    "snapshot_pool_peak": 64,
+    "snapshots_captured": 249239,
+    "total_iterations": 249238
+  },
+  "time_budget_s": 20,
+  "violations": [
+    {
+      "detected_at_s": 0.000288597,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_locked_equals_minted_minus_fees",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000290009,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_bridge_balance_matches_outstanding_mint",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000290729,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fees_never_exceed_minted",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000293253,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_supply_reflects_locked_minus_refunded",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000294011,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_called_by_authorized_relayer",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.00029489,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_valid_deposit_proof",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000296795,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_matching_lock",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000297778,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_signature_matches_sender",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000300067,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_used_at_most_once",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000300683,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_hash_processed_once",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000303281,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_id_is_unique",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000303819,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000304378,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked_amount",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000306511,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_mint_must_be_before_deadline",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000308242,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_relay_messages_processed_in_nonce_order",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000309217,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_locked_funds_auto_refund_on_chain_halt",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.00031111,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_max_per_tx",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000313462,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_distribution_preserves_total",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000314301,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_burn_proof_used_once",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_sig_forgery_tampered_replay_001",
+      "trigger_trace": [
+        "sim:1:Attacker intercepts the off‑chain payload, swaps `to` with his own address while keeping the original signature. Because the bridge contract mistakenly verifies `ECDSA.recover(hashMessage(to, amount, nonce, deadline), signature) == msg.sender` instead of `== to`, the check passes and tokens are minted to the attacker.",
+        "sim:2:Honest user Alice requests a bridge mint; off‑chain service signs hashMessage(to, amount, nonce, deadline) and returns signature `sigAlice` with deadline far in the future.",
+        "sim:3:Since the contract does not enforce a per‑address nonce increment, the attacker re‑submits the same tampered payload, minting an additional 1000 pGALA."
+      ]
+    },
+    {
+      "detected_at_s": 0.000713308,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_locked_equals_minted_minus_fees",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000714365,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_bridge_balance_matches_outstanding_mint",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000715109,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fees_never_exceed_minted",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000717072,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_supply_reflects_locked_minus_refunded",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000717675,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_called_by_authorized_relayer",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000718181,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_valid_deposit_proof",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000718787,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_matching_lock",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000720821,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_signature_matches_sender",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000721405,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_used_at_most_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000725367,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_hash_processed_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000726338,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_id_is_unique",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000727347,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000729795,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked_amount",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.00073039,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_mint_must_be_before_deadline",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000734057,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_relay_messages_processed_in_nonce_order",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000734923,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_locked_funds_auto_refund_on_chain_halt",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000735452,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_max_per_tx",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000736103,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_distribution_preserves_total",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000738239,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_burn_proof_used_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "pgala_sig_replay_mint_overmint",
+      "trigger_trace": [
+        "sim:1:Legitimate off‑chain relayer produces a signed mint authorization (r,e,q,u,i,r,e,(!u,s,e,d)[nonce]) for the locked amount. Signature does NOT bind the amount field (vulnerability).",
+        "sim:2:Attacker locks 1,000 pGALA on the source chain. Bridge internal accounting updates bridgeLockedBalance = 1,000.",
+        "sim:3:Attacker submits the signed mint to the destination bridge. totalMinted becomes 1,000, bridgeLockedBalance stays 1,000 – invariant holds.",
+        "sim:4:Attacker re‑uses the same signature (signature does not cover amount/nonce) with a new nonce, causing the contract to mint an additional 1,000 pGALA without any extra lock. totalMinted = 2,000 while bridgeLockedBalance = 1,000, violating bridgeLockedBalance == totalMinted - totalRefunded."
+      ]
+    },
+    {
+      "detected_at_s": 0.000969973,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_locked_equals_minted_minus_fees",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.00097281,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_bridge_balance_matches_outstanding_mint",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000973703,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fees_never_exceed_minted",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000974725,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_supply_reflects_locked_minus_refunded",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.00097569,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_called_by_authorized_relayer",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000978623,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_valid_deposit_proof",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000979651,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_matching_lock",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000980489,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_signature_matches_sender",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000981427,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_used_at_most_once",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000983983,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_hash_processed_once",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000984934,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_id_is_unique",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000985978,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000988515,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked_amount",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000989619,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_mint_must_be_before_deadline",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.00099063,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_relay_messages_processed_in_nonce_order",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.000991464,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_locked_funds_auto_refund_on_chain_halt",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.001022452,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_max_per_tx",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.001023585,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_distribution_preserves_total",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.001034724,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_burn_proof_used_once",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_nonce_reentrancy_2024_01",
+      "trigger_trace": [
+        "sim:1:Call the authorized mint function with a legitimate signature. Transfer of ERC777 tokens triggers tokensReceived on AttackerERC777, which re‑enters mint with the same nonce.",
+        "sim:2:Deploy malicious ERC777 token that implements tokensReceived hook. The hook calls bridge.mint(to, amount, nonce, signature) with the same nonce received from the off‑chain signer.",
+        "sim:3:Re‑enter bridge.mint inside the ERC777 callback using the same nonce, amount and a freshly generated signature (attacker controls the signing key after compromising the LegacyCustodian off‑chain signer)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002803506,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_locked_equals_minted_minus_fees",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002805711,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_bridge_balance_matches_outstanding_mint",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002807216,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fees_never_exceed_minted",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002808699,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_supply_reflects_locked_minus_refunded",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002810319,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_called_by_authorized_relayer",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002811846,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_valid_deposit_proof",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002816908,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_matching_lock",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002818005,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_signature_matches_sender",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002826833,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_used_at_most_once",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002828231,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_hash_processed_once",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002829385,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_id_is_unique",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002830493,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002831704,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked_amount",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002832814,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_mint_must_be_before_deadline",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002833858,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_relay_messages_processed_in_nonce_order",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002834928,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_locked_funds_auto_refund_on_chain_halt",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002836321,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_max_per_tx",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.00283738,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_distribution_preserves_total",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.002840422,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_burn_proof_used_once",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest user locks 1,000 pGALA on the source chain; LegacyCustodian updates its internal totalLocked counter.",
+        "sim:2:Bridge relay forwards the signed mint authorization to the destination token contract; first mint succeeds and totalSupply becomes 1,000.",
+        "sim:3:Attacker re‑submits the same signed mint message (replay) because the contract does not mark the nonce as used; a second mint creates another 1,000 pGALA.",
+        "sim:4:Check invariant after replay: totalSupply (2,000) > totalLocked (1,000) – totalRefunded (0)."
+      ]
+    },
+    {
+      "detected_at_s": 0.0079991,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_locked_equals_minted_minus_fees",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008001189,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_bridge_balance_matches_outstanding_mint",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.00800255,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fees_never_exceed_minted",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008003941,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_supply_reflects_locked_minus_refunded",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008007038,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_called_by_authorized_relayer",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008009633,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_valid_deposit_proof",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008010518,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_matching_lock",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008013196,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_signature_matches_sender",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008014218,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_used_at_most_once",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008015138,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_hash_processed_once",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008017788,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_id_is_unique",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008019012,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008020112,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked_amount",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008021047,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_mint_must_be_before_deadline",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008023766,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_relay_messages_processed_in_nonce_order",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008024908,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_locked_funds_auto_refund_on_chain_halt",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008025977,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_max_per_tx",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008028681,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_distribution_preserves_total",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    },
+    {
+      "detected_at_s": 0.008029529,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_burn_proof_used_once",
+      "state_diff": {
+        "dest_total": "2000000999999999966445568",
+        "source_total": "0"
+      },
+      "trigger_scenario": "pgala_replay_mint_2024_01",
+      "trigger_trace": [
+        "sim:1:First replay of the captured signature. The contract does not store used nonces, so the mint succeeds and totalMinted increases by 1 M.",
+        "sim:2:Obtain a legitimate off‑chain signed mint authorization from a user who deposited 1 M pGALA on the source chain. The signature (sig) is captured for reuse.",
+        "sim:3:Second replay of the same signature, minting another 1 M pGALA without any additional lock on the source chain.",
+        "sim:4:Third replay, further inflating the minted supply.",
+        "sim:5:After the three replays, totalLocked on the source chain remains L0 while totalMinted on BSC increased by 3 M, breaking the invariant totalLocked == totalMinted - totalFees."
+      ]
+    }
+  ]
+}

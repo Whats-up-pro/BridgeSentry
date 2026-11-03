@@ -1,0 +1,23 @@
+diff --git a/src/module3_fuzzing/src/fuzz_loop.rs b/src/module3_fuzzing/src/fuzz_loop.rs
+index 4e2bd4d..03d2ad6 100644
+--- a/src/module3_fuzzing/src/fuzz_loop.rs
++++ b/src/module3_fuzzing/src/fuzz_loop.rs
+@@ -286,7 +286,17 @@ pub fn run(ctx: &RuntimeContext) -> Result<FuzzingResults> {
+             &mut dispatched_dest,
+         );
+ 
+-        let mut state = crate::scenario_sim::global_state_from_scenario(&s_prime);
++        // DIAGNOSTIC (not part of the paper pipeline): when
++        // BRIDGESENTRY_DIAG_EXEC_ONLY=1, drop every fact derived from the
++        // scenario text so the checker sees only execution-derived state.
++        let diag_exec_only = std::env::var("BRIDGESENTRY_DIAG_EXEC_ONLY").ok().as_deref() == Some("1");
++        let mut state = if diag_exec_only {
++            let mut empty = s_prime.clone();
++            empty.actions.clear();
++            crate::scenario_sim::global_state_from_scenario(&empty)
++        } else {
++            crate::scenario_sim::global_state_from_scenario(&s_prime)
++        };
+         state.relay_state = relay.to_relay_snapshot();
+         if let Some(d) = dual.as_mut() {
+             let onchain = d.collect_global_state();

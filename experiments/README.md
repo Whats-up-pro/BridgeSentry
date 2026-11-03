@@ -10,5 +10,6 @@ a new directory.
 | --- | --- |
 | `official_20261103/` | Round 1: Nomad, Qubit; 5 seeds × 20 s; empty RPC; fixed block 15259100. |
 | `official_20261103_r2/` | Round 2 (regression): same matrix; blocks read from metadata. |
+| `legacy_oracle_diagnosis_20261103/` | Diagnosis of the legacy (pre-official) oracle at `db20af7` + `diag_exec_only.patch`: 12 fixtures × {scenario-only, real bytecode, execution-only state} + patched Nomad; 3 seeds × 20 s; empty RPC. Shows the legacy oracle derives violations from scenario text. |
 
 New campaigns: `scripts/official/run_matrix.sh experiments/official_<YYYYMMDD> <budget_s> <jobs> <bench>...`

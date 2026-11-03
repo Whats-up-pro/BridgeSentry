@@ -1,0 +1,3381 @@
+{
+  "bridge_name": "qubit",
+  "coverage": {
+    "basic_blocks_dest": 0,
+    "basic_blocks_source": 0,
+    "xcc_atg": 1.0
+  },
+  "evidence": {
+    "evaluation_mode": "legacy",
+    "ineligibility_reasons": [
+      "unvalidated_legacy_or_mixed_evidence"
+    ],
+    "official_eligible": false,
+    "oracle_state_source": "mixed"
+  },
+  "run_id": 0,
+  "stats": {
+    "contracts_scanned": 3,
+    "corpus_size": 256,
+    "deployment_plan_log": [
+      "benchmark_dir=/home/claude/whats-up-pro/bridgesentry/benchmarks/qubit",
+      "contracts_dir=/home/claude/whats-up-pro/bridgesentry/benchmarks/qubit/contracts",
+      "contracts_scan: 3 .sol files",
+      "source=MockToken.sol",
+      "source=QBridgeBSC.sol",
+      "source=QBridgeETH.sol",
+      "node=MockToken unresolved_address",
+      "node=QBridgeBSC unresolved_address",
+      "node=xQubit unresolved_address",
+      "node=QBridgeETH target=0x0000000000000000000000000000000000000000",
+      "deploy_helper_status=planned_only (compile/deploy hook pending)"
+    ],
+    "mutations_applied": 163769,
+    "snapshot_pool_peak": 64,
+    "snapshots_captured": 163770,
+    "total_iterations": 163769
+  },
+  "time_budget_s": 20,
+  "violations": [
+    {
+      "detected_at_s": 0.000242016,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_balance",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000245032,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000245888,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative_supply",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000246968,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_verified_relay",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000247557,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_lock_requires_active_state",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000249981,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_processed_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000250553,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_consumed_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000253033,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_id_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000253609,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_event_emits_unique_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000255787,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000256416,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_processed_before_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000256953,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_timestamp_monotonic",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000258959,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_amount_matches_locked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000259484,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_non_negative",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000262731,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_only_bridge_owner_can_set_fee",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000263651,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_fee_structure_per_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000264245,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_cannot_be_relocked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000266378,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_cap",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000267275,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_burn_matches_unlock",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.00026812,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_replay_msgid_2024_04_25",
+      "trigger_trace": [
+        "sim:1:Honest relayer forwards the RelayMessage to Ethereum. Bridge verifies signature, marks usedMessageId[42]=true and calls mint on xQUBIT (edge e1).",
+        "sim:2:Attacker locks 1 ETH‑equivalent of native BNB on BSC. Bridge emits RelayMessage(msgId=42, amount=1e18, to=Attacker).",
+        "sim:3:Compromised relayer re‑sends the same msgId=42 (replay). Due to missing uniqueness check, usedMessageId[42] is still false at entry, allowing a second mint of xQUBIT.",
+        "sim:4:State predicate after step 3: usedMessageId[42] == false (should be true) && totalMintedDest == 2 × 1e18, violating the invariant."
+      ]
+    },
+    {
+      "detected_at_s": 0.000657206,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_balance",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000658336,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000658927,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative_supply",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000659511,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_verified_relay",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000659994,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_lock_requires_active_state",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.0006636,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_processed_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000664168,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_consumed_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000664693,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_id_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000668379,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_event_emits_unique_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000669108,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.00066973,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_processed_before_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000670278,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_timestamp_monotonic",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000671005,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_amount_matches_locked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000674788,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_non_negative",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000675468,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_only_bridge_owner_can_set_fee",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000675976,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_fee_structure_per_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000676423,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_cannot_be_relocked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000676886,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_cap",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000677386,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_burn_matches_unlock",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.000677903,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_per_nonce_tampered_relay_2024_04_25",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001008044,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_balance",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001008922,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001009615,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative_supply",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001010526,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_verified_relay",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001013146,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_lock_requires_active_state",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001013799,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_processed_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001014328,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_consumed_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001014809,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_id_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001015319,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_event_emits_unique_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001015831,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.00101785,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_processed_before_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001018428,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_timestamp_monotonic",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001018936,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_amount_matches_locked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001019438,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_non_negative",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001019934,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_only_bridge_owner_can_set_fee",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001020412,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_fee_structure_per_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001027278,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_cannot_be_relocked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001028174,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_cap",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001028776,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_burn_matches_unlock",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.00102932,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_burn_unlock_mismatch_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "relay:3:queued_or_err",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.001174087,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_balance",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001174929,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_nonce",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001175503,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative_supply",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001176031,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_verified_relay",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001176521,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_lock_requires_active_state",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001182737,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_processed_nonce",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001183504,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_consumed_once",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.00118553,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_id_once",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.0011861,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_event_emits_unique_nonce",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001186685,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001187235,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_processed_before_timeout",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001187766,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_timestamp_monotonic",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001188234,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_amount_matches_locked",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001188719,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_non_negative",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001189215,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_only_bridge_owner_can_set_fee",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001189706,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_fee_structure_per_nonce",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001190175,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_cannot_be_relocked",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001190696,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_cap",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001229705,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_burn_matches_unlock",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001233214,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked",
+      "state_diff": {
+        "dest_total": "6000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_cap_exceed_replay_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.001693851,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_balance",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001696488,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001697312,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative_supply",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001697976,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_verified_relay",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.00169865,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_lock_requires_active_state",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001699248,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_processed_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001703031,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_consumed_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001703651,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_id_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001704247,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_event_emits_unique_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001704878,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001707597,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_processed_before_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001708102,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_timestamp_monotonic",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001708623,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_amount_matches_locked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001709264,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_non_negative",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001711679,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_only_bridge_owner_can_set_fee",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001712261,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_fee_structure_per_nonce",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001712823,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_cannot_be_relocked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.00171343,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_cap",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.001715625,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_burn_matches_unlock",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.00171614,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "qubit_fee_tampering_nonce_0x1a2b3c",
+      "trigger_trace": [
+        "sim:1:Normal relay emission (faithful) – shown for completeness; not used by attacker.",
+        "sim:2:Attacker locks 1 ETH on the Ethereum side; bridge records feePercentageAtLock[nonce]=1% and feeSet[nonce]=true.",
+        "sim:3:Compromised relayer sends a tampered relay payload to the BSC router, overwriting feePercentage[nonce] to 0% before processing.",
+        "sim:4:BSC router processes the tampered relay and mints the full locked amount (no fee deducted).",
+        "sim:5:Attacker withdraws the minted xQUBIT tokens to his EOA, realizing the profit."
+      ]
+    },
+    {
+      "detected_at_s": 0.00218194,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_balance",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002182979,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_nonce",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002183892,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative_supply",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002184471,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_verified_relay",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002185052,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_lock_requires_active_state",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002187291,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_processed_nonce",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002187901,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_consumed_once",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002188477,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_id_once",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002189026,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_event_emits_unique_nonce",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002191396,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002192017,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_processed_before_timeout",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002192534,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_timestamp_monotonic",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.00220475,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_amount_matches_locked",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002205732,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_non_negative",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002206438,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_only_bridge_owner_can_set_fee",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002207013,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_fee_structure_per_nonce",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002207557,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_cannot_be_relocked",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002208097,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_cap",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002208677,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_burn_matches_unlock",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002209524,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked",
+      "state_diff": {
+        "dest_total": "1000000000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_invariant_break_001",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "sim:2:Attacker initiates a zero‑value lock to obtain a fresh nonce N (nonce emitted in Deposit event). State predicate: `QBridgeBSC.totalLockedSource() == L0` (unchanged).",
+        "sim:3:Because the relay message is marked verified, the bridge router mints 1,000,000 xQUBIT to attacker. State predicate: `QBridgeETH.totalMintedDest() == M0 + 1_000_000e18`.",
+        "relay:4:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.002703857,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total_balance",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002704961,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_nonce",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002705778,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative_supply",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002706358,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_requires_verified_relay",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002706902,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_lock_requires_active_state",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002707603,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_unlock_requires_processed_nonce",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002708258,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_consumed_once",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.0027103,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_id_once",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002710851,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_lock_event_emits_unique_nonce",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002721249,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_allowed_after_timeout",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.00272207,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_processed_before_timeout",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002722711,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_timestamp_monotonic",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002723201,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_amount_matches_locked",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002723715,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_fee_non_negative",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002724321,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_only_bridge_owner_can_set_fee",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002724924,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_fee_structure_per_nonce",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002725418,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_cannot_be_relocked",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002725937,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_mint_cannot_exceed_cap",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002726444,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_burn_matches_unlock",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.002726931,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_cannot_exceed_locked",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "qubit_negative_supply_replay_burn",
+      "trigger_trace": [
+        "sim:1:Step 1",
+        "sim:2:Step 2",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3626 @@
+{
+  "bridge_name": "nomad",
+  "coverage": {
+    "basic_blocks_dest": 0,
+    "basic_blocks_source": 0,
+    "xcc_atg": 1.0
+  },
+  "evidence": {
+    "evaluation_mode": "legacy",
+    "ineligibility_reasons": [
+      "unvalidated_legacy_or_mixed_evidence"
+    ],
+    "official_eligible": false,
+    "oracle_state_source": "mixed"
+  },
+  "run_id": 0,
+  "stats": {
+    "contracts_scanned": 4,
+    "corpus_size": 256,
+    "deployment_plan_log": [
+      "benchmark_dir=/home/claude/whats-up-pro/bridgesentry/benchmarks/nomad",
+      "contracts_dir=/home/claude/whats-up-pro/bridgesentry/benchmarks/nomad/contracts",
+      "contracts_scan: 4 .sol files",
+      "source=BridgeRouter.sol",
+      "source=Message.sol",
+      "source=MockToken.sol",
+      "source=Replica.sol",
+      "node=BridgeRouter unresolved_address",
+      "node=Replica unresolved_address",
+      "node=MockToken target=0x0",
+      "node=NomadMessage unresolved_address",
+      "node=MockToken target=0x0",
+      "node=Replica unresolved_address",
+      "deploy_helper_status=planned_only (compile/deploy hook pending)"
+    ],
+    "mutations_applied": 50193,
+    "snapshot_pool_peak": 64,
+    "snapshots_captured": 50192,
+    "total_iterations": 50193
+  },
+  "time_budget_s": 20,
+  "violations": [
+    {
+      "detected_at_s": 0.000391082,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000392634,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_token",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000395134,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000396276,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_pending_sync",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000396984,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_valid_signature",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000397852,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_proof_of_lock",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.00039842,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_fee_collector",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.00040096,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_owner_update_replica",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000401614,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_processed_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000403868,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_per_source",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000404811,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_replay_protection_root",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000405726,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_no_duplicate_mint",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000406404,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000408277,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_must_be_processed_before_expiry",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000409796,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_reclaim_max_delay",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000411536,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_hashlock_expiration",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000412147,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_fee_withdrawal_window",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000414549,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_order_monotonic",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_nonce_reorder_001",
+      "trigger_trace": [
+        "sim:1:Attacker immediately locks an additional 500 MockToken. BridgeRouter emits a second NomadMessage with nonce = 2. This proof will be relayed promptly.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter emits a NomadMessage with nonce = 1. The attacker withholds the proof so the message is not relayed yet.",
+        "sim:4:Honest replica processes the nonce = 2 message first. The bridge mints 500 MockToken to the attacker on the destination chain.",
+        "sim:5:Attacker (or a colluding validator) submits the previously withheld nonce = 1 message after nonce = 2 has been processed. The replica only checks `!nonceUsed[...]` and therefore accepts it."
+      ]
+    },
+    {
+      "detected_at_s": 0.000602223,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.00060321,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_token",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.00060394,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000604619,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_pending_sync",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.00060669,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_valid_signature",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000607266,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_proof_of_lock",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000609265,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_fee_collector",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000609895,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_owner_update_replica",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.00061046,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_processed_once",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000612228,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_per_source",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000616061,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_replay_protection_root",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000617013,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_no_duplicate_mint",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000617961,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_after_timeout",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000618656,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_must_be_processed_before_expiry",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000620685,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_reclaim_max_delay",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000624992,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_hashlock_expiration",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.00064391,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_fee_withdrawal_window",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000645,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_order_monotonic",
+      "state_diff": {
+        "dest_total": "1000000000000001000",
+        "source_total": "1000"
+      },
+      "trigger_scenario": "nomad_replay_mint_attack_001",
+      "trigger_trace": [
+        "sim:1:Honest relay processes the original message. Destination Replica mints 1,000 MockToken to the attacker.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker locks 1,000 MockToken on the source chain. BridgeRouter updates its internal locked counter and emits a NomadMessage with nonce N.",
+        "sim:4:Attacker submits a replayed NomadMessage with a fresh nonce (N+1) and a manipulated Merkle root that still validates the message. The Replica’s checks `acceptableRoot`, `!processed[hash]`, and `!nonceUsed[originDomain][nonce]` all pass, causing a second mint of 1,000 MockToken.",
+        "sim:5:Read the total locked amount for MockToken on the source chain (unchanged after the replay).",
+        "sim:6:Read the total minted amount for MockToken on the destination chain after the replay attack."
+      ]
+    },
+    {
+      "detected_at_s": 0.000938537,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000940131,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_token",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000941196,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000942127,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_pending_sync",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.00094301,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_valid_signature",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000943839,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_proof_of_lock",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000947332,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_fee_collector",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000948251,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_owner_update_replica",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000949116,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_processed_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000951834,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_per_source",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000952501,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_replay_protection_root",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000953321,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_no_duplicate_mint",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000954066,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000957381,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_must_be_processed_before_expiry",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000958282,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_reclaim_max_delay",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.00095933,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_hashlock_expiration",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.00096205,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_fee_withdrawal_window",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.000963053,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_order_monotonic",
+      "state_diff": {
+        "dest_total": "2000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_owner_update_replica_unauth_01",
+      "trigger_trace": [
+        "sim:1:Using the newly upgraded implementation, attacker invokes setReplica without the only‑owner check, redirecting the bridge to a malicious Replica contract.",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Attacker calls the proxy's upgradeTo function (no onlyOwner guard) to point the router to a malicious implementation they control.",
+        "sim:4:Attacker replays a previously observed valid cross‑chain message; the malicious Replica accepts it because it bypasses root verification.",
+        "sim:5:The malicious Replica mints wrapped tokens directly to the attacker, completing the unauthorized asset creation."
+      ]
+    },
+    {
+      "detected_at_s": 0.001652104,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001653703,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_token",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001664111,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001665444,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_pending_sync",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.00166634,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_valid_signature",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001667223,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_proof_of_lock",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001668104,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_fee_collector",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001669075,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_owner_update_replica",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.00167212,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_processed_once",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001673165,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_per_source",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001674012,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_replay_protection_root",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001682585,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_no_duplicate_mint",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001683652,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_after_timeout",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001684457,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_must_be_processed_before_expiry",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001685252,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_reclaim_max_delay",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001685987,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_hashlock_expiration",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001686805,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_fee_withdrawal_window",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.001687537,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_order_monotonic",
+      "state_diff": {
+        "dest_total": "21000000000000000000",
+        "source_total": "10000000000000000000"
+      },
+      "trigger_scenario": "nomad_underflow_release_replay_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:Step 1",
+        "relay:4:ok",
+        "relay:5:ok"
+      ]
+    },
+    {
+      "detected_at_s": 0.003022925,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003024724,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_token",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003025865,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.00302729,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_pending_sync",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003028486,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_valid_signature",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.00302973,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_proof_of_lock",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003031197,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_fee_collector",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003032561,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_owner_update_replica",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003036529,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_processed_once",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003040067,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_per_source",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003041502,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_replay_protection_root",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003042489,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_no_duplicate_mint",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003043522,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_after_timeout",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003044554,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_must_be_processed_before_expiry",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003045581,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_reclaim_max_delay",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003048785,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_hashlock_expiration",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003050161,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_fee_withdrawal_window",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.003051267,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_order_monotonic",
+      "state_diff": {
+        "dest_total": "2000000000000000000000",
+        "source_total": "1000000000000000000000"
+      },
+      "trigger_scenario": "nomad_replay_double_mint_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3",
+        "sim:5:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.00673343,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006734789,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_token",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006735931,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006736939,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_pending_sync",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006737866,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_valid_signature",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.00673864,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_proof_of_lock",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.00673922,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_fee_collector",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006739739,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_owner_update_replica",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006740235,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_processed_once",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006740718,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_per_source",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006741307,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_replay_protection_root",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006742146,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_no_duplicate_mint",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006742809,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_after_timeout",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006743398,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_must_be_processed_before_expiry",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006743911,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_reclaim_max_delay",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006744424,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_hashlock_expiration",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006744996,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_fee_withdrawal_window",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.006745439,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_order_monotonic",
+      "state_diff": {
+        "dest_total": "1000000000000000000",
+        "source_total": "1"
+      },
+      "trigger_scenario": "nomad_pending_sync_replay_001",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Inserted adjacent ATG action",
+        "sim:3:Step 1",
+        "sim:4:Step 3"
+      ]
+    },
+    {
+      "detected_at_s": 0.008460165,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008461513,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_token",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008462256,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008462989,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_pending_sync",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008479979,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_valid_signature",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008481133,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_proof_of_lock",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008481723,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_fee_collector",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.00848233,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_owner_update_replica",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008482836,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_processed_once",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008483436,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_per_source",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008484108,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_replay_protection_root",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008485066,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_no_duplicate_mint",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008487341,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_after_timeout",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008488013,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_must_be_processed_before_expiry",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.00848889,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_reclaim_max_delay",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008489417,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_hashlock_expiration",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008491576,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_fee_withdrawal_window",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.008492133,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_order_monotonic",
+      "state_diff": {
+        "dest_total": "3000000000000000000",
+        "source_total": "1000000000000000000"
+      },
+      "trigger_scenario": "nomad_duplicate_mint_2024_01",
+      "trigger_trace": [
+        "relay:1:queued_or_err",
+        "relay:2:ok",
+        "sim:3:User initiates a legitimate bridge transfer; BridgeRouter emits a NomadMessage with originDomain=1, destinationDomain=100, recipient, amount, nonce=42.",
+        "relay:4:ok",
+        "sim:5:Replica calls MockToken.mint with the same (recipient, amount, nonce) tuple; mintedRecord check only indexes by sender and nonce, so the duplicate mint succeeds."
+      ]
+    },
+    {
+      "detected_at_s": 0.016181192,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_total",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016182515,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_per_token",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016183295,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_no_negative",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016192698,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "asset_conservation_pending_sync",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.01619372,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_valid_signature",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016194571,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_proof_of_lock",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016195273,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_fee_collector",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016196101,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "authorization_owner_update_replica",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016196846,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_message_processed_once",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016197589,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_nonce_per_source",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016198333,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_replay_protection_root",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016199176,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "uniqueness_no_duplicate_mint",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016199827,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_refund_after_timeout",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016200371,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_must_be_processed_before_expiry",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.01620093,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_lock_reclaim_max_delay",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016201447,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_hashlock_expiration",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016202055,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_fee_withdrawal_window",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    },
+    {
+      "detected_at_s": 0.016202678,
+      "evidence": {
+        "capability_compliant": "unknown",
+        "causal_path_valid": "unknown",
+        "impact_demonstrated": "unknown",
+        "material_state_change": "unknown",
+        "patched_rejected": "unknown",
+        "replayable": "unknown",
+        "target_bytecode_executed": "unknown"
+      },
+      "invariant_id": "timeliness_message_order_monotonic",
+      "state_diff": {
+        "dest_total": "1001000000000000000000",
+        "source_total": "0"
+      },
+      "trigger_scenario": "nomad_fake_lock_proof_01",
+      "trigger_trace": [
+        "sim:1:Step 2",
+        "sim:2:Step 1",
+        "sim:3:Step 3",
+        "sim:4:Step 4"
+      ]
+    }
+  ]
+}
