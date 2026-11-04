@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "benchmark_id": "feg_bridge_20241229",
+  "name": "FEG SmartBridge Exploit",
+  "incident_date_utc": "2024-12-29",
+  "loss_usd_estimate": 1000000,
+  "attack_type": "cross_chain_message_source_verification_bypass",
+  "vulnerability_classes": ["V1"],
+  "attack_stage": "destination_chain",
+  "source_chain": {
+    "name": "bsc",
+    "chain_id": 56,
+    "rpc_env": "BSC_RPC_URL"
+  },
+  "destination_chain": {
+    "name": "ethereum",
+    "chain_id": 1,
+    "rpc_env": "ETH_RPC_URL"
+  },
+  "fork": {
+    "block_number": 21500000,
+    "note": "LOCAL-FIXTURE ONLY. This benchmark is executed with scripts/official/empty_rpc.py (empty chain state) — it is NOT a mainnet-fork replay. block_number is a non-zero placeholder (approx. Ethereum height on the incident date) required by the runner; no real on-chain state is read. The incident actually spanned Ethereum, BSC and Base; the fixture uses a representative source->dest pair.",
+    "repro_rpc_port": 18545
+  },
+  "contracts": {
+    "note": "Reconstructed minimal model in official/; no production addresses are asserted. The attacker's own contract became a whitelisted sourceAddress on FEG's SmartBridge."
+  },
+  "root_cause_summary": {
+    "vulnerable_pattern": "FEGSmartBridge.receiveMessage enforced the trusted-source check only on the RELEASE op; the SET_TRUSTED op that extends the trusted-source whitelist had no sourceAddress check, so an attacker could whitelist their own (untrusted) source and then release the reserve.",
+    "verification_bypass": "Wormhole faithfully delivered the attacker's true sourceAddress; FEG's handler acted on an untrusted source for the whitelist-extension path.",
+    "affected_logic": ["FEGSmartBridge.receiveMessage (OP_SET_TRUSTED branch)"],
+    "fix": "Require trustedSource[sourceAddress] on the SET_TRUSTED op as well, so only an already-trusted endpoint can extend the whitelist.",
+    "not_wormhole": "The Wormhole Foundation stated its contracts were unaffected; the defect was a logical error in FEG's relay/SmartBridge."
+  },
+  "exploit_characteristics": {
+    "style": "spoofed cross-chain message (self-whitelist) + reserve release, no deposit",
+    "flash_loan": false,
+    "num_transactions_estimate": 2,
+    "notes": "No flash loan. Loss reported ~$1.0M-$1.3M across sources; recorded as a range lower bound."
+  },
+  "references": [
+    {"title": "CertiK - FEG Bridge Exploit Technical Analysis", "url": "https://www.certik.com/resources/blog/feg-bridge-exploit-technical-analysis"},
+    {"title": "Halborn - Explained: The Feed Every Gorilla (FEG) Hack (December 2024)", "url": "https://www.halborn.com/blog/post/explained-the-feed-every-gorilla-feg-hack-december-2024"},
+    {"title": "PeckShield analysis (X/Twitter)", "url": "https://x.com/peckshield/status/1873786831868756036"},
+    {"title": "Wormhole Foundation statement (PANews)", "url": "https://www.panewslab.com/en/articles/h3d1wi6g"}
+  ],
+  "status": {
+    "contracts_reconstructed": true,
+    "trace_curated": true,
+    "ready_for_module1_2_pipeline": false,
+    "ready_for_full_dual_evm_replay": false
+  },
+  "reporting": {
+    "loss_usd_confidence": "range"
+  }
+}

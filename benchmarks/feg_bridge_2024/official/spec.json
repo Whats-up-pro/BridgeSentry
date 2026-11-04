@@ -1,0 +1,27 @@
+{
+  "fixture_id": "feg_bridge_2024",
+  "notes": "Root cause (FEG SmartBridge, Dec 2024): the destination message handler enforced the trusted-source check only on the RELEASE op; the SET_TRUSTED op that extends the trusted-source whitelist had no source check. An attacker publishes a Wormhole message from their own contract to whitelist themselves (sourceAddress = attacker), then publishes a RELEASE message to drain the FEG reserve without depositing on the source chain. Wormhole delivers the attacker's true sourceAddress faithfully; the bug is in FEG's contract. Patched: SET_TRUSTED also requires an already-trusted sourceAddress. Sources: CertiK, PeckShield, Wormhole Foundation statement.",
+  "variants": {"vulnerable": "official/vulnerable", "patched": "official/patched"},
+  "cross_chain": true,
+  "deploy": [
+    {"name": "SrcFEG", "contract": "OfficialToken", "side": "source", "args": ["FEG (source)"]},
+    {"name": "WormholeCore", "contract": "WormholeCore", "side": "source", "args": []},
+    {"name": "FEGBridgeSrc", "contract": "FEGBridgeSrc", "side": "source", "args": ["$SrcFEG", "$WormholeCore"]},
+    {"name": "DstFEG", "contract": "OfficialToken", "side": "dest", "args": ["FEG (dest)"]},
+    {"name": "FEGSmartBridge", "contract": "FEGSmartBridge", "side": "dest", "args": ["$DstFEG", "relayer"]}
+  ],
+  "victims": ["0x000000000000000000000000000000000000Ab01"],
+  "setup": [
+    {"from": "deployer", "to": "$DstFEG", "fn": "mint", "args": ["$FEGSmartBridge", "1000000e18"]},
+    {"from": "deployer", "to": "$FEGSmartBridge", "fn": "setTrusted", "args": ["$FEGBridgeSrc", true]},
+    {"from": "deployer", "to": "$SrcFEG", "fn": "mint", "args": ["0x000000000000000000000000000000000000Ab01", "1000e18"]},
+    {"from": "deployer", "to": "$SrcFEG", "fn": "mint", "args": ["attacker", "100e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$SrcFEG", "fn": "approve", "args": ["$FEGBridgeSrc", "1000e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$FEGBridgeSrc", "fn": "deposit", "args": ["0x000000000000000000000000000000000000Ab01", "500e18"]}
+  ],
+  "relay": [
+    {"emitter": "WormholeCore", "event": "LogMessagePublished", "to": "FEGSmartBridge", "fn": "receiveMessage", "args": ["ev:sender", "ev:payload"]}
+  ],
+  "asset_pairs": [["SrcFEG", "DstFEG"]],
+  "release_entrypoints": ["FEGSmartBridge.receiveMessage"]
+}
