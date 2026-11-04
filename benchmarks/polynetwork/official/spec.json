@@ -1,0 +1,32 @@
+{
+  "fixture_id": "polynetwork_2021",
+  "notes": "Root cause (Poly Network, Aug 2021): EthCrossChainManager.verifyHeaderAndExecuteTx placed no restriction on which contract/method a cross-chain message could invoke. Because ECCM owns EthCrossChainData (ECCD), a message targeting ECCD.putCurEpochConPubKeyBytes (owner-only) replaced the keeper. The honest relay faithfully reports the TRUE source sender, so an attacker cannot forge the fromContract an unlock needs; but once the keeper is the attacker, the attacker submits a header directly and sets fromContract to the registered proxy, draining LockProxy. Keeper modelled as the authorised submitter address; the real function is putCurEpochConPubKeyBytes(bytes) and the real attacker brute-forced a colliding method selector (f1121318093). Patched: forbid messages targeting ECCD (Poly added callable-contract/method whitelists). Sources: SlowMist, BlockSec, Kudelski.",
+  "variants": {"vulnerable": "official/vulnerable", "patched": "official/patched"},
+  "cross_chain": true,
+  "deploy": [
+    {"name": "EthToken", "contract": "OfficialToken", "side": "dest", "args": ["Bridged asset (dest)"]},
+    {"name": "EthCrossChainData", "contract": "EthCrossChainData", "side": "dest", "args": []},
+    {"name": "LockProxy", "contract": "LockProxy", "side": "dest", "args": ["$EthToken"]},
+    {"name": "EthCrossChainManager", "contract": "EthCrossChainManager", "side": "dest", "args": ["$EthCrossChainData"]},
+    {"name": "SrcToken", "contract": "OfficialToken", "side": "source", "args": ["Bridged asset (source)"]},
+    {"name": "SourceCrossChain", "contract": "SourceCrossChain", "side": "source", "args": []},
+    {"name": "SrcDeposit", "contract": "SrcDeposit", "side": "source", "args": ["$SrcToken", "$SourceCrossChain", "$LockProxy"]}
+  ],
+  "victims": ["0x000000000000000000000000000000000000Ab01"],
+  "setup": [
+    {"from": "deployer", "to": "$EthToken", "fn": "mint", "args": ["$LockProxy", "1000000e18"]},
+    {"from": "deployer", "to": "$EthCrossChainData", "fn": "initKeeper", "args": ["relayer"]},
+    {"from": "deployer", "to": "$EthCrossChainData", "fn": "transferOwnership", "args": ["$EthCrossChainManager"]},
+    {"from": "deployer", "to": "$LockProxy", "fn": "setManager", "args": ["$EthCrossChainManager"]},
+    {"from": "deployer", "to": "$LockProxy", "fn": "setRegisteredProxy", "args": ["$SrcDeposit"]},
+    {"from": "deployer", "to": "$SrcToken", "fn": "mint", "args": ["0x000000000000000000000000000000000000Ab01", "1000e18"]},
+    {"from": "deployer", "to": "$SrcToken", "fn": "mint", "args": ["attacker", "100e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$SrcToken", "fn": "approve", "args": ["$SrcDeposit", "1000e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$SrcDeposit", "fn": "deposit", "args": ["0x000000000000000000000000000000000000Ab01", "500e18"]}
+  ],
+  "relay": [
+    {"emitter": "SourceCrossChain", "event": "CrossChainEvent", "to": "EthCrossChainManager", "fn": "verifyHeaderAndExecuteTx", "args": ["ev:toContract", "ev:method", "ev:args", "ev:sender"]}
+  ],
+  "asset_pairs": [["SrcToken", "EthToken"]],
+  "release_entrypoints": ["EthCrossChainManager.verifyHeaderAndExecuteTx"]
+}

