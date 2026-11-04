@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "benchmark_id": "verus_20260518",
+  "name": "Verus-Ethereum Bridge checkCCEValues Exploit",
+  "incident_date_utc": "2026-05-18",
+  "loss_usd_estimate": 11580000,
+  "attack_type": "missing_source_payout_reconciliation",
+  "vulnerability_classes": ["V1"],
+  "attack_stage": "destination_chain",
+  "source_chain": {"name": "verus", "chain_id": 0, "rpc_env": "VERUS_RPC_URL"},
+  "destination_chain": {"name": "ethereum", "chain_id": 1, "rpc_env": "ETH_RPC_URL"},
+  "fork": {
+    "block_number": 22650000,
+    "note": "LOCAL-FIXTURE ONLY (scripts/official/empty_rpc.py, empty state) — NOT a mainnet-fork replay. block_number is a non-zero placeholder (approx. Ethereum height on 2026-05-18) required by the runner. Verus is NOT an EVM chain; the source side is an EVM SURROGATE and chain_id 0 flags that.",
+    "repro_rpc_port": 18545
+  },
+  "contracts": {"note": "Minimal reconstruction; VerusExportSurrogate models the non-EVM Verus export side. No production addresses asserted."},
+  "root_cause_summary": {
+    "vulnerable_pattern": "VerusBridge.checkCCEValues verified notary signatures and Merkle proofs but did not reconcile the Ethereum payout against the value committed in the referenced Verus export, so an import could claim far more than was exported.",
+    "verification_bypass": "Source-amount reconciliation missing; notary attestation (honest) only proves an export exists, not that the payout matches it.",
+    "affected_logic": ["VerusBridge.checkCCEValues", "VerusBridge.submitImports"],
+    "fix": "Reconcile cumulative payout against the committed source value (claimed[exportId] + payout <= committedExport[exportId]).",
+    "dissenting_view": "BlockSec frames it as a supplemental/primary export type-confusion; both reduce to accepting a payout not backed by a matching committed export value."
+  },
+  "exploit_characteristics": {
+    "style": "over-claimed import against a small/unrelated attested export",
+    "flash_loan": false,
+    "num_transactions_estimate": 1,
+    "notes": "~$11.58M. Verus is non-EVM (surrogate used). A second, smaller follow-on incident (~$7.54M) via the same submitImports path was reported later; not modelled here."
+  },
+  "references": [
+    {"title": "Halborn - Explained: The Verus-Ethereum Bridge Hack (May 2026)", "url": "https://www.halborn.com/blog/post/explained-the-verus-ethereum-bridge-hack-may-2026"},
+    {"title": "Merkle Science - Hack Track: The $11.58M Verus Bridge Hack", "url": "https://www.merklescience.com/blog/hack-track-the-11-58m-verus-bridge-hack"},
+    {"title": "BlockSec - Web3 Security: Verus, RetoSwap & More", "url": "https://blocksec.com/blog/web3-security-verus-bridge-retoswap-more"},
+    {"title": "CryptoMode - Verus-Ethereum Bridge Hacked For $11.58M", "url": "https://cryptomode.com/news/crypto/verus-ethereum-bridge-hack/"}
+  ],
+  "status": {"contracts_reconstructed": true, "trace_curated": true, "ready_for_module1_2_pipeline": false, "ready_for_full_dual_evm_replay": false},
+  "reporting": {"loss_usd_confidence": "estimate"}
+}

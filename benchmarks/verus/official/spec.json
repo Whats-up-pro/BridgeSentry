@@ -1,0 +1,27 @@
+{
+  "fixture_id": "verus_2026",
+  "notes": "Root cause (Verus-Ethereum bridge, May 2026): VerusBridge.checkCCEValues verified notary signatures / Merkle proofs (the export is real) but did NOT reconcile the Ethereum payout against the value committed in the Verus export, so an attacker could reference a small attested export and claim a far larger payout. Verus is non-EVM; VerusExportSurrogate is a SURROGATE for the Verus side and notary attestation is honest (faithful relay via recordExport). The attacker cannot fabricate an export, only over-claim against an attested one. Patched: checkCCEValues reconciles cumulative payout <= committed source value. Sources: Halborn, Merkle Science, Blockaid; BlockSec frames it as a supplemental/primary export type confusion.",
+  "variants": {"vulnerable": "official/vulnerable", "patched": "official/patched"},
+  "cross_chain": true,
+  "deploy": [
+    {"name": "SrcVRSC", "contract": "OfficialToken", "side": "source", "args": ["VRSC (Verus surrogate)"]},
+    {"name": "VerusExportSurrogate", "contract": "VerusExportSurrogate", "side": "source", "args": ["$SrcVRSC"]},
+    {"name": "DstToken", "contract": "OfficialToken", "side": "dest", "args": ["Bridged VRSC (Ethereum)"]},
+    {"name": "VerusBridge", "contract": "VerusBridge", "side": "dest", "args": ["$DstToken", "relayer"]}
+  ],
+  "victims": ["0x000000000000000000000000000000000000Ab01"],
+  "setup": [
+    {"from": "deployer", "to": "$DstToken", "fn": "mint", "args": ["$VerusBridge", "1000000e18"]},
+    {"from": "deployer", "to": "$SrcVRSC", "fn": "mint", "args": ["0x000000000000000000000000000000000000Ab01", "1000e18"]},
+    {"from": "deployer", "to": "$SrcVRSC", "fn": "mint", "args": ["attacker", "100e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$SrcVRSC", "fn": "approve", "args": ["$VerusExportSurrogate", "1000e18"]},
+    {"from": "attacker", "to": "$SrcVRSC", "fn": "approve", "args": ["$VerusExportSurrogate", "100e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$VerusExportSurrogate", "fn": "export", "args": ["0x000000000000000000000000000000000000000000000000000000000000000b", "0x000000000000000000000000000000000000Ab01", "500e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$VerusBridge", "fn": "submitImports", "args": ["0x000000000000000000000000000000000000Ab01", "500e18", "0x000000000000000000000000000000000000000000000000000000000000000b"]}
+  ],
+  "relay": [
+    {"emitter": "VerusExportSurrogate", "event": "ExportEvent", "to": "VerusBridge", "fn": "recordExport", "args": ["ev:exportId", "ev:amount"]}
+  ],
+  "asset_pairs": [["SrcVRSC", "DstToken"]],
+  "release_entrypoints": ["VerusBridge.submitImports"]
+}
