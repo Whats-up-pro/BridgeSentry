@@ -1,0 +1,132 @@
+{
+  "candidates": [
+    {
+      "detected_at_s": 0.018040409,
+      "gain": {
+        "asset0:Qubit+xQubit": "1000000000000000000"
+      },
+      "gain_entrypoints": [
+        "QBridgeBSC.process@dest:Relay"
+      ],
+      "gates": {
+        "capability_compliant": "pass",
+        "causal_path_valid": "pass",
+        "impact_demonstrated": "pass",
+        "material_state_change": "pass",
+        "patched_rejected": "pass",
+        "replayable": "pass",
+        "target_bytecode_executed": "pass"
+      },
+      "key": "asset0:Qubit+xQubit|QBridgeBSC.process@dest:Relay",
+      "patched_control": {
+        "patched_gain": {}
+      },
+      "trace": [
+        {
+          "calldata": "0xf45346dc00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "QBridgeETH",
+          "function": "deposit(address,uint256,address)",
+          "side": "source"
+        },
+        {
+          "calldata": "0x7f69600000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "QBridgeBSC",
+          "function": "process(address,uint256,uint64)",
+          "side": "dest"
+        },
+        {
+          "calldata": "0xa9059cbb00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000de0b6b3a7640000",
+          "contract": "xQubit",
+          "function": "transfer(address,uint256):(bool)",
+          "side": "dest"
+        }
+      ],
+      "valid_exploit": true,
+      "validated": true
+    },
+    {
+      "detected_at_s": 3.93261432,
+      "gain": {
+        "asset0:Qubit+xQubit": "10000000000000000000"
+      },
+      "gain_entrypoints": [
+        "Qubit.transferFrom@source:Attack",
+        "QBridgeBSC.process@dest:Relay"
+      ],
+      "gates": {
+        "capability_compliant": "pass",
+        "causal_path_valid": "pass",
+        "impact_demonstrated": "pass",
+        "material_state_change": "pass",
+        "patched_rejected": "pass",
+        "replayable": "pass",
+        "target_bytecode_executed": "pass"
+      },
+      "key": "asset0:Qubit+xQubit|QBridgeBSC.process@dest:Relay+Qubit.transferFrom@source:Attack",
+      "patched_control": {
+        "patched_gain": {}
+      },
+      "trace": [
+        {
+          "calldata": "0x23b872dd0000000000000000000000009b137463d4e7986d7f535f9b79e28b4ef1938e9b00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000",
+          "contract": "Qubit",
+          "function": "transferFrom(address,address,uint256):(bool)",
+          "side": "source"
+        },
+        {
+          "calldata": "0xf45346dc00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008ac7230489e800000000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "QBridgeETH",
+          "function": "deposit(address,uint256,address)",
+          "side": "source"
+        },
+        {
+          "calldata": "0x7f6960000000000000000000000000009b137463d4e7986d7f535f9b79e28b4ef1938e9b0000000000000000000000000000000000000000000000008ac7230489e800000000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "QBridgeBSC",
+          "function": "process(address,uint256,uint64)",
+          "side": "dest"
+        },
+        {
+          "calldata": "0xcf456ae700000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "xQubit",
+          "function": "setMinter(address,bool)",
+          "side": "dest"
+        }
+      ],
+      "valid_exploit": true,
+      "validated": true
+    }
+  ],
+  "candidates_total": 2,
+  "corpus_final": 25,
+  "corpus_initial": 15,
+  "coverage": {
+    "fixture_unique_pcs": 2438
+  },
+  "deploy_log": [
+    "Qubit=0x9B137463d4E7986D7f535f9B79e28b4EF1938E9b@source (OfficialToken)",
+    "QBridgeETH=0x2387b3383E89c164781d173B7Aa14d9c46eD2642@source (QBridgeETH)",
+    "xQubit=0x9B137463d4E7986D7f535f9B79e28b4EF1938E9b@dest (OfficialToken)",
+    "QBridgeBSC=0x2387b3383E89c164781d173B7Aa14d9c46eD2642@dest (QBridgeBSC)"
+  ],
+  "evaluation_mode": "official",
+  "first_candidate_s": 0.018040409,
+  "first_valid_exploit_s": 0.018040409,
+  "fixture_id": "qubit_2022",
+  "fuzz_s": 15.005786168,
+  "iterations": 5704,
+  "oracle": "execution_only_asset_conservation",
+  "patched_addresses_match": true,
+  "required_offchain_capability": null,
+  "seed": 1042,
+  "seed_source": "llm",
+  "semantic_resolution": {
+    "actions_resolved": 28,
+    "actions_total": 65,
+    "scenarios_total": 20,
+    "scenarios_with_calls": 15
+  },
+  "setup_s": 0.158473373,
+  "time_budget_s": 15.0,
+  "valid_exploits": 2,
+  "variant": "vulnerable"
+}
