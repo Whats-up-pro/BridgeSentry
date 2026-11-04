@@ -1,0 +1,30 @@
+{
+  "fixture_id": "crosscurve_2026",
+  "notes": "Root cause (CrossCurve ReceiverAxelar, Jan 2026): the express execution path (expressExecute) acted on a relayed payload WITHOUT calling the Axelar gateway's validateContractCall, so anyone could submit a fabricated command + payload and make PortalV2 release tokens that were never locked on the source chain. The normal execute path does validate with the gateway. Patched: expressExecute also requires gateway.validateContractCall(commandId). The real contract's only express-path guard was a peer check on attacker-controlled sourceChain/sourceAddress (no real security); this model omits that useless check. Sources: Halborn, BlockSec, QuillAudits, Olympix.",
+  "variants": {"vulnerable": "official/vulnerable", "patched": "official/patched"},
+  "cross_chain": true,
+  "deploy": [
+    {"name": "SrcToken", "contract": "OfficialToken", "side": "source", "args": ["CrossCurve LP (source)"]},
+    {"name": "GatewaySrc", "contract": "AxelarGateway", "side": "source", "args": ["relayer"]},
+    {"name": "PortalSrc", "contract": "PortalSrc", "side": "source", "args": ["$SrcToken", "$GatewaySrc"]},
+    {"name": "DstToken", "contract": "OfficialToken", "side": "dest", "args": ["CrossCurve LP (dest)"]},
+    {"name": "GatewayDst", "contract": "AxelarGateway", "side": "dest", "args": ["relayer"]},
+    {"name": "PortalV2", "contract": "PortalV2", "side": "dest", "args": ["$DstToken"]},
+    {"name": "ReceiverAxelar", "contract": "ReceiverAxelar", "side": "dest", "args": ["$GatewayDst", "$PortalV2"]}
+  ],
+  "victims": ["0x000000000000000000000000000000000000Ab01"],
+  "setup": [
+    {"from": "deployer", "to": "$DstToken", "fn": "mint", "args": ["$PortalV2", "1000000e18"]},
+    {"from": "deployer", "to": "$PortalV2", "fn": "setReceiver", "args": ["$ReceiverAxelar"]},
+    {"from": "deployer", "to": "$SrcToken", "fn": "mint", "args": ["0x000000000000000000000000000000000000Ab01", "1000e18"]},
+    {"from": "deployer", "to": "$SrcToken", "fn": "mint", "args": ["attacker", "100e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$SrcToken", "fn": "approve", "args": ["$PortalSrc", "1000e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$PortalSrc", "fn": "deposit", "args": ["0x000000000000000000000000000000000000Ab01", "500e18"]}
+  ],
+  "relay": [
+    {"emitter": "GatewaySrc", "event": "ContractCall", "to": "GatewayDst", "fn": "approveContractCall", "args": ["ev:commandId"]},
+    {"emitter": "GatewaySrc", "event": "ContractCall", "to": "ReceiverAxelar", "fn": "execute", "args": ["ev:commandId", "ev:payload"]}
+  ],
+  "asset_pairs": [["SrcToken", "DstToken"]],
+  "release_entrypoints": ["ReceiverAxelar.expressExecute", "ReceiverAxelar.execute"]
+}

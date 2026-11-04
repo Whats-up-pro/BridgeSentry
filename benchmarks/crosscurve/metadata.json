@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "benchmark_id": "crosscurve_20260131",
+  "name": "CrossCurve ReceiverAxelar Express-Path Exploit",
+  "incident_date_utc": "2026-01-31",
+  "loss_usd_estimate": 1400000,
+  "attack_type": "cross_chain_message_validation_bypass",
+  "vulnerability_classes": ["V1"],
+  "attack_stage": "destination_chain",
+  "source_chain": {"name": "ethereum", "chain_id": 1, "rpc_env": "ETH_RPC_URL"},
+  "destination_chain": {"name": "arbitrum", "chain_id": 42161, "rpc_env": "ARB_RPC_URL"},
+  "fork": {
+    "block_number": 300000000,
+    "note": "LOCAL-FIXTURE ONLY (scripts/official/empty_rpc.py, empty state) — NOT a mainnet-fork replay. block_number is a non-zero placeholder required by the runner. The incident spanned multiple chains (most losses on Arbitrum); the fixture uses a representative source->dest pair.",
+    "repro_rpc_port": 18545
+  },
+  "contracts": {"note": "Minimal reconstruction in official/; no production addresses asserted."},
+  "root_cause_summary": {
+    "vulnerable_pattern": "ReceiverAxelar.expressExecute executed a relayed payload without calling the Axelar gateway's validateContractCall, so a fabricated command/payload made PortalV2 release unbacked tokens.",
+    "verification_bypass": "The express path skipped the gateway attestation entirely; its only guard was a peer check on attacker-controlled sourceChain/sourceAddress, which provided no real security.",
+    "affected_logic": ["ReceiverAxelar.expressExecute"],
+    "fix": "Require gateway.validateContractCall(commandId) on the express path as the normal path already does."
+  },
+  "exploit_characteristics": {
+    "style": "forged Axelar message executed via unvalidated express path -> unbacked PortalV2 release",
+    "flash_loan": false,
+    "num_transactions_estimate": 1,
+    "notes": "Loss reported ~$1.4M (QuillAudits, Olympix) to ~$2.8M-$3M (BlockSec and others); dates range 2026-01-31 to 2026-02-02 across sources. Recorded as a range lower bound."
+  },
+  "references": [
+    {"title": "Halborn - Explained: The CrossCurve Hack (February 2026)", "url": "https://www.halborn.com/blog/post/explained-the-crosscurve-hack-february-2026"},
+    {"title": "BlockSec - Weekly Web3 Security Incident Roundup (Feb 2-8 2026)", "url": "https://blocksec.com/blog/weekly-web3-security-incident-roundup-feb-2-feb-8-2026"},
+    {"title": "QuillAudits - CrossCurve $1.4M Exploit", "url": "https://www.quillaudits.com/blog/hack-analysis/cross-curve-exploit"},
+    {"title": "Olympix - CrossCurve Exploit Post-Mortem", "url": "https://olympixai.medium.com/crosscurve-exploit-post-mortem-1-4m-lost-to-a-missing-access-control-check-c128e0aeb360"}
+  ],
+  "status": {"contracts_reconstructed": true, "trace_curated": true, "ready_for_module1_2_pipeline": false, "ready_for_full_dual_evm_replay": false},
+  "reporting": {"loss_usd_confidence": "range"}
+}

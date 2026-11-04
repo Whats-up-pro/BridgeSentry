@@ -1,0 +1,22 @@
+{
+  "bridge_name": "crosscurve",
+  "version": "1.0",
+  "nodes": [
+    {"node_id": "GatewaySrc", "node_type": "messaging", "chain": "ethereum", "address": "", "functions": ["callContract"]},
+    {"node_id": "PortalSrc", "node_type": "router", "chain": "ethereum", "address": "", "functions": ["deposit"]},
+    {"node_id": "GatewayDst", "node_type": "messaging", "chain": "arbitrum", "address": "", "functions": ["approveContractCall", "validateContractCall"]},
+    {"node_id": "ReceiverAxelar", "node_type": "router", "chain": "arbitrum", "address": "", "functions": ["execute", "expressExecute"]},
+    {"node_id": "PortalV2", "node_type": "vault", "chain": "arbitrum", "address": "", "functions": ["release"]},
+    {"node_id": "SrcToken", "node_type": "token", "chain": "ethereum", "address": "", "functions": []},
+    {"node_id": "DstToken", "node_type": "token", "chain": "arbitrum", "address": "", "functions": []}
+  ],
+  "edges": [
+    {"edge_id": "e1", "src": "PortalSrc", "dst": "GatewaySrc", "label": "callContract", "token": "SrcToken", "conditions": [], "function_signature": "deposit(address,uint256)"},
+    {"edge_id": "e2", "src": "GatewaySrc", "dst": "ReceiverAxelar", "label": "relay", "token": "", "conditions": ["gateway_attested"], "function_signature": "execute(bytes32,bytes)"},
+    {"edge_id": "e3", "src": "ReceiverAxelar", "dst": "PortalV2", "label": "release", "token": "DstToken", "conditions": [], "function_signature": "release(address,uint256)"}
+  ],
+  "invariants": [
+    {"invariant_id": "asset_conservation_total_balance", "category": "asset_conservation", "description": "No attacker address ends with a net positive balance in a paired asset.", "predicate": "sum(attacker_gain) <= 0", "solidity_assertion": "", "related_edges": ["e2", "e3"]},
+    {"invariant_id": "release_requires_gateway_attestation", "category": "authorization", "description": "PortalV2 releases only for commands the Axelar gateway attested.", "predicate": "release => validateContractCall(commandId)", "solidity_assertion": "", "related_edges": ["e2", "e3"]}
+  ]
+}
