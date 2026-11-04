@@ -55,3 +55,18 @@ Nhóm A chỉ có nomad, qubit, polynetwork, socket (socket còn nghi vấn): qu
 - Đã thay 2 URL: bài usethebitcoin về đơn kiện pGALA đã chết (404/410), thay bằng Cointelegraph; link Benzinga bị cắt cụt, bổ sung đủ đường dẫn.
 
 Bài Benzinga chỉ thuật lại cách pNetwork mô tả sự việc ("white-hat"), không phải bằng chứng lộ khoá. Bằng chứng lộ khoá của pGALA là phân tích của SlowMist (qua ChainCatcher) và nội dung đơn kiện.
+
+## Quyết định của tác giả (04/11/2026)
+
+Các quyết định dưới đây thay cho phần "đề xuất" tương ứng ở trên.
+
+| Fixture | Quyết định | Lý do |
+| --- | --- | --- |
+| socket | **Loại khỏi benchmark.** | Sự cố chỉ diễn ra trên một chain, không đi qua thông điệp cross-chain, nên không thuộc phạm vi Valid exploit. |
+| gempad | **Loại khỏi benchmark.** | Sự cố thật là reentrancy trong locker V2 của GemPad, ngày 17/12/2024, trên Ethereum, BNB Chain, Base và Polygon, khoảng 1,9 triệu USD (post-mortem của GemPad; Halborn; Rekt). GemPad là nền tảng triển khai/khoá token, không phải bridge. `benchmarks/gempad/metadata.json` (13/04/2024, `transferLockOwnership`) và record KB `gempad_20240419` (19/04/2024, thao túng lock ID) mô tả các sự cố không tìm được nguồn xác nhận. |
+| fegtoken (cũ) | **Loại khỏi benchmark.** | `benchmarks/fegtoken/metadata.json` (28/04/2022, `claimMigrator` + flash loan) và record KB `fegtoken_20240220` (20/02/2024, lộ khoá admin; tweet trích dẫn trả 404) không có nguồn xác nhận. Sự cố flash loan thật của FEG (15–16/05/2022, `FEGexPRO.swapToSwap`) là lỗi DEX, không phải bridge. |
+| feg_bridge_2024 (mới) | **Thêm vào nhóm A.** | FEG SmartBridge, 29/12/2024, Ethereum, BSC và Base, khoảng 1 triệu USD. Kẻ tấn công gửi thông điệp Wormhole từ hợp đồng của mình; relayer của FEG không kiểm tra `sourceAddress` có đáng tin hay không, nên trước hết đưa hợp đồng tấn công vào whitelist, rồi gọi `registerWithdraw` trên SmartBridge, cho phép rút FEG mà không nạp ở chain nguồn. Không dùng flash loan. Lỗi nằm trong code của FEG, không phải của Wormhole. Nguồn: CertiK https://www.certik.com/resources/blog/feg-bridge-exploit-technical-analysis ; Halborn https://www.halborn.com/blog/post/explained-the-feed-every-gorilla-feg-hack-december-2024 |
+
+**Nhóm A sau quyết định:** nomad, qubit (đã có spec official); polynetwork, ronin_2024, crosscurve, verus, feg_bridge_2024 (chưa có spec). Ronin 08/2024, CrossCurve 01/2026, Verus 05/2026 và FEG SmartBridge 12/2024 được chọn theo tiêu chí ưu tiên sự cố 2023–2026 nổi bật, có phân tích của hãng bảo mật uy tín; chi tiết root cause phải đối chiếu post-mortem khi viết spec.
+
+**Hệ quả cho knowledge base:** hai record KB `gempad_20240419` và `fegtoken_20240220` sai so với nguồn công khai. Phải kiểm toán toàn bộ 48 record (`docs/kb_audit.md`, chưa làm) trước khi chạy holdout. Các thư mục `benchmarks/gempad`, `benchmarks/fegtoken`, `benchmarks/socket` được giữ nguyên làm lịch sử, nhưng không dùng trong đánh giá official.
