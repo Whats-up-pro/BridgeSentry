@@ -1,0 +1,18 @@
+{
+  "bridge_name": "ronin_2024",
+  "version": "1.0",
+  "nodes": [
+    {"node_id": "RoninDeposit", "node_type": "router", "chain": "ronin", "address": "", "functions": ["deposit"]},
+    {"node_id": "RoninGatewayV3", "node_type": "gateway", "chain": "ethereum", "address": "", "functions": ["initializeV3", "initializeV4", "withdraw", "minimumVoteWeight"]},
+    {"node_id": "RoninToken", "node_type": "token", "chain": "ronin", "address": "", "functions": []},
+    {"node_id": "EthToken", "node_type": "token", "chain": "ethereum", "address": "", "functions": []}
+  ],
+  "edges": [
+    {"edge_id": "e1", "src": "RoninDeposit", "dst": "RoninGatewayV3", "label": "bridge", "token": "RoninToken", "conditions": ["operator_votes"], "function_signature": "withdraw(address,uint256,address[])"},
+    {"edge_id": "e2", "src": "RoninGatewayV3", "dst": "EthToken", "label": "withdraw", "token": "EthToken", "conditions": ["vote_weight>=threshold"], "function_signature": "withdraw(address,uint256,address[])"}
+  ],
+  "invariants": [
+    {"invariant_id": "asset_conservation_total_balance", "category": "asset_conservation", "description": "No attacker address ends with a net positive balance in a paired asset.", "predicate": "sum(attacker_gain) <= 0", "solidity_assertion": "", "related_edges": ["e2"]},
+    {"invariant_id": "withdraw_requires_quorum", "category": "authorization", "description": "A withdrawal requires operator vote weight at or above the threshold.", "predicate": "withdraw => voteWeight >= minimumVoteWeight && minimumVoteWeight > 0", "solidity_assertion": "", "related_edges": ["e2"]}
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "benchmark_id": "ronin_20240806",
+  "name": "Ronin Bridge Exploit (August 2024, skipped initializer)",
+  "incident_date_utc": "2024-08-06",
+  "loss_usd_estimate": 12000000,
+  "attack_type": "uninitialized_vote_threshold",
+  "vulnerability_classes": ["V1"],
+  "attack_stage": "destination_chain",
+  "source_chain": {"name": "ronin", "chain_id": 2020, "rpc_env": "RONIN_RPC_URL"},
+  "destination_chain": {"name": "ethereum", "chain_id": 1, "rpc_env": "ETH_RPC_URL"},
+  "fork": {
+    "block_number": 20467000,
+    "note": "LOCAL-FIXTURE ONLY (scripts/official/empty_rpc.py, empty state) — NOT a mainnet-fork replay. block_number is a non-zero placeholder (approx. Ethereum height on 2024-08-06) required by the runner; no on-chain state is read.",
+    "repro_rpc_port": 18545
+  },
+  "contracts": {"note": "Minimal reconstruction; no production addresses asserted. Funds returned by the whitehat."},
+  "root_cause_summary": {
+    "vulnerable_pattern": "The bridge upgrade's initializeV3 (which sets totalOperatorWeight) was never called; only initializeV4 ran. minimumVoteWeight() computed from a zero total weight is 0, so a withdrawal passes with no operator votes.",
+    "verification_bypass": "Withdrawal vote-weight threshold collapsed to zero; an empty signer set clears it. No signatures are forged.",
+    "affected_logic": ["RoninGatewayV3 upgrade init (initializeV3 skipped)", "RoninGatewayV3.minimumVoteWeight", "RoninGatewayV3.withdraw"],
+    "fix": "Run initializeV3 during the upgrade so totalOperatorWeight is set and the real threshold is enforced.",
+    "deployment_defect": "Root cause was the deployment procedure (skipped initializer), not contract logic. Modelled as a code-level end-state difference because the harness runs one shared setup."
+  },
+  "exploit_characteristics": {
+    "style": "withdrawal with empty operator signer set accepted due to zero threshold",
+    "flash_loan": false,
+    "num_transactions_estimate": 1,
+    "notes": "~3,996 ETH + ~1,998,046 USDC withdrawn (~$10M-$12M). Whitehat; funds returned. Distinct from the March 2022 Ronin validator key-compromise incident (Group B)."
+  },
+  "references": [
+    {"title": "Cointelegraph/Verichains - Ronin bridge hack caused by upgrade deployment script", "url": "https://cointelegraph.com/news/ronin-bridge-hack-upgrade-script-verichains"},
+    {"title": "SolidityScan - Ronin Bridge Hack Analysis", "url": "https://blog.solidityscan.com/ronin-bridge-hack-analysis-d8f64b8fe683/"},
+    {"title": "Verichains (X) - quick analysis of the Ronin Bridge hack", "url": "https://x.com/Verichains/status/1820810424159437261"},
+    {"title": "SmartContractsHacking - Ronin Bridge Hack (2024) $12.0M", "url": "https://smartcontractshacking.com/hacks/ronin-bridge-hack-2024"}
+  ],
+  "status": {"contracts_reconstructed": true, "trace_curated": true, "ready_for_module1_2_pipeline": false, "ready_for_full_dual_evm_replay": false},
+  "reporting": {"loss_usd_confidence": "range"}
+}

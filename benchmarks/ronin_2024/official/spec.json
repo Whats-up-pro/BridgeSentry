@@ -1,0 +1,24 @@
+{
+  "fixture_id": "ronin_2024",
+  "notes": "Root cause (Ronin mainchain gateway, Aug 2024): the bridge upgrade added initializeV3 (which sets totalOperatorWeight) and initializeV4, but the deployer ran ONLY initializeV4. totalOperatorWeight stayed 0, minimumVoteWeight() became 0, and a withdrawal passed the operator-vote check with an EMPTY signer set, draining the reserve. The attacker forges no signatures (empty set); the bug is the zero threshold from the skipped initializer. The incident was a deployment mistake, so setup runs only initializeV4 for both variants; the VULNERABLE finalizer leaves the weight 0, the patched finalizer runs initializeV3's weight-init (Ronin's actual fix). Distinct from the March 2022 Ronin key-compromise incident (Group B). Sources: Verichains, SolidityScan, Three Sigma.",
+  "variants": {"vulnerable": "official/vulnerable", "patched": "official/patched"},
+  "cross_chain": true,
+  "deploy": [
+    {"name": "RoninToken", "contract": "OfficialToken", "side": "source", "args": ["Ronin-chain WETH"]},
+    {"name": "RoninDeposit", "contract": "RoninDeposit", "side": "source", "args": ["$RoninToken"]},
+    {"name": "EthToken", "contract": "OfficialToken", "side": "dest", "args": ["Mainchain WETH"]},
+    {"name": "RoninGatewayV3", "contract": "RoninGatewayV3", "side": "dest", "args": ["$EthToken"]}
+  ],
+  "victims": ["0x000000000000000000000000000000000000Ab01"],
+  "setup": [
+    {"from": "deployer", "to": "$EthToken", "fn": "mint", "args": ["$RoninGatewayV3", "1000000e18"]},
+    {"from": "deployer", "to": "$RoninGatewayV3", "fn": "initializeV4", "args": []},
+    {"from": "deployer", "to": "$RoninToken", "fn": "mint", "args": ["0x000000000000000000000000000000000000Ab01", "1000e18"]},
+    {"from": "deployer", "to": "$RoninToken", "fn": "mint", "args": ["attacker", "100e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$RoninToken", "fn": "approve", "args": ["$RoninDeposit", "1000e18"]},
+    {"from": "0x000000000000000000000000000000000000Ab01", "to": "$RoninDeposit", "fn": "deposit", "args": ["1000e18"]}
+  ],
+  "relay": [],
+  "asset_pairs": [["RoninToken", "EthToken"]],
+  "release_entrypoints": ["RoninGatewayV3.withdraw"]
+}

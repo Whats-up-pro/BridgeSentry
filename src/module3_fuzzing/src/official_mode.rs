@@ -1498,6 +1498,29 @@ mod fixture_tests {
     }
 
     #[test]
+    fn ronin_2024_official_exploit_and_patch() {
+        // Attacker withdraws from the mainchain gateway with an EMPTY operator
+        // signer set. Vulnerable: totalOperatorWeight == 0 so minimumVoteWeight
+        // is 0 and the empty set passes. Patched: initializeV4 ran initializeV3,
+        // so the 70% threshold is enforced and the empty set is rejected.
+        let Some((vuln, patched)) = eval("ronin_2024", |w| {
+            vec![ucall(
+                w,
+                "RoninGatewayV3",
+                "withdraw",
+                vec![
+                    addr_tok(attacker()),
+                    Token::Uint(parse_uint("500000e18").unwrap()),
+                    Token::Array(vec![]), // no operator signatures
+                ],
+            )]
+        }) else {
+            return;
+        };
+        assert_exploit("ronin_2024", &vuln, &patched);
+    }
+
+    #[test]
     fn nomad_official_exploit_and_patch() {
         let Some((vuln, patched)) = eval("nomad", |w| {
             // Attacker calls the destination release entrypoint directly with a
