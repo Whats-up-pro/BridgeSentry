@@ -1173,3 +1173,300 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
         "candidates": cand_json,
     }))
 }
+
+// ---------------------------------------------------------------------------
+// Deterministic fixture tests
+//
+// These tests prove each Option-A official fixture reproduces the documented
+// root cause, independently of whether the fuzzer's random/LLM search happens
+// to find it. For every fixture we build the `vulnerable` and `patched`
+// worlds with the real `World::build`, replay the recorded attack sequence
+// with the real `run_trace`, and assert:
+//   * vulnerable -> the attacker-controlled set ends with a positive net
+//     balance in a paired asset (execution-derived gain > 0);
+//   * patched    -> no gain.
+//
+// The dual-EVM is backed by an in-process JSON-RPC stub that mirrors
+// `scripts/official/empty_rpc.py` (empty chain state at any block), so the
+// tests are hermetic: no network, no external process, no mainnet fork. They
+// require `solc` on PATH (same tool the official runner needs); when solc is
+// absent the test logs SKIP and returns so `cargo test` still passes in
+// environments without the compiler.
+// ---------------------------------------------------------------------------
+#[cfg(test)]
+mod fixture_tests {
+    use super::*;
+    use crate::config::{BaselineMode, RuntimeContext};
+    use crate::contract_loader::ContractPlan;
+    use serde_json::json;
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::sync::OnceLock;
+
+    // ---- in-process empty JSON-RPC (mirror of empty_rpc.py) ---------------
+    fn zero32() -> String {
+        format!("0x{}", "00".repeat(32))
+    }
+
+    fn block_json(param: Option<&Value>) -> Value {
+        let n = param
+            .and_then(|p| p.as_str())
+            .and_then(|s| u64::from_str_radix(s.trim_start_matches("0x"), 16).ok())
+            .unwrap_or(30_000_000);
+        json!({
+            "number": format!("0x{n:x}"),
+            "hash": format!("0x{n:064x}"),
+            "parentHash": zero32(),
+            "nonce": "0x0000000000000000",
+            "sha3Uncles": zero32(),
+            "logsBloom": format!("0x{}", "00".repeat(256)),
+            "transactionsRoot": zero32(),
+            "stateRoot": zero32(),
+            "receiptsRoot": zero32(),
+            "miner": format!("0x{}", "00".repeat(20)),
+            "difficulty": "0x0",
+            "totalDifficulty": "0x0",
+            "extraData": "0x",
+            "size": "0x0",
+            "gasLimit": format!("0x{:x}", 30_000_000u64),
+            "gasUsed": "0x0",
+            "timestamp": format!("0x{:x}", 1_659_312_000u64),
+            "transactions": [],
+            "uncles": [],
+            "baseFeePerGas": "0x1",
+            "mixHash": zero32(),
+        })
+    }
+
+    fn rpc_answer_one(method: &str, params: &Value) -> Value {
+        match method {
+            "eth_chainId" => json!("0x1"),
+            "net_version" => json!("1"),
+            "eth_blockNumber" => json!(format!("0x{:x}", 30_000_000u64)),
+            "eth_getBalance" | "eth_getTransactionCount" => json!("0x0"),
+            "eth_getCode" => json!("0x"),
+            "eth_getStorageAt" => json!(zero32()),
+            "eth_gasPrice" => json!("0x1"),
+            "eth_getBlockByNumber" => block_json(params.get(0)),
+            "eth_getBlockByHash" => block_json(None),
+            _ => Value::Null,
+        }
+    }
+
+    fn rpc_answer(body: &[u8]) -> Vec<u8> {
+        let parsed: Value = serde_json::from_slice(body).unwrap_or(Value::Null);
+        let one = |req: &Value| -> Value {
+            let method = req.get("method").and_then(|m| m.as_str()).unwrap_or("");
+            let params = req.get("params").cloned().unwrap_or(Value::Array(vec![]));
+            json!({"jsonrpc": "2.0", "id": req.get("id").cloned().unwrap_or(Value::Null),
+                   "result": rpc_answer_one(method, &params)})
+        };
+        let resp = match &parsed {
+            Value::Array(reqs) => Value::Array(reqs.iter().map(one).collect()),
+            other => one(other),
+        };
+        serde_json::to_vec(&resp).unwrap_or_default()
+    }
+
+    fn handle_conn(mut stream: TcpStream) {
+        let mut buf = Vec::new();
+        let mut tmp = [0u8; 4096];
+        let header_end = loop {
+            if let Some(p) = buf.windows(4).position(|w| w == b"\r\n\r\n") {
+                break p + 4;
+            }
+            match stream.read(&mut tmp) {
+                Ok(0) => return,
+                Ok(n) => buf.extend_from_slice(&tmp[..n]),
+                Err(_) => return,
+            }
+        };
+        let headers = String::from_utf8_lossy(&buf[..header_end]).to_ascii_lowercase();
+        let clen = headers
+            .lines()
+            .find_map(|l| l.strip_prefix("content-length:").and_then(|v| v.trim().parse::<usize>().ok()))
+            .unwrap_or(0);
+        while buf.len() < header_end + clen {
+            match stream.read(&mut tmp) {
+                Ok(0) => break,
+                Ok(n) => buf.extend_from_slice(&tmp[..n]),
+                Err(_) => break,
+            }
+        }
+        let body = &buf[header_end..(header_end + clen).min(buf.len())];
+        let data = rpc_answer(body);
+        let head = format!(
+            "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            data.len()
+        );
+        let _ = stream.write_all(head.as_bytes());
+        let _ = stream.write_all(&data);
+        let _ = stream.flush();
+    }
+
+    fn empty_rpc_url() -> String {
+        static URL: OnceLock<String> = OnceLock::new();
+        URL.get_or_init(|| {
+            let listener = TcpListener::bind("127.0.0.1:0").expect("bind rpc stub");
+            let addr = listener.local_addr().expect("local_addr");
+            std::thread::spawn(move || {
+                for stream in listener.incoming() {
+                    if let Ok(s) = stream {
+                        std::thread::spawn(move || handle_conn(s));
+                    }
+                }
+            });
+            format!("http://{addr}")
+        })
+        .clone()
+    }
+
+    // ---- fixture harness --------------------------------------------------
+    fn repo_root() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf()
+    }
+
+    fn solc_available() -> bool {
+        Command::new("solc").arg("--version").output().map(|o| o.status.success()).unwrap_or(false)
+    }
+
+    fn test_ctx() -> RuntimeContext {
+        let rpc = empty_rpc_url();
+        RuntimeContext {
+            config: serde_json::from_value(json!({
+                "atg_path": "", "scenarios_path": "", "output_path": "",
+                "time_budget_s": 1,
+                "source_rpc": rpc, "dest_rpc": rpc,
+                "source_block": 30_000_000u64, "dest_block": 30_000_000u64,
+                "random_seed": 42
+            }))
+            .unwrap(),
+            atg: serde_json::from_value(json!({
+                "bridge_name": "", "version": "1.0",
+                "nodes": [], "edges": [], "invariants": []
+            }))
+            .unwrap(),
+            hypotheses: serde_json::from_value(json!({"bridge_name": "", "scenarios": []})).unwrap(),
+            verbose: false,
+            address_overrides: vec![],
+            address_aliases: vec![],
+            auth_witness: None,
+            replay_cache_dir: None,
+            fork_spec_id: None,
+            synthesize_unauth_lock: false,
+            synthesize_unauth_unlock: false,
+            baseline_mode: BaselineMode::Bridgesentry,
+            contract_plan: ContractPlan::default(),
+        }
+    }
+
+    fn load_spec(bench_dir: &Path) -> OfficialSpec {
+        let p = bench_dir.join("official").join("spec.json");
+        serde_json::from_str(&std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("read {}: {e}", p.display())))
+            .unwrap_or_else(|e| panic!("parse {}: {e}", p.display()))
+    }
+
+    fn ucall(w: &World, name: &str, func: &str, args: Vec<Token>) -> AttackCall {
+        let idx = w.contract_index(name).unwrap_or_else(|| panic!("no contract `{name}` in world"));
+        let c = &w.contracts[idx];
+        let fs = c.abi.functions_by_name(func).unwrap_or_else(|_| panic!("{name} has no fn {func}"));
+        let f = fs
+            .iter()
+            .find(|f| f.inputs.len() == args.len())
+            .cloned()
+            .unwrap_or_else(|| panic!("{name}.{func}: no overload with {} args", args.len()));
+        AttackCall { idx, func: f, args }
+    }
+
+    fn addr_tok(a: Address) -> Token {
+        Token::Address(to_h160(a))
+    }
+    fn contract_tok(w: &World, name: &str) -> Token {
+        Token::Address(to_h160(w.contract(name).unwrap_or_else(|| panic!("no contract {name}")).addr))
+    }
+    fn u(s: &str) -> Token {
+        Token::Uint(parse_uint(s).unwrap_or_else(|| panic!("bad uint {s}")))
+    }
+
+    /// Build vulnerable+patched worlds for `bench`, replay the sequence built
+    /// by `make` (from the vulnerable world) on both, and return their gains.
+    fn eval(
+        bench: &str,
+        make: impl Fn(&World) -> Seq,
+    ) -> Option<(BTreeMap<String, EU256>, BTreeMap<String, EU256>)> {
+        if !solc_available() {
+            eprintln!("SKIP {bench}: solc not on PATH");
+            return None;
+        }
+        let ctx = test_ctx();
+        let bench_dir = repo_root().join("benchmarks").join(bench);
+        let spec = load_spec(&bench_dir);
+        let mut vw = World::build(&ctx, &spec, &bench_dir, "vulnerable").expect("build vulnerable");
+        let mut pw = World::build(&ctx, &spec, &bench_dir, "patched").expect("build patched");
+        // Deploy order is identical across variants, so contract indices match.
+        assert!(
+            vw.contracts.iter().zip(&pw.contracts).all(|(a, b)| a.addr == b.addr && a.name == b.name),
+            "vulnerable/patched deployment addresses diverged"
+        );
+        let seq = make(&vw);
+        let mut cov = CoverageTracker::default();
+        let vr = run_trace(&mut vw, &spec, &seq, &mut cov);
+        let mut cov2 = CoverageTracker::default();
+        let pr = run_trace(&mut pw, &spec, &seq, &mut cov2);
+        Some((vr.gains, pr.gains))
+    }
+
+    fn assert_exploit(bench: &str, vuln: &BTreeMap<String, EU256>, patched: &BTreeMap<String, EU256>) {
+        assert!(
+            !vuln.is_empty() && vuln.values().any(|v| *v > EU256::zero()),
+            "{bench}: vulnerable variant must yield a positive attacker gain, got {vuln:?}"
+        );
+        assert!(
+            patched.is_empty(),
+            "{bench}: patched variant must yield no attacker gain, got {patched:?}"
+        );
+    }
+
+    // ---- existing fixtures (regression) -----------------------------------
+    #[test]
+    fn qubit_official_exploit_and_patch() {
+        let Some((vuln, patched)) = eval("qubit", |_w| {
+            vec![ucall(
+                _w,
+                "QBridgeETH",
+                "deposit",
+                vec![addr_tok(Address::ZERO), u("500e18"), addr_tok(attacker())],
+            )]
+        }) else {
+            return;
+        };
+        assert_exploit("qubit", &vuln, &patched);
+    }
+
+    #[test]
+    fn nomad_official_exploit_and_patch() {
+        let Some((vuln, patched)) = eval("nomad", |w| {
+            // Attacker calls the destination release entrypoint directly with a
+            // forged message body (recipient = attacker). The vulnerable Replica
+            // accepts the unproven (zero-root) message; the patched one rejects it.
+            let body = Token::Tuple(vec![
+                Token::Uint(EU256::from(2000u64)), // originDomain
+                Token::Uint(EU256::from(1000u64)), // destinationDomain
+                Token::Uint(EU256::from(1u64)),    // nonce
+                addr_tok(attacker()),              // sender
+                addr_tok(attacker()),              // recipient
+                contract_tok(w, "Representation"), // token
+                parse_uint("500e18").map(Token::Uint).unwrap(),
+            ]);
+            vec![ucall(w, "NomadBridgeRouter", "processAndRelease", vec![body])]
+        }) else {
+            return;
+        };
+        assert_exploit("nomad", &vuln, &patched);
+    }
+}
