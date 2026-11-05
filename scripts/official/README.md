@@ -91,3 +91,12 @@ error occurred in cc-rs: failed to find tool "x86_64-linux-musl-gcc": No such fi
 Fallback: build inside an old-glibc container (e.g. manylinux2014) for a
 portable dynamic binary instead. Do not change the crate dependencies to force a
 musl build without first reporting the blocker.
+
+## Failure handling and seed provenance (2026-11-05)
+
+- `run_official.sh` exits with the fuzzer's exit status (97 if the fuzzer exits 0 without writing its result JSON) and records it in `seed_<n>.rc`.
+- `run_matrix.sh` starts the empty RPC on `$RPC_PORT` or a free port, waits until it answers `eth_chainId`, always aggregates, and exits 1 if any run failed.
+- `aggregate_official.py` counts a run as `completed` only if its JSON exists and its exit status is 0. Failed runs are excluded from every outcome column (never treated as "no exploit" and never censored) and counted in the appended `runs_failed` column. `runs_seed_fallback` counts runs whose requested seed source fell back to random. Columns 1–13 are unchanged, and records without `.rc` files (before 2026-11-05) aggregate exactly as before.
+- Runs use `BRIDGESENTRY_OFFICIAL_STRICT_SEEDS=1`: a requested `llm` run whose scenarios do not map to any callable fixture function fails instead of silently running random seeds. Result JSON version 2 records `seed_source_requested`, `seed_source_effective` and `seed_fallback_to_random`; `seed_source` keeps its earlier meaning (requested mode).
+- Fixture tests in `official_mode.rs` fail when solc 0.8.20 is not on `PATH`. `BRIDGESENTRY_ALLOW_MISSING_SOLC=1` turns this into an explicit "SKIPPED (not evidence)" and must not be used for acceptance. CI installs the official static solc 0.8.20 (sha256 `0479d44f...fda782`).
+- Behaviour tests: `python3 -m pytest tests/test_official_runner.py`.
