@@ -753,6 +753,70 @@ fn random_seeds(world: &World, rng: &mut StdRng, n: usize) -> Vec<Seq> {
         .collect()
 }
 
+/// Version of the official-mode result JSON. Version 2 adds
+/// `seed_source_requested`, `seed_source_effective` and
+/// `seed_fallback_to_random`; `seed_source` keeps its version-1 meaning
+/// (the requested seed mode) so earlier result files stay readable.
+const OFFICIAL_RESULT_VERSION: u32 = 2;
+
+struct InitialCorpus {
+    seqs: Vec<Seq>,
+    stats: SeedStats,
+    effective: &'static str,
+    fallback: bool,
+}
+
+/// Build the initial corpus for the requested seed mode.
+///
+/// `strict` (BRIDGESENTRY_OFFICIAL_STRICT_SEEDS=1, set by the campaign runner)
+/// refuses to label a run with a seed source it did not use: an unknown mode,
+/// or a requested mode that yields no executable sequence (missing scenarios,
+/// or no scenario action maps to a callable fixture function), is an error.
+/// Without `strict` the version-1 behaviour is kept for reproducing earlier
+/// records: unknown modes are treated as `llm` and an empty corpus falls back
+/// to random seeds, now reported as `random_fallback`.
+fn build_initial_corpus(
+    world: &World,
+    ctx: &RuntimeContext,
+    seed_mode: &str,
+    strict: bool,
+    rng: &mut StdRng,
+) -> Result<InitialCorpus> {
+    let (seqs, stats, effective) = match seed_mode {
+        "random" => {
+            let s = random_seeds(world, rng, 20);
+            let n = s.len();
+            (s, SeedStats { scenarios_total: 0, scenarios_with_calls: n, actions_total: 0, actions_resolved: 0 }, "random")
+        }
+        "llm" => {
+            let (s, st) = llm_seeds(world, ctx);
+            (s, st, "llm")
+        }
+        other => {
+            if strict {
+                return Err(eyre!(
+                    "official mode: unknown BRIDGESENTRY_OFFICIAL_SEEDS={other:?} (expected `llm` or `random`)"
+                ));
+            }
+            let (s, st) = llm_seeds(world, ctx);
+            (s, st, "llm")
+        }
+    };
+    if !seqs.is_empty() {
+        return Ok(InitialCorpus { seqs, stats, effective, fallback: false });
+    }
+    if strict {
+        return Err(eyre!(
+            "official mode: requested `{seed_mode}` seeds but none map to a callable fixture function \
+             (scenarios_total={}, actions_total={}, actions_resolved={}); refusing to substitute random seeds",
+            stats.scenarios_total,
+            stats.actions_total,
+            stats.actions_resolved
+        ));
+    }
+    Ok(InitialCorpus { seqs: random_seeds(world, rng, 20), stats, effective: "random_fallback", fallback: true })
+}
+
 struct Dict {
     words: Vec<[u8; 32]>,
     encodings: Vec<Vec<u8>>,
@@ -994,17 +1058,9 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
     let mut world = World::build(ctx, &spec, &bench_dir, &variant)?;
     let setup_s = t_setup.elapsed().as_secs_f64();
 
-    let (mut corpus, seed_stats) = match seed_mode.as_str() {
-        "random" => {
-            let s = random_seeds(&world, &mut rng, 20);
-            let n = s.len();
-            (s, SeedStats { scenarios_total: 0, scenarios_with_calls: n, actions_total: 0, actions_resolved: 0 })
-        }
-        _ => llm_seeds(&world, ctx),
-    };
-    if corpus.is_empty() {
-        corpus = random_seeds(&world, &mut rng, 20);
-    }
+    let strict_seeds = std::env::var("BRIDGESENTRY_OFFICIAL_STRICT_SEEDS").ok().as_deref() == Some("1");
+    let InitialCorpus { seqs: mut corpus, stats: seed_stats, effective: seed_effective, fallback: seed_fallback } =
+        build_initial_corpus(&world, ctx, &seed_mode, strict_seeds, &mut rng)?;
     let initial_corpus = corpus.len();
 
     let mut dict = Dict { words: Vec::new(), encodings: Vec::new() };
@@ -1149,6 +1205,10 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
         "fixture_id": spec.fixture_id,
         "variant": variant,
         "seed_source": seed_mode,
+        "official_result_version": OFFICIAL_RESULT_VERSION,
+        "seed_source_requested": seed_mode,
+        "seed_source_effective": seed_effective,
+        "seed_fallback_to_random": seed_fallback,
         "seed": seed,
         "time_budget_s": budget,
         "setup_s": setup_s,
@@ -1189,9 +1249,9 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
 // The dual-EVM is backed by an in-process JSON-RPC stub that mirrors
 // `scripts/official/empty_rpc.py` (empty chain state at any block), so the
 // tests are hermetic: no network, no external process, no mainnet fork. They
-// require `solc` on PATH (same tool the official runner needs); when solc is
-// absent the test logs SKIP and returns so `cargo test` still passes in
-// environments without the compiler.
+// require solc 0.8.20 on PATH (same tool the official runner needs). A missing
+// or different compiler FAILS the test; only BRIDGESENTRY_ALLOW_MISSING_SOLC=1
+// turns that into an explicit "SKIPPED (not evidence)" message.
 // ---------------------------------------------------------------------------
 #[cfg(test)]
 mod fixture_tests {
@@ -1331,8 +1391,27 @@ mod fixture_tests {
             .to_path_buf()
     }
 
-    fn solc_available() -> bool {
-        Command::new("solc").arg("--version").output().map(|o| o.status.success()).unwrap_or(false)
+    /// Fixture tests need solc 0.8.20. A missing or different solc fails the
+    /// test unless BRIDGESENTRY_ALLOW_MISSING_SOLC=1 is set explicitly, in
+    /// which case the test is reported as skipped and is not evidence.
+    fn require_solc(what: &str) -> bool {
+        let version = Command::new("solc")
+            .arg("--version")
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .map(|o| String::from_utf8_lossy(&o.stdout).to_string());
+        if version.as_deref().map_or(false, |v| v.contains("Version: 0.8.20+")) {
+            return true;
+        }
+        if std::env::var("BRIDGESENTRY_ALLOW_MISSING_SOLC").ok().as_deref() == Some("1") {
+            eprintln!("SKIPPED (not evidence) {what}: solc 0.8.20 not on PATH (found: {version:?})");
+            return false;
+        }
+        panic!(
+            "{what}: fixture tests require solc 0.8.20 on PATH (found: {version:?}); \
+             set BRIDGESENTRY_ALLOW_MISSING_SOLC=1 only to skip knowingly"
+        );
     }
 
     fn test_ctx() -> RuntimeContext {
@@ -1399,8 +1478,7 @@ mod fixture_tests {
         bench: &str,
         make: impl Fn(&World) -> Seq,
     ) -> Option<(BTreeMap<String, EU256>, BTreeMap<String, EU256>)> {
-        if !solc_available() {
-            eprintln!("SKIP {bench}: solc not on PATH");
+        if !require_solc(bench) {
             return None;
         }
         let ctx = test_ctx();
@@ -1430,6 +1508,77 @@ mod fixture_tests {
             patched.is_empty(),
             "{bench}: patched variant must yield no attacker gain, got {patched:?}"
         );
+    }
+
+    // ---- every official fixture has a deterministic test --------------------
+    const TESTED_FIXTURES: [&str; 7] =
+        ["nomad", "qubit", "feg_bridge_2024", "crosscurve", "ronin_2024", "polynetwork", "verus"];
+
+    #[test]
+    fn every_official_fixture_has_a_deterministic_test() {
+        let mut found: Vec<String> = std::fs::read_dir(repo_root().join("benchmarks"))
+            .expect("read benchmarks/")
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().join("official").join("spec.json").is_file())
+            .map(|e| e.file_name().to_string_lossy().to_string())
+            .collect();
+        found.sort();
+        let mut expected: Vec<String> = TESTED_FIXTURES.iter().map(|s| s.to_string()).collect();
+        expected.sort();
+        assert_eq!(found, expected, "official fixtures and deterministic tests diverged");
+    }
+
+    // ---- seed-source honesty (requested vs effective) -----------------------
+    fn qubit_world_with(hyp: Value) -> Option<(RuntimeContext, World)> {
+        if !require_solc("seed_source") {
+            return None;
+        }
+        let mut ctx = test_ctx();
+        ctx.hypotheses = serde_json::from_value(hyp).expect("hypotheses json");
+        let bench_dir = repo_root().join("benchmarks").join("qubit");
+        let spec = load_spec(&bench_dir);
+        let w = World::build(&ctx, &spec, &bench_dir, "vulnerable").expect("build qubit");
+        Some((ctx, w))
+    }
+
+    fn scenario(contract: &str, function: &str) -> Value {
+        json!({"bridge_name": "qubit", "scenarios": [{
+            "scenario_id": "s1", "target_invariant": "i", "vulnerability_class": "v",
+            "confidence": 0.5, "waypoints": [], "retrieved_exploits": [],
+            "actions": [{"step": 1, "chain": "source", "contract": contract,
+                         "function": function, "params": {}, "description": ""}]
+        }]})
+    }
+
+    #[test]
+    fn llm_seeds_missing_is_an_error_in_strict_mode_and_flagged_otherwise() {
+        let Some((ctx, w)) = qubit_world_with(json!({"bridge_name": "qubit", "scenarios": []})) else { return };
+        let mut rng = StdRng::seed_from_u64(1);
+        let err = build_initial_corpus(&w, &ctx, "llm", true, &mut rng).err().expect("strict must fail");
+        assert!(err.to_string().contains("refusing to substitute random seeds"), "{err}");
+        let lax = build_initial_corpus(&w, &ctx, "llm", false, &mut rng).expect("lax mode");
+        assert!(lax.fallback && lax.effective == "random_fallback" && !lax.seqs.is_empty());
+    }
+
+    #[test]
+    fn llm_seeds_unmappable_actions_is_an_error_in_strict_mode() {
+        let Some((ctx, w)) = qubit_world_with(scenario("NoSuchContract", "noSuchFunction")) else { return };
+        let mut rng = StdRng::seed_from_u64(1);
+        assert!(build_initial_corpus(&w, &ctx, "llm", true, &mut rng).is_err());
+        let lax = build_initial_corpus(&w, &ctx, "llm", false, &mut rng).expect("lax mode");
+        assert_eq!(lax.stats.actions_total, 1);
+        assert_eq!(lax.stats.actions_resolved, 0);
+        assert!(lax.fallback && lax.effective == "random_fallback");
+    }
+
+    #[test]
+    fn llm_seeds_mappable_actions_are_reported_as_llm() {
+        let Some((ctx, w)) = qubit_world_with(scenario("QBridgeETH", "deposit")) else { return };
+        let mut rng = StdRng::seed_from_u64(1);
+        let c = build_initial_corpus(&w, &ctx, "llm", true, &mut rng).expect("strict llm");
+        assert_eq!((c.effective, c.fallback), ("llm", false));
+        assert_eq!(c.stats.actions_resolved, 1);
+        assert!(build_initial_corpus(&w, &ctx, "bogus", true, &mut rng).is_err(), "unknown mode must fail in strict");
     }
 
     // ---- existing fixtures (regression) -----------------------------------
