@@ -1034,6 +1034,56 @@ fn gains_json(g: &BTreeMap<String, EU256>) -> Value {
 // Entry point
 // ---------------------------------------------------------------------------
 
+/// Evaluate the seven Option-A exploit gates for one candidate trace, exactly
+/// as the campaign does: target bytecode executed, material state change,
+/// causal path through a release entrypoint or the relay, capability
+/// compliance (faithful relay only), replayability, impact, and rejection by
+/// the paired patched variant. `validate` gates the replay and patched-control
+/// runs. Returns the finalized gates and the patched-control note. Shared by
+/// run_official and the deterministic fixture tests so the tests check the same
+/// thing the campaign records.
+fn gate_candidate(
+    world: &mut World,
+    spec: &OfficialSpec,
+    release: &HashSet<&str>,
+    seq: &Seq,
+    res: &TraceResult,
+    patched_world: Option<&mut World>,
+    addresses_match: Option<bool>,
+    validate: bool,
+) -> (ExploitEvidenceGates, Value) {
+    let gates = ExploitEvidenceGates {
+        target_bytecode_executed: status(res.fixture_pcs > 0),
+        material_state_change: status(!res.gains.is_empty()),
+        ..ExploitEvidenceGates::default()
+    };
+    let mut sup = SupplementalExploitEvidence::default();
+    let via_protocol = res.gain_entries.iter().any(|(entry, side, kind)| {
+        *kind == Kind::Relay || (release.contains(entry.as_str()) && (!spec.cross_chain || *side == Side::Dest))
+    });
+    sup.causal_path_valid = status(via_protocol);
+    sup.capability_compliant = ObservationStatus::Pass; // faithful relay only, attacker never impersonates roles
+    sup.impact_demonstrated = status(!res.gains.is_empty());
+    let mut patched_note = Value::Null;
+    if validate {
+        let mut scratch = CoverageTracker::default();
+        let replay = run_trace(world, spec, seq, &mut scratch);
+        sup.replayable = status(replay.gains == res.gains);
+        match (patched_world, addresses_match) {
+            (Some(pw), Some(true)) => {
+                let pr = run_trace(pw, spec, seq, &mut scratch);
+                sup.patched_rejected = status(pr.gains.is_empty());
+                patched_note = json!({"patched_gain": gains_json(&pr.gains)});
+            }
+            (Some(_), _) => {
+                patched_note = json!({"error": "patched deployment addresses differ from vulnerable deployment"});
+            }
+            _ => {}
+        }
+    }
+    (finalize_exploit_evidence(gates, sup), patched_note)
+}
+
 pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
     let bench_dir = ctx
         .contract_plan
@@ -1150,33 +1200,8 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
     let mut first_valid: Option<f64> = None;
     let mut n_valid = 0usize;
     for (i, (key, t, seq, res)) in candidates.iter().enumerate() {
-        let mut gates = ExploitEvidenceGates {
-            target_bytecode_executed: status(res.fixture_pcs > 0),
-            material_state_change: status(!res.gains.is_empty()),
-            ..ExploitEvidenceGates::default()
-        };
-        let mut sup = SupplementalExploitEvidence::default();
-        let via_protocol = res
-            .gain_entries
-            .iter()
-            .any(|(entry, side, kind)| *kind == Kind::Relay || (release.contains(entry.as_str()) && (!spec.cross_chain || *side == Side::Dest)));
-        sup.causal_path_valid = status(via_protocol);
-        sup.capability_compliant = ObservationStatus::Pass; // faithful relay only, attacker never impersonates roles
-        sup.impact_demonstrated = status(!res.gains.is_empty());
-        let mut patched_note = Value::Null;
-        if i < max_validate {
-            let mut scratch = CoverageTracker::default();
-            let replay = run_trace(&mut world, &spec, seq, &mut scratch);
-            sup.replayable = status(replay.gains == res.gains);
-            if let (Some(pw), Some(true)) = (patched_world.as_mut(), addresses_match) {
-                let pr = run_trace(pw, &spec, seq, &mut scratch);
-                sup.patched_rejected = status(pr.gains.is_empty());
-                patched_note = json!({"patched_gain": gains_json(&pr.gains)});
-            } else if patched_world.is_some() {
-                patched_note = json!({"error": "patched deployment addresses differ from vulnerable deployment"});
-            }
-        }
-        gates = finalize_exploit_evidence(gates, sup);
+        let (gates, patched_note) =
+            gate_candidate(&mut world, &spec, &release, seq, res, patched_world.as_mut(), addresses_match, i < max_validate);
         let valid = gates.is_valid_exploit();
         if valid {
             n_valid += 1;
@@ -1496,6 +1521,15 @@ mod fixture_tests {
         let vr = run_trace(&mut vw, &spec, &seq, &mut cov);
         let mut cov2 = CoverageTracker::default();
         let pr = run_trace(&mut pw, &spec, &seq, &mut cov2);
+        // Đ1: the documented attack must be representable as a Seq that passes
+        // ALL seven Option-A gates (replay + patched control), computed exactly
+        // as run_official does — not merely yield a positive gain.
+        let release: HashSet<&str> = spec.release_entrypoints.iter().map(|s| s.as_str()).collect();
+        let (gates, note) = gate_candidate(&mut vw, &spec, &release, &seq, &vr, Some(&mut pw), Some(true), true);
+        assert!(
+            gates.is_valid_exploit(),
+            "{bench}: documented attack must pass all seven gates, got {gates:?} ({note})"
+        );
         Some((vr.gains, pr.gains))
     }
 
