@@ -79,3 +79,29 @@ hay (2) ghi 3 fixture này là "chỉ biểu diễn được, search chưa tới
 2. Mở rộng mutator cho 3 fixture khó, hay ghi "search chưa tới".
 3. Chốt model frontier + cấp API key (`NVIDIA_API_KEY` + key frontier) cho Bước 5.
 4. HPC: bật VPN để chạy Bước 1 (hoặc để người dùng tự submit).
+
+## Phát hiện 2026-11-07: patched-control chưa sạch cho CrossCurve/PolyNetwork
+
+Mutator mở rộng (commit `a90aa3d`) khi chạy 600 s random lộ ra: bản **vá** của CrossCurve và PolyNetwork
+vẫn cho candidate lợi nhuận dương (`runs_with_any_alert`=5/5), dù `valid_exploits=0`. Chi tiết + số liệu:
+`experiments/official_20261106_hard_before_after/`.
+
+Root cause (đã truy): **không** phải `OfficialToken.setMinter` (có kiểm owner, call revert) và **không** phải
+tự-attest ở gateway (`approveContractCall` có kiểm relayer). Lợi nhuận đến qua **đường relay** (`@dest:Relay`):
+kẻ tấn công gọi `AxelarGateway.callContract` ở chain nguồn với payload trả cho mình → relayer **trung thực**
+attest + execute ở chain đích → `ReceiverAxelar.execute` trả tiền, vì fixture **cố ý bỏ kiểm `sourceAddress`**
+(tác giả fixture cho là "useless"). Hệ quả: đích thực thi mọi thông điệp đã-attest, kể cả thông điệp kẻ tấn công
+tự phát từ nguồn → bản vá không chặn đường này.
+
+**Tại sao VER bản lỗi vẫn đúng:** exploit "valid" của bản lỗi đi qua `expressExecute` (bỏ qua gateway) và **bị
+`patched_rejected` loại** khi chạy trên bản vá → nên 5/5 valid của crosscurve vulnerable là đường tài liệu thật,
+không phải đường relay này. Đường relay cho lợi nhuận trên CẢ hai biến thể nên không bao giờ thành "valid".
+
+**Quyết định cần người dùng (mô hình hoá, KHÔNG tự sửa để tránh làm sai lệch):**
+- Có mô hình hoá ràng buộc `sourceAddress` (đích chỉ thực thi thông điệp phát từ PortalSrc hợp lệ, như Axelar thật
+  ràng buộc nguồn qua lệnh đã-attest) để bản vá sạch không? Nếu có, cả vulnerable lẫn patched phải ràng buộc nguồn,
+  và exploit tài liệu vẫn phải khai thác được trên vulnerable.
+- Hay giữ mô hình hiện tại và **không báo patched-control/FPR** cho crosscurve/polynetwork, chỉ báo VER bản lỗi?
+- Kiểm tra polynetwork tương tự (alert qua đường nào) trước khi quyết.
+
+FEG patched sạch (0 alert) nên không vướng.
