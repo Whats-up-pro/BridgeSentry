@@ -22,7 +22,7 @@ Cập nhật lần cuối: 2026-11-06 (HPC Bước 1 nghiệm thu).
 | 2. Nghiệm thu fixture + Đ1 | **một phần** | 7 fixture có test xác định; Đ1 phần (b) đạt: test qua đủ 7 cổng (`980a542`) | Đ1 phần (a) — search có tới được Seq không — xem mục fixture dưới; 2 quyết định chờ người dùng |
 | 3. KB + đối chứng âm | **một phần** | `docs/kb_audit.md` (nháp) | chuẩn hoá snapshot KB + hash; 2 bridge benign chưa viết |
 | 4. Holdout + runner | **một phần** | runner đã sửa (strict seeds, mã thoát, `runs_failed`) `de75daa`; test runner 6 pass | 4 chế độ holdout + no_rag chưa implement; chưa có bộ lọc KB |
-| 5. Sinh Module 1–2, chi phí | **chưa** | — | cần chốt model + API key; sinh seed thật cho 7 fixture official; probe ghi nhớ |
+| 5. Sinh Module 1–2, chi phí | **chờ key** | model chốt: gpt-oss-120b (chính) + **OpenAI GPT-5-class (frontier, phương án A)**; key qua `C:\Users\Admin\.bridgesentry.env` (ngoài repo) | user tạo file key; rồi dựng venv, sinh seed 7 fixture official + probe ghi nhớ |
 | 6. Pilot + ma trận chính | **một phần** | `experiments/official_20261105_local_pilot/g20` (4 fixture dễ, 60 run, 0 lỗi; `980a542`) | nhóm 3 fixture khó (pilot 120s/600s) bị dừng do thiếu RAM; ma trận chính trên HPC |
 | 7. Thống kê | **chưa** | — | script `analyze_official.py` (KM, log-rank, Fisher, Holm, bootstrap) |
 | 8. Baseline A1 | **chưa** | — | kiểm tra artifact BridgeFuzz/ItyFuzz |
