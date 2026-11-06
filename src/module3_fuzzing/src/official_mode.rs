@@ -728,7 +728,7 @@ fn llm_value_token(world: &World, kind: &ParamType, v: &Value) -> Option<Token> 
     literal_token(kind, v)
 }
 
-fn random_call(world: &World, rng: &mut StdRng) -> Option<AttackCall> {
+fn random_call(world: &World, dict: &Dict, rng: &mut StdRng) -> Option<AttackCall> {
     let all: Vec<(usize, Function)> = world
         .contracts
         .iter()
@@ -739,15 +739,16 @@ fn random_call(world: &World, rng: &mut StdRng) -> Option<AttackCall> {
         return None;
     }
     let (idx, func) = all[rng.gen_range(0..all.len())].clone();
-    let args = func.inputs.iter().map(|p| default_token(&p.kind)).collect();
+    let args = func.inputs.iter().map(|p| random_arg(&p.kind, dict, rng)).collect();
     Some(AttackCall { idx, func, args })
 }
 
 fn random_seeds(world: &World, rng: &mut StdRng, n: usize) -> Vec<Seq> {
+    let dict = Dict::from_world(world);
     (0..n)
         .filter_map(|_| {
             let len = rng.gen_range(1..=4);
-            let s: Seq = (0..len).filter_map(|_| random_call(world, rng)).collect();
+            let s: Seq = (0..len).filter_map(|_| random_call(world, &dict, rng)).collect();
             if s.is_empty() { None } else { Some(s) }
         })
         .collect()
@@ -817,9 +818,109 @@ fn build_initial_corpus(
     Ok(InitialCorpus { seqs: random_seeds(world, rng, 20), stats, effective: "random_fallback", fallback: true })
 }
 
+/// Mutation vocabulary derived from the fixture itself: the addresses in play
+/// (attacker + deployed contracts), boundary amounts and small opcodes, the
+/// function signatures of the fixture contracts, and 32-byte words. This is the
+/// same information a real adversary or the LLM scenario generator has; it lets
+/// the search assemble ABI-encoded `bytes` payloads and method-name `string`
+/// arguments (e.g. a cross-chain message selecting a target function), which a
+/// raw-byte mutator cannot synthesize. It encodes no fixture-specific exploit.
 struct Dict {
     words: Vec<[u8; 32]>,
     encodings: Vec<Vec<u8>>,
+    addresses: Vec<Address>,
+    amounts: Vec<EU256>,
+    method_sigs: Vec<String>,
+}
+
+impl Dict {
+    fn from_world(world: &World) -> Dict {
+        let mut addresses = vec![attacker()];
+        addresses.extend(world.contracts.iter().map(|c| c.addr));
+        let mut amounts: Vec<EU256> = (0u64..8).map(EU256::from).collect();
+        for v in [
+            EU256::exp10(18),
+            EU256::exp10(21),
+            EU256::exp10(23),
+            EU256::exp10(24),
+            EU256::from(u128::MAX),
+        ] {
+            amounts.push(v);
+        }
+        if let Some(v) = parse_uint("500000e18") {
+            amounts.push(v);
+        }
+        let mut method_sigs: Vec<String> = Vec::new();
+        for c in &world.contracts {
+            for f in c.abi.functions().filter(|f| callable(f)) {
+                method_sigs.push(f.signature());
+            }
+        }
+        method_sigs.sort();
+        method_sigs.dedup();
+        let mut words: Vec<[u8; 32]> = Vec::new();
+        for a in &addresses {
+            let mut w = [0u8; 32];
+            w[12..].copy_from_slice(&to_h160(*a).0);
+            words.push(w);
+        }
+        for v in &amounts {
+            let mut w = [0u8; 32];
+            v.to_big_endian(&mut w);
+            words.push(w);
+        }
+        Dict { words, encodings: Vec::new(), addresses, amounts, method_sigs }
+    }
+
+    /// Build an ABI-encoded `bytes` blob from 1..=4 vocabulary tokens
+    /// (addresses or amounts). Reaches structured payloads that a protocol
+    /// decodes as `abi.decode(data, (...))`.
+    fn rand_abi_bytes(&self, rng: &mut StdRng) -> Vec<u8> {
+        let arity = rng.gen_range(1..=4);
+        let toks: Vec<Token> = (0..arity)
+            .map(|_| {
+                if rng.gen_bool(0.5) && !self.addresses.is_empty() {
+                    Token::Address(to_h160(self.addresses[rng.gen_range(0..self.addresses.len())]))
+                } else {
+                    Token::Uint(self.amounts[rng.gen_range(0..self.amounts.len())])
+                }
+            })
+            .collect();
+        ethers_core::abi::encode(&toks)
+    }
+
+    fn rand_method_sig(&self, rng: &mut StdRng) -> Option<String> {
+        if self.method_sigs.is_empty() {
+            None
+        } else {
+            Some(self.method_sigs[rng.gen_range(0..self.method_sigs.len())].clone())
+        }
+    }
+}
+
+/// Vocabulary-aware argument for a fresh random call, so random seeds explore
+/// structured payloads and method-name strings, not just empty/default values.
+fn random_arg(kind: &ParamType, dict: &Dict, rng: &mut StdRng) -> Token {
+    match kind {
+        ParamType::Address => Token::Address(to_h160(dict.addresses[rng.gen_range(0..dict.addresses.len())])),
+        ParamType::Uint(n) => Token::Uint(mask_width(dict.amounts[rng.gen_range(0..dict.amounts.len())], &ParamType::Uint(*n))),
+        ParamType::Bytes => {
+            if rng.gen_bool(0.75) {
+                Token::Bytes(dict.rand_abi_bytes(rng))
+            } else {
+                Token::Bytes(Vec::new())
+            }
+        }
+        ParamType::String => dict.rand_method_sig(rng).map(Token::String).unwrap_or_else(|| Token::String(String::new())),
+        ParamType::FixedBytes(n) => {
+            let mut b = vec![0u8; *n];
+            if rng.gen_bool(0.5) {
+                rng.fill(&mut b[..]);
+            }
+            Token::FixedBytes(b)
+        }
+        _ => default_token(kind),
+    }
 }
 
 fn mask_width(v: EU256, kind: &ParamType) -> EU256 {
@@ -879,7 +980,10 @@ fn mutate_token_raw(t: &Token, kind: &ParamType, world: &World, dict: &Dict, rng
             Token::FixedBytes(out)
         }
         Token::Bytes(_) => {
-            if !dict.encodings.is_empty() && rng.gen_bool(0.6) {
+            let r = rng.gen_range(0u8..10);
+            if r < 4 {
+                Token::Bytes(dict.rand_abi_bytes(rng))
+            } else if !dict.encodings.is_empty() && r < 7 {
                 Token::Bytes(dict.encodings[rng.gen_range(0..dict.encodings.len())].clone())
             } else {
                 let mut out = vec![0u8; 32 * rng.gen_range(0..4)];
@@ -887,6 +991,10 @@ fn mutate_token_raw(t: &Token, kind: &ParamType, world: &World, dict: &Dict, rng
                 Token::Bytes(out)
             }
         }
+        Token::String(_) => match dict.rand_method_sig(rng) {
+            Some(sig) if rng.gen_bool(0.7) => Token::String(sig),
+            _ => t.clone(),
+        },
         Token::Tuple(parts) if !parts.is_empty() => {
             let mut p = parts.clone();
             let i = rng.gen_range(0..p.len());
@@ -913,7 +1021,7 @@ fn mutate_seq(seq: &Seq, world: &World, dict: &Dict, rng: &mut StdRng) -> Seq {
     for _ in 0..rng.gen_range(1..=3) {
         match rng.gen_range(0..10) {
             0 | 1 if s.len() < 8 => {
-                if let Some(c) = random_call(world, rng) {
+                if let Some(c) = random_call(world, dict, rng) {
                     let pos = rng.gen_range(0..=s.len());
                     s.insert(pos, c);
                 }
@@ -1113,7 +1221,7 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
         build_initial_corpus(&world, ctx, &seed_mode, strict_seeds, &mut rng)?;
     let initial_corpus = corpus.len();
 
-    let mut dict = Dict { words: Vec::new(), encodings: Vec::new() };
+    let mut dict = Dict::from_world(&world);
     for seq in &corpus {
         for c in seq {
             for a in &c.args {
@@ -1613,6 +1721,40 @@ mod fixture_tests {
         assert_eq!((c.effective, c.fallback), ("llm", false));
         assert_eq!(c.stats.actions_resolved, 1);
         assert!(build_initial_corpus(&w, &ctx, "bogus", true, &mut rng).is_err(), "unknown mode must fail in strict");
+    }
+
+    // ---- Đ1(a): hard-fixture exploit tokens are in the mutator vocabulary --
+    #[test]
+    fn hard_fixture_exploit_tokens_are_in_mutator_vocabulary() {
+        // The documented attacks for the three hard fixtures use only tokens the
+        // expanded mutator can produce: contract/attacker addresses, boundary and
+        // opcode amounts, and method-name strings drawn from the fixtures' own
+        // ABIs. Whether the random search assembles them within budget is the
+        // empirical pilot; this proves they are reachable in principle.
+        for bench in ["feg_bridge_2024", "crosscurve", "polynetwork"] {
+            if !require_solc(bench) {
+                return;
+            }
+            let ctx = test_ctx();
+            let bench_dir = repo_root().join("benchmarks").join(bench);
+            let spec = load_spec(&bench_dir);
+            let w = World::build(&ctx, &spec, &bench_dir, "vulnerable").expect("build");
+            let dict = Dict::from_world(&w);
+            assert!(dict.addresses.contains(&attacker()), "{bench}: attacker not in vocab");
+            assert!(dict.amounts.iter().any(|v| *v == EU256::one()), "{bench}: opcode 1 missing");
+            assert!(dict.amounts.iter().any(|v| *v == EU256::from(2u8)), "{bench}: opcode 2 missing");
+            assert!(dict.amounts.iter().any(|v| *v >= EU256::exp10(18)), "{bench}: payout amount missing");
+        }
+        if require_solc("polynetwork") {
+            let ctx = test_ctx();
+            let bench_dir = repo_root().join("benchmarks").join("polynetwork");
+            let spec = load_spec(&bench_dir);
+            let w = World::build(&ctx, &spec, &bench_dir, "vulnerable").expect("build");
+            let dict = Dict::from_world(&w);
+            let has = |pfx: &str| dict.method_sigs.iter().any(|m| m.starts_with(pfx));
+            assert!(has("putCurEpochConPubKeyBytes("), "polynetwork target setter sig missing: {:?}", dict.method_sigs);
+            assert!(has("unlock("), "polynetwork unlock sig missing: {:?}", dict.method_sigs);
+        }
     }
 
     // ---- existing fixtures (regression) -----------------------------------
