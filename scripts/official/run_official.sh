@@ -15,7 +15,8 @@
 # only to reproduce pre-2026-11-05 behaviour.
 set -u
 B=$1; V=$2; S=$3; SEED=$4; BUDGET=$5
-REPO=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
+REPO=${REPO:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel 2>/dev/null)}
+[ -n "$REPO" ] || { echo "run_official.sh: set REPO (not a git checkout)" >&2; exit 2; }
 OUT_ROOT=${6:-$REPO/_exp/official_runs}
 RPC_URL=${RPC_URL:-http://127.0.0.1:18545}
 BIN=${BIN:-$REPO/src/module3_fuzzing/target/release/bridgesentry-fuzzer}

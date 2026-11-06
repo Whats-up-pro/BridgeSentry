@@ -19,7 +19,8 @@
 set -eu
 OUT_ROOT=$1; BUDGET=$2; PAR=$3; shift 3
 HERE=$(cd "$(dirname "$0")" && pwd)
-REPO=$(git -C "$HERE" rev-parse --show-toplevel)
+REPO=${REPO:-$(git -C "$HERE" rev-parse --show-toplevel 2>/dev/null)}
+[ -n "$REPO" ] || { echo "run_matrix.sh: set REPO (not a git checkout)" >&2; exit 2; }
 SEEDS=${SEEDS:-"1042 2042 3042 4042 5042"}
 
 # echoes "llm random" when real LLM scenarios exist for <bench>, else "random".
