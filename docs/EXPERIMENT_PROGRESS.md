@@ -3,7 +3,7 @@
 Theo dõi `docs/EXPERIMENT_PLAN.md` (Bước 0–10, Đ1–Đ8) và `todo.txt` (A1–A9, B1–B8, C1–C6).
 Cập nhật ở mỗi mốc. Phân biệt bốn mức: **có code** / **đã test** / **đã nghiệm thu** / **có kết quả thực nghiệm**.
 
-Cập nhật lần cuối: 2026-11-05, HEAD `980a542`.
+Cập nhật lần cuối: 2026-11-06 (HPC Bước 1 nghiệm thu).
 
 ## Quy tắc cố định (khoá cho mọi chiến dịch)
 - Oracle: `BRIDGESENTRY_EVALUATION_MODE=official` (execution-only asset conservation); runner `scripts/official/`.
@@ -18,7 +18,7 @@ Cập nhật lần cuối: 2026-11-05, HEAD `980a542`.
 | Bước | Trạng thái | Bằng chứng / commit | Còn thiếu |
 |---|---|---|---|
 | 0. Đồng bộ, khoá quy trình | đang làm | file này (`980a542`) | — |
-| 1. Môi trường HPC | **chưa nghiệm thu** | build musl `experiments/official_20261104_musl_regression/`; môi trường local WSL Ubuntu 24.04 + rustc 1.99.1 + solc 0.8.20 (sha256 `0479d44f…`) | chưa chạy trên compute node HPC; chờ `sinfo`/VPN |
+| 1. Môi trường HPC | **ĐÃ NGHIỆM THU** | job CPU-only 10714 trên h200node02 (normal/mig2-35, no GPU); binary musl static sha256 `8d2c004a…`; hồi quy Nomad/Qubit 5/5 lỗi, 0/5 vá, 0 fail — `experiments/official_20261106_hpc_regression/` | — |
 | 2. Nghiệm thu fixture + Đ1 | **một phần** | 7 fixture có test xác định; Đ1 phần (b) đạt: test qua đủ 7 cổng (`980a542`) | Đ1 phần (a) — search có tới được Seq không — xem mục fixture dưới; 2 quyết định chờ người dùng |
 | 3. KB + đối chứng âm | **một phần** | `docs/kb_audit.md` (nháp) | chuẩn hoá snapshot KB + hash; 2 bridge benign chưa viết |
 | 4. Holdout + runner | **một phần** | runner đã sửa (strict seeds, mã thoát, `runs_failed`) `de75daa`; test runner 6 pass | 4 chế độ holdout + no_rag chưa implement; chưa có bộ lọc KB |
