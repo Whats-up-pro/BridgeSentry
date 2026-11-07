@@ -141,3 +141,31 @@ parser-only ≈ 1–2M token) **không chạy được** trên free tier.
   `console.groq.com/settings/billing`. Hoặc đổi host gpt-oss-120b (Fireworks/Together/DeepInfra).
 - gpt-5.5 (frontier) KHÔNG bị cap này, đã chạy được; **đang giữ** chưa sinh seed frontier để sinh cùng lúc với
   gpt-oss (so sánh công bằng) và chốt chi phí với người dùng trước.
+
+
+## 2026-11-08: hằng số lấy từ test exploit nằm trong từ vựng mutator (CẦN SỬA trước chiến dịch chính)
+
+Phát hiện khi viết đoạn mô tả mutator cho paper (rà `official_mode.rs` ở `main`):
+- `Dict::from_world` (thêm ở `a90aa3d`) đưa hằng `parse_uint("500000e18")` vào danh sách `amounts`.
+- `500000e18` **chính là số tiền rút** trong các test exploit viết tay của 5 fixture: `feg_bridge_2024`, `crosscurve`,
+  `ronin_2024`, `polynetwork`, `verus` (các test `*_official_exploit_and_patch` trong `mod fixture_tests`).
+  Nó không phải thanh khoản nạp sẵn (thanh khoản là `1000000e18`, xem `setup` trong `spec.json`).
+- Như vậy giá trị lấy từ exploit đã biết bị đưa vào không gian tìm kiếm. Điều này vi phạm quy tắc
+  "toán tử mới phải tổng quát, không viết riêng cho exploit của một fixture" (quyết định 06/11, mục 2).
+  Câu "It encodes no fixture-specific exploit" trong doc comment của `Dict` hiện chưa đúng.
+
+Mức ảnh hưởng **chưa đo**. Oracle chỉ cần lợi nhuận ròng > 0, nên mọi số dương ≤ thanh khoản đều có thể
+cho exploit (từ vựng còn có 1e18, 1e21, 1e23, 1e24). Vì vậy hằng này có thể không quyết định kết quả, nhưng phải chứng minh bằng số liệu:
+1. Bỏ `500000e18` khỏi `Dict::from_world`. Nếu cần số lớn thì lấy từ trạng thái fixture (ví dụ đọc số dư token
+   của các hợp đồng đã deploy sau `setup`), áp dụng như nhau cho mọi fixture. Thêm test khẳng định từ vựng không chứa
+   số tiền của các test exploit.
+2. Chạy lại before/after 3 fixture khó (cùng cấu hình `experiments/official_20261106_hard_before_after/`: random,
+   5 seed, 600 s) vào **thư mục mới**. Không sửa thư mục cũ (hồ sơ đóng băng).
+3. Chạy lại 4 fixture dễ để chắc kết luận không đổi.
+4. Kết quả before/after ngày 06/11 (CrossCurve 5/5, FEG 4/5, PolyNetwork 1/5) chỉ được trích sau khi có số của bản
+   đã bỏ hằng. Nếu hai bản khác nhau, báo cả hai.
+
+Ghi chú phụ (không chặn): các luỹ thừa 10 cố định (1e18, 1e21, 1e23, 1e24) là giá trị biên chung, không lấy từ test.
+Tuy nhiên 1e24 trùng thanh khoản nạp sẵn của 5 fixture, và 1e18, 1e21, 1e24 đã có trong `mutate_token_raw` từ trước `a90aa3d` (1e23 mới thêm ở `a90aa3d`).
+Paper (`main.tex`, `main_bcra.tex`, mục Evaluated configuration) đã mô tả từ vựng là "small integers and boundary amounts"
+kèm `% TODO(authors)`; sửa câu đó theo bản code cuối.
