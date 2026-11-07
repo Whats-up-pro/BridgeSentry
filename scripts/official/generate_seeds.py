@@ -48,7 +48,8 @@ sys.path.insert(0, str(REPO))
 os.chdir(REPO)
 
 # Determinism + honest accounting knobs set before any LLM/embedding work.
-os.environ["BRIDGESENTRY_LLM_CACHE"] = "0"          # count every real API call
+os.environ.setdefault("BRIDGESENTRY_LLM_CACHE", "0")  # default: count every real API call;
+#                                                     set =1 to reuse cache (Module 1 across regimes)
 os.environ["BRIDGESENTRY_EMBEDDING_CACHE"] = "0"    # reproducible retrieval label
 os.environ.setdefault("PYTHONHASHSEED", "0")        # hash-fallback determinism
 
@@ -306,6 +307,7 @@ def main() -> int:
         "kb_dropped_ids": dropped_ids,
         "embedding_backend": emb_backend,
         "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
+        "llm_cache": os.environ.get("BRIDGESENTRY_LLM_CACHE"),
         "module1": {
             "llm_used": not args.parser_only,
             "api_calls": m1_calls_end,
