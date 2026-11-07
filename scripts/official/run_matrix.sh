@@ -6,7 +6,9 @@
 # starts empty_rpc.py (local-fixture execution, NOT a mainnet fork) on
 # $RPC_PORT, or on a free port when RPC_PORT is unset, waits until it answers,
 # and stops it on exit.
-#   SEEDS     default "1042 2042 3042 4042 5042"
+#   SEEDS       default "1042 2042 3042 4042 5042"
+#   SEED_SUBDIR path under benchmarks/<b>/ for atg.json + hypotheses.json
+#               (default llm_outputs); set to a generated model/regime dir
 #   RPC_URL   use an existing endpoint (e.g. a mainnet-fork node) instead
 #   RPC_PORT  fixed port for the local empty RPC
 #
@@ -22,10 +24,14 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=${REPO:-$(git -C "$HERE" rev-parse --show-toplevel 2>/dev/null)}
 [ -n "$REPO" ] || { echo "run_matrix.sh: set REPO (not a git checkout)" >&2; exit 2; }
 SEEDS=${SEEDS:-"1042 2042 3042 4042 5042"}
+# SEED_SUBDIR: path under benchmarks/<b>/ holding atg.json + hypotheses.json
+# for this campaign pass (e.g. official/llm_outputs/gpt-oss/exact). The legacy
+# default keeps the previous behaviour.
+SEED_SUBDIR=${SEED_SUBDIR:-llm_outputs}
 
 # echoes "llm random" when real LLM scenarios exist for <bench>, else "random".
 seed_modes_for() {
-  local hyp="$REPO/benchmarks/$1/llm_outputs/hypotheses.json"
+  local hyp="$REPO/benchmarks/$1/$SEED_SUBDIR/hypotheses.json"
   if [ -f "$hyp" ] && python3 - "$hyp" <<'PY'
 import json, sys
 try:
@@ -72,7 +78,7 @@ for b in "$@"; do
   for v in vulnerable patched; do
     for s in $modes; do
       for seed in $SEEDS; do
-        echo "$b $v $s $seed $BUDGET $OUT_ROOT"
+        echo "$b $v $s $seed $BUDGET $OUT_ROOT $REPO/benchmarks/$b/$SEED_SUBDIR"
       done
     done
   done

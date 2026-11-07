@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_official.sh <bench> <variant:vulnerable|patched> <seeds:llm|random> <seed> <budget_s> [out_root]
+# run_official.sh <bench> <variant:vulnerable|patched> <seeds:llm|random> <seed> <budget_s> [out_root] [seed_dir]
 #
 # Runs one official-oracle fuzzing job (BRIDGESENTRY_EVALUATION_MODE=official).
 # Requires: the release fuzzer build, solc 0.8.20 on PATH, and a JSON-RPC
@@ -24,7 +24,7 @@ META=$REPO/benchmarks/$B/metadata.json
 # SEED_DIR: directory holding atg.json + hypotheses.json for this run.
 # Defaults to the legacy per-bench path; a campaign overrides it with a
 # generated set, e.g. benchmarks/$B/official/llm_outputs/<model>/<regime>.
-SEED_DIR=${SEED_DIR:-$REPO/benchmarks/$B/llm_outputs}
+SEED_DIR=${7:-${SEED_DIR:-$REPO/benchmarks/$B/llm_outputs}}
 SRC_BLOCK=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["fork"]["block_number"])' "$META")
 DST_BLOCK=$(python3 -c 'import json,sys; f=json.load(open(sys.argv[1]))["fork"]; print(f.get("dest_block_number", f["block_number"]))' "$META")
 OUT=$OUT_ROOT/$B/$V/$S
