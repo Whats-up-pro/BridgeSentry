@@ -105,3 +105,39 @@ không phải đường relay này. Đường relay cho lợi nhuận trên CẢ
 - Kiểm tra polynetwork tương tự (alert qua đường nào) trước khi quyết.
 
 FEG patched sạch (0 alert) nên không vướng.
+
+
+## 2026-11-08: hạ tầng sinh seed (holdout) + phân tích thống kê (Bước 4 + Bước 6)
+
+Đã commit lên `main` và kiểm thử:
+- `1401ef4` — **seed generator** `scripts/official/generate_seeds.py`: chạy Module 1 (ATG+invariant) + Module 2
+  (scenario) cho một fixture official theo (backend LLM × regime holdout); ghi `atg.json`/`hypotheses.json`/
+  `provenance.json` + cost ledger. Ép đúng 1 backend/lần (gỡ key provider kia trước khi resolve → không trộn),
+  đếm token/latency thật (A8), đánh dấu từng scenario `llm` vs `deterministic_fallback` (fallback không bị tính là
+  LLM), tách `--parser-only` (A5: Module 1 không LLM, Module 2 vẫn LLM).
+  - `src/module2_rag/holdout.py` — lọc regime `known/no_rag/exact/family/temporal`, registry sự cố + alias (gồm
+    bản `*_xscope`), ghi id bị loại vào provenance. 9 unit test (`tests/test_holdout.py`).
+  - `src/common/llm_client.py` — tham số theo họ model: model reasoning OpenAI (o1/o3/o4, gpt-5+/gpt-6+, vd gpt-5.5)
+    bỏ `temperature`, dùng `max_completion_tokens`; nhận diện trên tên model trần nên gpt-oss (có prefix provider)
+    không bị ảnh hưởng. **Đã xác nhận với API gpt-5.5 thật** (trả `{"ok":true}`).
+  - 4 record KB cho sự cố nhóm A sau 2022 (`ronin_20240806`, `feg_bridge_20241229`, `crosscurve_20260131`,
+    `verus_20260518`), **lấy nguyên từ metadata.json đã kiểm nguồn trong repo** → regime `known`/`temporal` mới có
+    nghĩa cho 4 fixture này. KB 48→52; test schema cũ vẫn pass.
+- `b8d29db` — **phân tích thống kê** `scripts/official/analyze_official.py` (A7): VER/FPR + CI Clopper–Pearson 95%,
+  survival Kaplan–Meier (completed không có exploit = censored tại budget), log-rank llm-vs-random. Không phụ thuộc
+  scipy/matplotlib (CP + đuôi chi-square tự cài). `--selftest` pass; chạy trên `experiments/official_20261103/
+  official_runs` **tái lập đúng** summary cũ (nomad/qubit vulnerable 5/5, patched 0/5, median TTVE khớp), thêm
+  CI + p-value.
+- `180cfff` — `run_matrix.sh`/`run_official.sh`: `SEED_SUBDIR` + positional `seed_dir` để mỗi (model×regime) chạy
+  như một pass riêng, trỏ tới seed đã sinh ở `benchmarks/<b>/official/llm_outputs/<model>/<regime>`. Mặc định không
+  đổi.
+
+### Chốt chặn hiện tại (CẦN NGƯỜI DÙNG) — token cho gpt-oss-120b
+Smoke sinh seed nomad chạy đúng toàn bộ pipeline, nhưng **Groq free tier giới hạn gpt-oss-120b = 200.000 token/ngày**
+và đã cạn (`Used ~199.787/200.000`) → phần lớn call 429, seed rơi về template fallback (ghi trung thực `n_llm=0`,
+không giả làm LLM). gpt-oss là model **chính** (cutoff 06/2024 sạch), nên chiến dịch (6 fixture × 4 regime +
+parser-only ≈ 1–2M token) **không chạy được** trên free tier.
+- Đề xuất: nâng Groq lên **Dev tier** (trả theo dùng, ~vài USD cho cả chiến dịch) tại
+  `console.groq.com/settings/billing`. Hoặc đổi host gpt-oss-120b (Fireworks/Together/DeepInfra).
+- gpt-5.5 (frontier) KHÔNG bị cap này, đã chạy được; **đang giữ** chưa sinh seed frontier để sinh cùng lúc với
+  gpt-oss (so sánh công bằng) và chốt chi phí với người dùng trước.
