@@ -1,0 +1,21 @@
+{
+  "exploit_id": "feg_bridge_20241229",
+  "bridge": "FEG SmartBridge",
+  "date": "2024-12-29",
+  "loss_usd": 1000000,
+  "chains": ["bsc", "ethereum", "base"],
+  "vulnerability_class": "logic_bug",
+  "attack_stage": "destination_chain",
+  "summary": "FEGSmartBridge.receiveMessage enforced the trusted-source check only on the RELEASE op; the SET_TRUSTED op that extends the trusted-source whitelist had no sourceAddress check, so an attacker whitelisted their own source and then released the reserve. Wormhole delivered the attacker's true source faithfully; the defect was in FEG's handler.",
+  "attack_trace": [
+    "Attacker sends a cross-chain SET_TRUSTED message from their own (untrusted) source",
+    "receiveMessage extends the trusted-source whitelist without a sourceAddress check",
+    "Attacker sends a RELEASE message that now passes the trusted-source check and drains the reserve"
+  ],
+  "root_cause": "Missing source verification on the whitelist-extension path (OP_SET_TRUSTED); the trusted-source check was enforced only on release. Not a Wormhole defect.",
+  "references": [
+    "https://www.certik.com/resources/blog/feg-bridge-exploit-technical-analysis",
+    "https://www.halborn.com/blog/post/explained-the-feed-every-gorilla-feg-hack-december-2024"
+  ],
+  "source": "reconstructed_from_postmortem"
+}

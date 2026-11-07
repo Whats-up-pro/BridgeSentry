@@ -21,6 +21,10 @@ OUT_ROOT=${6:-$REPO/_exp/official_runs}
 RPC_URL=${RPC_URL:-http://127.0.0.1:18545}
 BIN=${BIN:-$REPO/src/module3_fuzzing/target/release/bridgesentry-fuzzer}
 META=$REPO/benchmarks/$B/metadata.json
+# SEED_DIR: directory holding atg.json + hypotheses.json for this run.
+# Defaults to the legacy per-bench path; a campaign overrides it with a
+# generated set, e.g. benchmarks/$B/official/llm_outputs/<model>/<regime>.
+SEED_DIR=${SEED_DIR:-$REPO/benchmarks/$B/llm_outputs}
 SRC_BLOCK=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["fork"]["block_number"])' "$META")
 DST_BLOCK=$(python3 -c 'import json,sys; f=json.load(open(sys.argv[1]))["fork"]; print(f.get("dest_block_number", f["block_number"]))' "$META")
 OUT=$OUT_ROOT/$B/$V/$S
@@ -29,7 +33,7 @@ rm -f "$OUT/seed_$SEED.json" "$OUT/seed_$SEED.rc"
 cd "$REPO"
 BRIDGESENTRY_EVALUATION_MODE=official BRIDGESENTRY_OFFICIAL_VARIANT=$V BRIDGESENTRY_OFFICIAL_SEEDS=$S \
 BRIDGESENTRY_OFFICIAL_STRICT_SEEDS=${BRIDGESENTRY_OFFICIAL_STRICT_SEEDS:-1} \
-"$BIN" --atg "benchmarks/$B/llm_outputs/atg.json" --scenarios "benchmarks/$B/llm_outputs/hypotheses.json" \
+"$BIN" --atg "$SEED_DIR/atg.json" --scenarios "$SEED_DIR/hypotheses.json" \
   --metadata "$META" --output "$OUT/seed_$SEED.json" --budget "$BUDGET" --runs 1 --seed "$SEED" \
   --source-rpc "$RPC_URL" --dest-rpc "$RPC_URL" --source-block "$SRC_BLOCK" --dest-block "$DST_BLOCK" \
   > "$OUT/seed_$SEED.log" 2>&1

@@ -1,0 +1,21 @@
+{
+  "exploit_id": "crosscurve_20260131",
+  "bridge": "CrossCurve (EYWA)",
+  "date": "2026-01-31",
+  "loss_usd": 1400000,
+  "chains": ["ethereum", "arbitrum"],
+  "vulnerability_class": "logic_bug",
+  "attack_stage": "destination_chain",
+  "summary": "ReceiverAxelar.expressExecute acted on a relayed payload without calling the Axelar gateway's validateContractCall, so a fabricated command and payload made PortalV2 release unbacked tokens. The normal execute path validated with the gateway.",
+  "attack_trace": [
+    "Submit a fabricated Axelar command and payload to the express path",
+    "expressExecute skips gateway.validateContractCall (only a peer check on attacker-controlled source)",
+    "PortalV2 releases tokens that were never locked on the source chain"
+  ],
+  "root_cause": "Cross-chain message validation bypass: the express execution path omitted the gateway attestation (validateContractCall) that the normal path performs, guarded only by an attacker-controlled sourceChain/sourceAddress peer check.",
+  "references": [
+    "https://www.halborn.com/blog/post/explained-the-crosscurve-hack-february-2026",
+    "https://www.quillaudits.com/blog/hack-analysis/cross-curve-exploit"
+  ],
+  "source": "reconstructed_from_postmortem"
+}

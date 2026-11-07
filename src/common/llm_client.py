@@ -27,6 +27,7 @@ Use
 from __future__ import annotations
 
 import os
+import re
 import time
 from dataclasses import dataclass
 from functools import wraps
@@ -187,6 +188,24 @@ def chat_completion_json(
     return content
 
 
+def _model_restricts_sampling(model: str) -> bool:
+    """True for OpenAI reasoning models (o1/o3/o4, gpt-5+/gpt-6+) that accept
+    only the default ``temperature`` and require ``max_completion_tokens``
+    instead of ``max_tokens``.
+
+    The check runs on the bare model name, so a provider prefix such as
+    ``openai/gpt-oss-120b`` (Groq) never trips it: ``gpt-oss`` matches none of
+    these patterns and keeps the standard sampling parameters.
+    """
+    tail = (model or "").strip().lower().split("/")[-1]
+    return bool(re.match(r"(o[1-4]([.\-]|$)|gpt-?[5-9])", tail))
+
+
+def effective_temperature(model: str, requested: float) -> float | None:
+    """Temperature actually sent for ``model`` (``None`` == omitted/default)."""
+    return None if _model_restricts_sampling(model) else requested
+
+
 @with_retry(max_retries=3)
 def _chat_completion_json_uncached(
     provider: LLMProvider,
@@ -199,15 +218,22 @@ def _chat_completion_json_uncached(
     """Internal: actual API call with retry. Use :func:`chat_completion_json`."""
     kwargs: dict[str, Any] = {
         "model": provider.model,
-        "temperature": temperature,
         "response_format": {"type": "json_object"},
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
     }
-    if max_tokens is not None:
-        kwargs["max_tokens"] = max_tokens
+    if _model_restricts_sampling(provider.model):
+        # These models reject a non-default temperature (only 1 is allowed) and
+        # rename the token cap. Omit temperature entirely rather than send 1, so
+        # a stray caller default never 400s the request.
+        if max_tokens is not None:
+            kwargs["max_completion_tokens"] = max_tokens
+    else:
+        kwargs["temperature"] = temperature
+        if max_tokens is not None:
+            kwargs["max_tokens"] = max_tokens
 
     resp = provider.client.chat.completions.create(**kwargs)
     msg = resp.choices[0].message

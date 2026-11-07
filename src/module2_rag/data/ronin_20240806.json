@@ -1,0 +1,21 @@
+{
+  "exploit_id": "ronin_20240806",
+  "bridge": "Ronin Bridge",
+  "date": "2024-08-06",
+  "loss_usd": 12000000,
+  "chains": ["ronin", "ethereum"],
+  "vulnerability_class": "logic_bug",
+  "attack_stage": "destination_chain",
+  "summary": "A bridge upgrade skipped initializeV3, leaving totalOperatorWeight at zero, so minimumVoteWeight() returned 0 and a withdrawal with an empty operator signer set cleared the threshold. Whitehat; funds returned. Distinct from the March 2022 Ronin validator key-compromise.",
+  "attack_trace": [
+    "Upgrade runs initializeV4 but not initializeV3, leaving totalOperatorWeight = 0",
+    "minimumVoteWeight() computed from zero total weight returns 0",
+    "Submit withdrawal with an empty signer set; the zero threshold is met and funds are released"
+  ],
+  "root_cause": "Deployment defect: the upgrade's initializeV3 (which sets totalOperatorWeight) was never called, collapsing the withdrawal vote-weight threshold to zero. No signatures are forged.",
+  "references": [
+    "https://cointelegraph.com/news/ronin-bridge-hack-upgrade-script-verichains",
+    "https://blog.solidityscan.com/ronin-bridge-hack-analysis-d8f64b8fe683/"
+  ],
+  "source": "reconstructed_from_postmortem"
+}

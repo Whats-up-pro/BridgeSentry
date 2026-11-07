@@ -1,0 +1,21 @@
+{
+  "exploit_id": "verus_20260518",
+  "bridge": "Verus-Ethereum Bridge",
+  "date": "2026-05-18",
+  "loss_usd": 11580000,
+  "chains": ["verus", "ethereum"],
+  "vulnerability_class": "logic_bug",
+  "attack_stage": "destination_chain",
+  "summary": "VerusBridge.checkCCEValues verified notary signatures and Merkle proofs but did not reconcile the Ethereum payout against the value committed in the referenced Verus export, so an import could claim far more than was exported. Verus is non-EVM; the source side is an EVM surrogate.",
+  "attack_trace": [
+    "Create a small, honestly-attested Verus export",
+    "Submit an import referencing that export but claiming a far larger payout",
+    "checkCCEValues passes (signatures and proofs valid) with no source-amount reconciliation; the over-claimed payout is released"
+  ],
+  "root_cause": "Missing source-amount reconciliation: notary attestation proves an export exists, not that the payout matches it, so a payout not backed by a matching committed export value is accepted.",
+  "references": [
+    "https://www.halborn.com/blog/post/explained-the-verus-ethereum-bridge-hack-may-2026",
+    "https://www.merklescience.com/blog/hack-track-the-11-58m-verus-bridge-hack"
+  ],
+  "source": "reconstructed_from_postmortem"
+}
