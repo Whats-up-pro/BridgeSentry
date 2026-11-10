@@ -1,0 +1,1457 @@
+{
+  "bridge_name": "nomad",
+  "scenarios": [
+    {
+      "scenario_id": "nomad_replay_tampered_mint_001",
+      "target_invariant": "asset_conservation_locked_equals_minted",
+      "vulnerability_class": "replay/tampered_message",
+      "confidence": 0.86,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": 100
+          },
+          "mode": "faithful",
+          "waypoint": "lockedAmount[nonce_0xabc123] == 100",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process(bytes)",
+          "params": {
+            "message": "0xmsg_abc123"
+          },
+          "mode": "faithful",
+          "waypoint": "mintedAmount[nonce_0xabc123] == 100",
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process(bytes)",
+          "params": {
+            "message": "0xmsg_abc123_tampered"
+          },
+          "mode": "tampered",
+          "waypoint": "mintedAmount[nonce_0xabc123] == 200",
+          "step": 3,
+          "description": "Step 3"
+        }
+      ],
+      "retrieved_exploits": [
+        "pnetwork_20210919",
+        "wormhole_20220202"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_total_supply_overmint_replay",
+      "target_invariant": "asset_conservation_total_supply_bound",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.86,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xAttackerDest",
+            "amount": "1000e18"
+          },
+          "description": "Lock 1000 OfficialToken on source chain, increasing totalLocked to 1000e18.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "NomadReplica",
+          "function": "prove",
+          "params": {
+            "root": "0xValidRootFromLock",
+            "proof": "0xValidProof"
+          },
+          "description": "Post the Merkle root containing the legitimate lock message (faithful relay).",
+          "relay_mode": "faithful",
+          "step": 2
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0xForgedMessage{nonce:1,amount:5000e18,recipient:0xAttackerDest}",
+            "proof": "0xValidProofForRoot"
+          },
+          "description": "Submit a forged message with inflated amount 5000 while reusing the same root (tampered relay).",
+          "relay_mode": "tampered",
+          "step": 3
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadBridgeRouter",
+          "function": "processAndRelease",
+          "params": {
+            "body": {
+              "nonce": 1,
+              "amount": "5000e18",
+              "recipient": "0xAttackerDest"
+            }
+          },
+          "description": "Replica processes the forged message, minting 5000 representation tokens to attacker.",
+          "relay_mode": "tampered",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "wormhole_20220202",
+        "multichain_20220118"
+      ],
+      "state_predicates": [
+        "NomadHome.totalLocked() == 1000e18",
+        "representationToken.totalSupply() == 5000e18",
+        "representationToken.totalSupply() > NomadHome.totalLocked()"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1000 OfficialToken on source chain, increasing totalLocked to 1000e18."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Post the Merkle root containing the legitimate lock message (faithful relay)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Submit a forged message with inflated amount 5000 while reusing the same root (tampered relay)."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Replica processes the forged message, minting 5000 representation tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_negative_lock_exploit_001",
+      "target_invariant": "asset_conservation_no_negative_lock",
+      "vulnerability_class": "reentrancy_via_erc777_hook",
+      "confidence": 0.78,
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "NomadHome",
+          "function": "send(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": 1
+          },
+          "mode": "faithful",
+          "waypoint": "NomadHome.lockedAmount[nonce]==1",
+          "description": "Step 1"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "MaliciousToken",
+          "function": "tokensToSend(address,address,uint256,bytes,bytes)",
+          "params": {
+            "operator": "NomadHome",
+            "from": "0xAttacker",
+            "to": "NomadHome",
+            "amount": 1,
+            "data": "0x",
+            "operatorData": "0x"
+          },
+          "mode": "tampered",
+          "waypoint": "NomadHome.lockedAmount[nonce]==0",
+          "description": "Step 2"
+        },
+        {
+          "step": 3,
+          "chain": "relay",
+          "contract": "NomadReplica",
+          "function": "process(bytes)",
+          "params": {
+            "message": "0xSignedLockMessage"
+          },
+          "mode": "faithful",
+          "waypoint": "NomadReplica.processed[nonce]==true",
+          "description": "Step 3"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "NomadBridgeRouter",
+          "function": "mint(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": 1
+          },
+          "mode": "faithful",
+          "waypoint": "representationToken.totalSupply() > totalLocked && totalLocked==0",
+          "description": "Step 4"
+        }
+      ],
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "thorchain_20210628"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "relay.message_count > 0",
+          "description": "Step 3"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Step 4"
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_auth_relay_mint_tamper_001",
+      "target_invariant": "authorization_only_relay_can_mint",
+      "vulnerability_class": "upgradeable_proxy_misconfiguration",
+      "confidence": 0.86,
+      "actions": [
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "upgradeTo(address)",
+          "params": {
+            "newImplementation": "0xDeaDBeefDeaDBeefDeaDBeefDeaDBeefDeaDBeef"
+          },
+          "mode": "tampered",
+          "waypoint": "NomadReplica.implementation() == 0xDeaDBeefDeaDBeefDeaDBeefDeaDBeefDeaDBeef",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "MaliciousReplica",
+          "function": "setAuthorizedRelay(address)",
+          "params": {
+            "newRelay": "0xAttackerEOA000000000000000000000000000000"
+          },
+          "mode": "faithful",
+          "waypoint": "MaliciousReplica.authorizedRelay() == 0xAttackerEOA000000000000000000000000000000",
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "processAndRelease(bytes)",
+          "params": {
+            "message": "0xabcdef... (encoded mint of 1,000,000 representation tokens to attacker)"
+          },
+          "mode": "faithful",
+          "waypoint": "token.balanceOf(0xAttackerEOA000000000000000000000000000000) >= 1000000",
+          "step": 3,
+          "description": "Step 3"
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "ronin_20220323"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_proof_tamper_2024_01",
+      "target_invariant": "authorization_valid_message_proof",
+      "vulnerability_class": "proof_replay_tampering",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "prove",
+          "params": {
+            "root": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "proof": "0xfeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface"
+          },
+          "relay_mode": "tampered",
+          "waypoint": "NomadReplica.acceptedRoot(0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef)==true",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0xabcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+          },
+          "relay_mode": "faithful",
+          "waypoint": "NomadReplica.processed[keccak256(0xabcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789)]==true",
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadBridgeRouter",
+          "function": "processAndRelease",
+          "params": {
+            "body": {
+              "recipient": "0xAttackerAddress000000000000000000000000000000",
+              "amount": "1000000000000000000",
+              "nonce": "42",
+              "proof": "0xfeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface"
+            }
+          },
+          "relay_mode": "faithful",
+          "waypoint": "token.balanceOf(0xAttackerAddress000000000000000000000000000000)>=1000000000000000000",
+          "step": 3,
+          "description": "Step 3"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "token",
+          "function": "totalSupply",
+          "params": {},
+          "description": "Verify total supply exceeds locked amount on source chain, confirming invariant breach",
+          "waypoint": "token.totalSupply()>NomadHome.totalLocked()",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "multichain_20220118"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Verify total supply exceeds locked amount on source chain, confirming invariant breach"
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_token_misuse_lock_001",
+      "target_invariant": "authorization_correct_token_used_in_lock",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "MaliciousToken",
+          "function": "constructor",
+          "params": {
+            "name": "Fake",
+            "symbol": "FAKE",
+            "initialSupply": 1000000
+          },
+          "description": "Deploy attacker‑controlled ERC‑20 token that will be used to bypass the official‑token check.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "MaliciousToken",
+          "function": "approve",
+          "params": {
+            "spender": "NomadHome",
+            "amount": 1000
+          },
+          "description": "Approve the bridge router to transfer the malicious tokens.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "token": "0xMaliciousToken",
+            "amount": 1000
+          },
+          "description": "Call the lock function with a non‑official token; due to missing token validation the bridge records a lock of 1000 FAKE tokens.",
+          "step": 3
+        },
+        {
+          "chain": "relay",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0xEncodedLockMessageFromStep3"
+          },
+          "mode": "faithful",
+          "description": "Relay forwards the lock message unchanged to the destination chain.",
+          "step": 4
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "processAndRelease",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000
+          },
+          "description": "Destination replica mints the representation token to the attacker based on the forged lock.",
+          "step": 5
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Deploy attacker‑controlled ERC‑20 token that will be used to bypass the official‑token check."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Approve the bridge router to transfer the malicious tokens."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Call the lock function with a non‑official token; due to missing token validation the bridge records a lock of 1000 FAKE tokens."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "relay.message_count > 0",
+          "description": "Relay forwards the lock message unchanged to the destination chain."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Destination replica mints the representation token to the attacker based on the forged lock."
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118"
+      ]
+    },
+    {
+      "scenario_id": "nomad_auth_token_mint_tamper_001",
+      "target_invariant": "authorization_correct_token_minted",
+      "vulnerability_class": "logic_bug_message_tampering",
+      "confidence": 0.86,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "NomadBridgeRouter",
+            "amount": 1000,
+            "token": "OfficialToken"
+          },
+          "mode": "faithful",
+          "waypoint": "sourceRouter.totalLocked() >= 1000",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0xdeadbeef... (bytes encoding a Body where token == address(MaliciousToken), amount == 1000, recipient == attacker, nonce == 42, proof == validProofFromPreviousRoot)"
+          },
+          "mode": "tampered",
+          "waypoint": "replica.lastProcessedMessageToken() == address(MaliciousToken) && replica.processed[42] == true",
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "processAndRelease",
+          "params": {
+            "token": "MaliciousToken",
+            "to": "attacker",
+            "amount": 1000
+          },
+          "mode": "tampered",
+          "waypoint": "MaliciousToken.balanceOf(attacker) == 1000 && token != address(OfficialTokenRepresentation)",
+          "step": 3,
+          "description": "Step 3"
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "qubit_20220127"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_double_mint_nonce42",
+      "target_invariant": "uniqueness_single_mint_per_nonce",
+      "vulnerability_class": "replay_attack_via_malicious_relay",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000"
+          },
+          "description": "Lock 1000 OfficialToken on source chain, generating nonce 42",
+          "waypoint": "sourceLock.totalLocked()>=1000 && pendingMessage.nonce==42",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "dispatch",
+          "params": {},
+          "description": "Dispatch the cross‑chain message containing nonce 42",
+          "waypoint": "messageRoot[42]==true",
+          "step": 2
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "processAndRelease",
+          "params": {
+            "message": "0xEncodedMessage{nonce:42,recipient:0xAttacker,amount:1000}",
+            "proof": "0xValidProof"
+          },
+          "relay_mode": "faithful",
+          "description": "Authorized relay processes the message, minting representation tokens to Attacker",
+          "waypoint": "minted[42]==true && balanceOf(0xAttacker)>=1000",
+          "step": 3
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "processAndRelease",
+          "params": {
+            "message": "0xEncodedMessage{nonce:42,recipient:0xAttacker2,amount:1000}",
+            "proof": "0xValidProof2"
+          },
+          "relay_mode": "tampered",
+          "description": "Compromised relay re‑uses the same nonce with a different recipient, exploiting missing nonce uniqueness check",
+          "waypoint": "minted[42]==true && balanceOf(0xAttacker2)>=1000",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polyNetwork_20210810",
+        "wormhole_20220202",
+        "nomad_20210415"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1000 OfficialToken on source chain, generating nonce 42"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Dispatch the cross‑chain message containing nonce 42"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Authorized relay processes the message, minting representation tokens to Attacker"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Compromised relay re‑uses the same nonce with a different recipient, exploiting missing nonce uniqueness check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_nonce_replay_reentrancy_001",
+      "target_invariant": "uniqueness_single_lock_per_nonce",
+      "vulnerability_class": "reentrancy_via_erc777_hook",
+      "confidence": 0.78,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "MaliciousToken",
+          "function": "mint(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": 1000
+          },
+          "description": "Mint ERC777 tokens to attacker address.",
+          "waypoint": "MaliciousToken.balanceOf(0xAttacker)==1000",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "OfficialToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "NomadHome",
+            "amount": 1000
+          },
+          "description": "Approve NomadHome to pull attacker’s tokens.",
+          "waypoint": "OfficialToken.allowance(0xAttacker,NomadHome)>=1000",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send(address,uint256)",
+          "params": {
+            "to": "0xAttackerDest",
+            "amount": 1000
+          },
+          "description": "First lock call. During the ERC777 tokensReceived hook, the malicious token re‑enters NomadHome.send with the same nonce N.",
+          "waypoint": "NomadHome.locked[N]==true && NomadHome.lockCount[N]==2",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "locked(uint256)",
+          "params": {
+            "nonce": "N"
+          },
+          "description": "Read locked flag for nonce N after re‑entrancy.",
+          "waypoint": "locked[N]==true && lockCount[N]==2",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "anyswap_20210710"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Mint ERC777 tokens to attacker address."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Approve NomadHome to pull attacker’s tokens."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "First lock call. During the ERC777 tokensReceived hook, the malicious token re‑enters NomadHome.send with the same nonce N."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Read locked flag for nonce N after re‑entrancy."
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_nonce_replay_20231110",
+      "target_invariant": "uniqueness_nonce_monotonic_increase",
+      "vulnerability_class": "relay_root_forgery_and_replay",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef",
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 ETH on source chain; Home emits nonce N=5 and updates lastNonce[msg.sender].",
+          "state_predicate": "lastNonce[msg.sender] == 5",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "dispatch",
+          "params": {
+            "remoteChainId": 2004,
+            "nonce": 5
+          },
+          "description": "Home creates outbound message with nonce 5; message is recorded in outbound Merkle tree.",
+          "state_predicate": "outboundRoot.contains(message{nonce:5}) == true",
+          "step": 2
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "prove",
+          "params": {
+            "messageHash": "0xabc123... (hash of stale message nonce 3)",
+            "proof": "0xdead... (forged proof)"
+          },
+          "description": "Attacker (acting as updater) submits a forged proof that makes the replica accept a tampered root containing an old message (nonce 3).",
+          "relay_mode": "tampered",
+          "state_predicate": "acceptableRoot(messages[3]) == true",
+          "step": 3
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0xdef456... (encoded body of stale message nonce 3)"
+          },
+          "description": "Process the replayed message; replica mints representation tokens using nonce 3 despite having already processed higher nonces.",
+          "relay_mode": "replay",
+          "state_predicate": "processed[3] == true && lastProcessedNonce[msg.sender] == 3",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "chainswap_20210711",
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 ETH on source chain; Home emits nonce N=5 and updates lastNonce[msg.sender]."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Home creates outbound message with nonce 5; message is recorded in outbound Merkle tree."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker (acting as updater) submits a forged proof that makes the replica accept a tampered root containing an old message (nonce 3)."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Process the replayed message; replica mints representation tokens using nonce 3 despite having already processed higher nonces."
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_replay_double_mint_001",
+      "target_invariant": "uniqueness_replay_protection",
+      "vulnerability_class": "logic_bug_replay_reset",
+      "confidence": 0.85,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xAttackerEoa",
+            "amount": "1000e18"
+          },
+          "description": "User (attacker) locks 1000 OfficialToken on source chain, generating message M with hash H.",
+          "waypoint": "sourceLock.totalLocked() >= 1000e18",
+          "step": 1
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0x<encoded_M>"
+          },
+          "mode": "faithful",
+          "description": "Authorized relay processes M for the first time, minting 1000 representation tokens to attacker.",
+          "waypoint": "token.balanceOf(0xAttackerEoa) == 1000e18 && processedHashes[keccak256(0x<encoded_M>)] == true",
+          "step": 2
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0x<encoded_M>"
+          },
+          "mode": "replay",
+          "description": "After a root rotation event, the replica’s processed‑hash mapping is mistakenly cleared for old roots. Attacker re‑submits the same message M.",
+          "waypoint": "processedHashes[keccak256(0x<encoded_M>)] == false && acceptableRoot(messages[keccak256(0x<encoded_M>)]) == true",
+          "step": 3
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "processAndRelease",
+          "params": {
+            "body": "0x<decoded_body_of_M>"
+          },
+          "description": "Replay passes the uniqueness check, causing a second mint of 1000 representation tokens to attacker.",
+          "waypoint": "token.balanceOf(0xAttackerEoa) == 2000e18 && processedHashes[keccak256(0x<encoded_M>)] == true",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "harmony_horizon_20220624",
+        "anyswap_20210710"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User (attacker) locks 1000 OfficialToken on source chain, generating message M with hash H."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Authorized relay processes M for the first time, minting 1000 representation tokens to attacker."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "After a root rotation event, the replica’s processed‑hash mapping is mistakenly cleared for old roots. Attacker re‑submits the same message M."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Replay passes the uniqueness check, causing a second mint of 1000 representation tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_dispatch_reentrancy_double",
+      "target_invariant": "uniqueness_dispatch_once_per_nonce",
+      "vulnerability_class": "reentrancy",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "MaliciousToken",
+          "function": "approveAndCall",
+          "params": {
+            "spender": "NomadHome",
+            "amount": 1000
+          },
+          "mode": "faithful",
+          "state_predicate": "dispatched[nonce]==false",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xRemoteRecipient",
+            "amount": 1000
+          },
+          "mode": "reentrancy",
+          "state_predicate": "dispatched[nonce]==true && duplicate_dispatch_occurred==true",
+          "step": 2,
+          "description": "Step 2"
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "qubit_20220127"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_hash_mismatch_attack_001",
+      "target_invariant": "authorization_message_hash_matches_body",
+      "vulnerability_class": "storage_tampering",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xRecipientOnMoonbeam",
+            "amount": "1000000000000000000"
+          },
+          "description": "User locks 1 ETH on source chain, generating a cross‑chain message with body B_orig and stored hash H_orig = keccak256(B_orig).",
+          "step": 1
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "prove",
+          "params": {
+            "messageHash": "H_orig",
+            "proof": "validMerkleProofForNonce123"
+          },
+          "description": "Malicious relay submits the valid proof for the pending message, causing the replica to store H_orig for nonce 123.",
+          "mode": "faithful",
+          "step": 2
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "overrideMessageHash",
+          "params": {
+            "nonce": 123,
+            "newHash": "keccak256(B_fake)"
+          },
+          "description": "Relay operator exploits a storage‑write backdoor (e.g., via an upgradeable proxy admin) to replace the stored hash with H_fake = keccak256(B_fake).",
+          "mode": "tampered",
+          "waypoint": "replica.messageHash[123] == keccak256(B_fake)",
+          "step": 3
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "abi.encode({nonce:123, body:B_fake, proof:validMerkleProofForNonce123})"
+          },
+          "description": "Relay calls process with the forged body B_fake (attacker address, same amount). The contract checks stored hash (now H_fake) against keccak256(B_fake) and succeeds, minting tokens to attacker.",
+          "mode": "faithful",
+          "waypoint": "token.balanceOf(0xAttacker) >= 1 ETH && replica.processed[123] == true",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "pnetwork_20210919"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks 1 ETH on source chain, generating a cross‑chain message with body B_orig and stored hash H_orig = keccak256(B_orig)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Malicious relay submits the valid proof for the pending message, causing the replica to store H_orig for nonce 123."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relay operator exploits a storage‑write backdoor (e.g., via an upgradeable proxy admin) to replace the stored hash with H_fake = keccak256(B_fake)."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Relay calls process with the forged body B_fake (attacker address, same amount). The contract checks stored hash (now H_fake) against keccak256(B_fake) and succeeds, minting tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_sig_forgery_2024_01",
+      "target_invariant": "authorization_signature_valid",
+      "vulnerability_class": "signature_forgery",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xRecipientMoonbeam",
+            "amount": "1000000000000000000000"
+          },
+          "description": "Lock 1,000 tokens on source chain, emitting outbound message.",
+          "waypoint": "NomadHome.totalLocked()>=1000000000000000000000",
+          "step": 1
+        },
+        {
+          "chain": "offchain",
+          "contract": "observer",
+          "function": "captureMessage",
+          "params": {
+            "nonce": "0x1"
+          },
+          "description": "Attacker captures the outbound body and original signature.",
+          "waypoint": "messageCaptured==true",
+          "step": 2
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0xforgedMessageBytes"
+          },
+          "description": "Submit tampered relay message with forged signature; relay mode = tampered.",
+          "relay_mode": "tampered",
+          "waypoint": "replica.processed[0x1]==true && RepresentationToken.balanceOf(0xAttackerEOA)==1000000000000000000000",
+          "step": 3
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "RepresentationToken",
+          "function": "transfer",
+          "params": {
+            "to": "0xAttackerEOA",
+            "amount": "1000000000000000000000"
+          },
+          "description": "Attacker withdraws minted representation tokens to own address.",
+          "waypoint": "RepresentationToken.balanceOf(0xAttackerEOA)==1000000000000000000000",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1,000 tokens on source chain, emitting outbound message."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker captures the outbound body and original signature."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Submit tampered relay message with forged signature; relay mode = tampered."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Attacker withdraws minted representation tokens to own address."
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_replay_double_mint_001",
+      "target_invariant": "asset_conservation_balance_increment_on_mint",
+      "vulnerability_class": "replay_attack_missing_processed_flag",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xRecipient",
+            "amount": "1000"
+          },
+          "mode": "faithful",
+          "waypoint": "NomadHome.lockedAmount[nonce1]==1000 && representationToken.totalSupply()==0",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "msgBytes_nonce1"
+          },
+          "mode": "faithful",
+          "waypoint": "NomadReplica.processed[nonce1]==true && representationToken.balanceOf(0xRecipient)==balanceBefore+1000",
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "msgBytes_nonce1"
+          },
+          "mode": "replay",
+          "waypoint": "representationToken.balanceOf(0xRecipient)==balanceBefore+2000 && representationToken.totalSupply()>lockedAmount[nonce1]",
+          "step": 3,
+          "description": "Step 3"
+        }
+      ],
+      "retrieved_exploits": [
+        "pnetwork_20210919",
+        "chainswap_20210711"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_auth_bypass_lock_001",
+      "target_invariant": "authorization_only_router_can_initiate_lock",
+      "vulnerability_class": "missing_access_control",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "step": 1,
+          "chain": "ethereum",
+          "contract": "OfficialToken",
+          "function": "approve",
+          "params": {
+            "spender": "NomadHome",
+            "amount": "1000000000000000000000"
+          },
+          "description": "Attacker approves NomadHome to transfer OfficialToken."
+        },
+        {
+          "step": 2,
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000000000000000000000"
+          },
+          "description": "Attacker directly calls lock (send) bypassing NomadBridgeRouter."
+        },
+        {
+          "step": 3,
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "totalLocked",
+          "params": {},
+          "waypoint": "NomadHome.totalLocked() >= 1000000000000000000000",
+          "description": "Step 3"
+        },
+        {
+          "step": 4,
+          "chain": "ethereum",
+          "contract": "NomadBridgeRouter",
+          "function": "lockedAmount",
+          "params": {
+            "account": "0xAttacker"
+          },
+          "waypoint": "NomadBridgeRouter.lockedAmount(0xAttacker) == 0",
+          "description": "Step 4"
+        },
+        {
+          "step": 5,
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0xEncodedLockMessage"
+          },
+          "relay_mode": "faithful",
+          "description": "Relay processes the unauthorized lock message and mints representation tokens to attacker."
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "ronin_20220223"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker approves NomadHome to transfer OfficialToken."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker directly calls lock (send) bypassing NomadBridgeRouter."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Step 4"
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Relay processes the unauthorized lock message and mints representation tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_nonce_replay_missing_cleanup_01",
+      "target_invariant": "uniqueness_state_cleared_after_successful_mint",
+      "vulnerability_class": "logic_bug_missing_state_cleanup",
+      "confidence": 0.86,
+      "actions": [
+        {
+          "step_id": "a1",
+          "chain": "ethereum",
+          "contract": "NomadHome",
+          "function": "send",
+          "params": {
+            "to": "0xAttackerDest",
+            "amount": 1000,
+            "nonce": "N1"
+          },
+          "description": "User locks 1000 OfficialToken on source chain, creating nonce N1. locked[N1] is set to true, minted[N1] is false.",
+          "postcondition": "locked[N1] == true && minted[N1] == false",
+          "step": 1
+        },
+        {
+          "step_id": "a2",
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "processAndRelease",
+          "params": {
+            "message": {
+              "nonce": "N1",
+              "recipient": "0xAttackerDest",
+              "amount": 1000,
+              "proof": "validProofFromAuthorizedRelay"
+            }
+          },
+          "mode": "faithful",
+          "description": "Authorized relay (or compromised key) calls processAndRelease with the original message. Mint of 1000 representation tokens occurs, setting minted[N1] = true. The contract fails to clear locked[N1].",
+          "postcondition": "locked[N1] == true && minted[N1] == true",
+          "step": 2
+        },
+        {
+          "step_id": "a3",
+          "chain": "moonbeam",
+          "contract": "NomadReplica",
+          "function": "processAndRelease",
+          "params": {
+            "message": {
+              "nonce": "N1",
+              "recipient": "0xAttackerDest",
+              "amount": 1000,
+              "proof": "validProofFromAuthorizedRelay"
+            }
+          },
+          "mode": "replay",
+          "description": "Attacker re‑submits the same message (replay) because the lock flag was never cleared. A second mint of 1000 tokens is performed, violating the uniqueness invariant.",
+          "postcondition": "locked[N1] == true && minted[N1] == true && representationToken.totalSupply() increased by 2000",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "nomad_2021",
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks 1000 OfficialToken on source chain, creating nonce N1. locked[N1] is set to true, minted[N1] is false."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Authorized relay (or compromised key) calls processAndRelease with the original message. Mint of 1000 representation tokens occurs, setting minted[N1] = true. The contract fails to clear locked[N1]."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker re‑submits the same message (replay) because the lock flag was never cleared. A second mint of 1000 tokens is performed, violating the uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "nomad_global_cap_exceed_01",
+      "target_invariant": "asset_conservation_global_cap_not_exceeded",
+      "vulnerability_class": "relay_key_compromise_and_message_tampering",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "NomadReplica",
+          "function": "process",
+          "params": {
+            "message": "0xFAKE_MESSAGE_WITH_LARGE_AMOUNT"
+          },
+          "relay_mode": "tampered",
+          "waypoint": "representationToken.totalSupply()==0",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "moonbeam",
+          "contract": "NomadBridgeRouter",
+          "function": "processAndRelease",
+          "params": {
+            "body": {
+              "recipient": "0xATTACKER",
+              "amount": 1000000000000000000000,
+              "nonce": 9999
+            }
+          },
+          "relay_mode": "faithful",
+          "waypoint": "representationToken.totalSupply()>GLOBAL_CAP",
+          "step": 2,
+          "description": "Step 2"
+        }
+      ],
+      "retrieved_exploits": [
+        "evodefi_20220607",
+        "harmony_horizon_20220624"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        }
+      ]
+    }
+  ]
+}
