@@ -847,9 +847,11 @@ impl Dict {
         ] {
             amounts.push(v);
         }
-        if let Some(v) = parse_uint("500000e18") {
-            amounts.push(v);
-        }
+        // The documented exploit drain amount (500000e18) is deliberately NOT
+        // seeded here: adding the exact solution amount to the vocabulary would
+        // leak the documented exploit into the search. The search must reach a
+        // draining amount from the generic boundary values above (powers of ten
+        // up to 1e24 and u128::MAX) or by mutation. See A-0 / SPEC 2026-11-12.
         let mut method_sigs: Vec<String> = Vec::new();
         for c in &world.contracts {
             for f in c.abi.functions().filter(|f| callable(f)) {
@@ -1744,6 +1746,10 @@ mod fixture_tests {
             assert!(dict.amounts.iter().any(|v| *v == EU256::one()), "{bench}: opcode 1 missing");
             assert!(dict.amounts.iter().any(|v| *v == EU256::from(2u8)), "{bench}: opcode 2 missing");
             assert!(dict.amounts.iter().any(|v| *v >= EU256::exp10(18)), "{bench}: payout amount missing");
+            assert!(
+                !dict.amounts.iter().any(|v| *v == parse_uint("500000e18").unwrap()),
+                "{bench}: documented exploit drain amount 500000e18 leaked into mutator vocabulary"
+            );
         }
         if require_solc("polynetwork") {
             let ctx = test_ctx();
