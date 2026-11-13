@@ -9,8 +9,9 @@ pragma solidity ^0.8.20;
 /// this model represents the keeper by the ADDRESS authorised to submit
 /// cross-chain headers, so the manager's keeper check can be enforced on-chain.
 /// The function NAME (putCurEpochConPubKeyBytes) is kept from the incident; the
-/// signature is adapted to (address newKeeper, address fromContract) because the
-/// manager appends the message's fromContract to every dispatched call.
+/// signature is adapted to (address newKeeper). The manager no longer appends
+/// the message's fromContract to dispatched calls (it exposes it via a context
+/// getter instead), so the setter takes only the new keeper.
 contract EthCrossChainData {
     address public owner;
     address public keeper;
@@ -31,7 +32,7 @@ contract EthCrossChainData {
 
     /// Owner-only (owner == ECCM). Reaching this through a cross-chain message
     /// is the root cause of the August 2021 incident.
-    function putCurEpochConPubKeyBytes(address newKeeper, address /*fromContract*/) external {
+    function putCurEpochConPubKeyBytes(address newKeeper) external {
         require(msg.sender == owner, "!owner");
         keeper = newKeeper;
     }

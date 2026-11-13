@@ -1874,7 +1874,7 @@ mod fixture_tests {
                     "crossChain",
                     vec![
                         contract_tok(w, "EthCrossChainData"),
-                        Token::String("putCurEpochConPubKeyBytes(address,address)".into()),
+                        Token::String("putCurEpochConPubKeyBytes(address)".into()),
                         set_keeper_args,
                     ],
                 ),
@@ -1885,7 +1885,7 @@ mod fixture_tests {
                     "verifyHeaderAndExecuteTx",
                     vec![
                         contract_tok(w, "LockProxy"),
-                        Token::String("unlock(address,uint256,address)".into()),
+                        Token::String("unlock(address,uint256)".into()),
                         unlock_args,
                         contract_tok(w, "SrcDeposit"), // forged fromContract = registered proxy
                     ],

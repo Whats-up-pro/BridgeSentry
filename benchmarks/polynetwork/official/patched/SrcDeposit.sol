@@ -21,6 +21,6 @@ contract SrcDeposit {
         require(amount > 0, "zero");
         token.transferFrom(msg.sender, address(this), amount);
         bytes memory args = abi.encode(recipient, amount);
-        ccm.crossChain(destLockProxy, "unlock(address,uint256,address)", args);
+        ccm.crossChain(destLockProxy, "unlock(address,uint256)", args);
     }
 }

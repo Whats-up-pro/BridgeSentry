@@ -14,8 +14,15 @@ import "./EthCrossChainData.sol";
 /// with the attacker, the attacker submits headers themselves — and can set the
 /// message's `fromContract` to the registered proxy, which the honest relay
 /// would never do (it reports the true source sender).
+///
+/// The message's source (`fromContract`) is supplied by the keeper and exposed
+/// to the called contract through `fromContractContext()`, NOT appended to the
+/// caller-controlled `args`. Appending it would let a caller pad `args` with a
+/// forged source that the target reads positionally; the context getter closes
+/// that.
 contract EthCrossChainManager {
     EthCrossChainData public immutable eccd;
+    address public fromContractContext;
 
     constructor(address eccd_) {
         eccd = EthCrossChainData(eccd_);
@@ -31,7 +38,9 @@ contract EthCrossChainManager {
         // VULNERABLE: no restriction on toContract/method — a message may target
         // the privileged ECCD and replace the keeper.
         bytes4 sel = bytes4(keccak256(bytes(method)));
-        (bool ok, ) = toContract.call(abi.encodePacked(sel, args, abi.encode(fromContract)));
+        fromContractContext = fromContract;
+        (bool ok, ) = toContract.call(abi.encodePacked(sel, args));
+        fromContractContext = address(0);
         require(ok, "cross-chain exec failed");
     }
 }
