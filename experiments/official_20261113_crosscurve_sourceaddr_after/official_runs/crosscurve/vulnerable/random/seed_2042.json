@@ -1,0 +1,151 @@
+{
+  "candidates": [
+    {
+      "detected_at_s": 1.330373914,
+      "gain": {
+        "asset0:SrcToken+DstToken": "5"
+      },
+      "gain_entrypoints": [
+        "ReceiverAxelar.expressExecute@dest:Attack"
+      ],
+      "gates": {
+        "capability_compliant": "pass",
+        "causal_path_valid": "pass",
+        "impact_demonstrated": "pass",
+        "material_state_change": "pass",
+        "patched_rejected": "pass",
+        "replayable": "pass",
+        "target_bytecode_executed": "pass"
+      },
+      "key": "asset0:SrcToken+DstToken|ReceiverAxelar.expressExecute@dest:Attack",
+      "patched_control": {
+        "patched_gain": {}
+      },
+      "trace": [
+        {
+          "calldata": "0x23b872dd0000000000000000000000007bbcfa8c109b0a6888d3329a6b762ad4782e0b2600000000000000000000000022bc2df58d96cbc5f2599f2c25d1e565974749ee0000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "SrcToken",
+          "function": "transferFrom(address,address,uint256):(bool)",
+          "side": "source"
+        },
+        {
+          "calldata": "0xcf456ae70000000000000000000000009b137463d4e7986d7f535f9b79e28b4ef1938e9b0000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "SrcToken",
+          "function": "setMinter(address,bool)",
+          "side": "source"
+        },
+        {
+          "calldata": "0x7c201e03000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022bc2df58d96cbc5f2599f2c25d1e565974749ee00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000050000000000000000000000007bbcfa8c109b0a6888d3329a6b762ad4782e0b26",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "side": "dest"
+        },
+        {
+          "calldata": "0xcf456ae70000000000000000000000009b137463d4e7986d7f535f9b79e28b4ef1938e9b0000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "SrcToken",
+          "function": "setMinter(address,bool)",
+          "side": "source"
+        }
+      ],
+      "valid_exploit": true,
+      "validated": true
+    },
+    {
+      "detected_at_s": 35.476017838,
+      "gain": {
+        "asset0:SrcToken+DstToken": "1000000000000000000000"
+      },
+      "gain_entrypoints": [
+        "ReceiverAxelar.expressExecute@dest:Attack",
+        "ReceiverAxelar.execute@dest:Relay"
+      ],
+      "gates": {
+        "capability_compliant": "pass",
+        "causal_path_valid": "pass",
+        "impact_demonstrated": "pass",
+        "material_state_change": "pass",
+        "patched_rejected": "pass",
+        "replayable": "pass",
+        "target_bytecode_executed": "pass"
+      },
+      "key": "asset0:SrcToken+DstToken|ReceiverAxelar.execute@dest:Relay+ReceiverAxelar.expressExecute@dest:Attack",
+      "patched_control": {
+        "patched_gain": {}
+      },
+      "trace": [
+        {
+          "calldata": "0x095ea7b300000000000000000000000022bc2df58d96cbc5f2599f2c25d1e565974749ee0000000000000000000000000000000000000000000000000000000000000002",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256):(bool)",
+          "side": "source"
+        },
+        {
+          "calldata": "0x254acb695dc319bd9bf543e57918e46c4178a2d1f32953c202671a1895a3cfbc80d964140000000000000000000000002387b3383e89c164781d173b7aa14d9c46ed2642",
+          "contract": "GatewaySrc",
+          "function": "approveContractCall(bytes32,address)",
+          "side": "source"
+        },
+        {
+          "calldata": "0x7c201e0357782692422803cba7f38f7759453293b536a42c51d87ad1d6c610c7347bfe7300000000000000000000000022bc2df58d96cbc5f2599f2c25d1e565974749ee000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000003635c9adc5dea0000000000000000000000000000000000000000000000000000000000000000000070000000000000000000000000000000000000000000000000de0b6b3a7640000",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "side": "dest"
+        },
+        {
+          "calldata": "0x1c92115f000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000001f617070726f766528616464726573732c75696e74323536293a28626f6f6c290000000000000000000000000000000000000000000000000000000000000000207472616e7366657228616464726573732c75696e74323536293a28626f6f6c29000000000000000000000000000000000000000000000000000000000000006000000000000000000000000022bc2df58d96cbc5f2599f2c25d1e565974749ee000000000000000000000000000000000000000000000000000000000000000400000000000000000000000022bc2df58d96cbc5f2599f2c25d1e565974749ee",
+          "contract": "GatewayDst",
+          "function": "callContract(string,string,bytes):(bytes32)",
+          "side": "dest"
+        },
+        {
+          "calldata": "0x47e7ef2400000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "side": "source"
+        }
+      ],
+      "valid_exploit": true,
+      "validated": true
+    }
+  ],
+  "candidates_total": 2,
+  "corpus_final": 38,
+  "corpus_initial": 20,
+  "coverage": {
+    "fixture_unique_pcs": 4779
+  },
+  "deploy_log": [
+    "SrcToken=0x9B137463d4E7986D7f535f9B79e28b4EF1938E9b@source (OfficialToken)",
+    "GatewaySrc=0x2387b3383E89c164781d173B7Aa14d9c46eD2642@source (AxelarGateway)",
+    "PortalSrc=0x22bc2df58D96CBc5f2599f2C25D1E565974749EE@source (PortalSrc)",
+    "DstToken=0x9B137463d4E7986D7f535f9B79e28b4EF1938E9b@dest (OfficialToken)",
+    "GatewayDst=0x2387b3383E89c164781d173B7Aa14d9c46eD2642@dest (AxelarGateway)",
+    "PortalV2=0x22bc2df58D96CBc5f2599f2C25D1E565974749EE@dest (PortalV2)",
+    "ReceiverAxelar=0x7bBCFa8c109B0a6888d3329a6B762Ad4782e0B26@dest (ReceiverAxelar)"
+  ],
+  "evaluation_mode": "official",
+  "first_candidate_s": 1.330373914,
+  "first_valid_exploit_s": 1.330373914,
+  "fixture_id": "crosscurve_2026",
+  "fuzz_s": 60.001234719,
+  "iterations": 80096,
+  "official_result_version": 2,
+  "oracle": "execution_only_asset_conservation",
+  "patched_addresses_match": true,
+  "required_offchain_capability": null,
+  "seed": 2042,
+  "seed_fallback_to_random": false,
+  "seed_source": "random",
+  "seed_source_effective": "random",
+  "seed_source_requested": "random",
+  "semantic_resolution": {
+    "actions_resolved": 0,
+    "actions_total": 0,
+    "scenarios_total": 0,
+    "scenarios_with_calls": 20
+  },
+  "setup_s": 0.852078493,
+  "time_budget_s": 60.0,
+  "valid_exploits": 2,
+  "variant": "vulnerable"
+}

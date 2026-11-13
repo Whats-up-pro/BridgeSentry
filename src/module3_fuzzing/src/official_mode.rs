@@ -1821,7 +1821,7 @@ mod fixture_tests {
                 addr_tok(attacker()),
                 Token::Uint(parse_uint("500000e18").unwrap()),
             ]));
-            vec![ucall(w, "ReceiverAxelar", "expressExecute", vec![forged_command, payload])]
+            vec![ucall(w, "ReceiverAxelar", "expressExecute", vec![forged_command, contract_tok(w, "PortalSrc"), payload])]
         }) else {
             return;
         };
