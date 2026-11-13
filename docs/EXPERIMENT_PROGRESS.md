@@ -169,3 +169,33 @@ Ghi chú phụ (không chặn): các luỹ thừa 10 cố định (1e18, 1e21, 1
 Tuy nhiên 1e24 trùng thanh khoản nạp sẵn của 5 fixture, và 1e18, 1e21, 1e24 đã có trong `mutate_token_raw` từ trước `a90aa3d` (1e23 mới thêm ở `a90aa3d`).
 Paper (`main.tex`, `main_bcra.tex`, mục Evaluated configuration) đã mô tả từ vựng là "small integers and boundary amounts"
 kèm `% TODO(authors)`; sửa câu đó theo bản code cuối.
+
+
+## 2026-11-13: A-0 ĐÓNG (cổng chặn chung) + A-1 sẵn sàng cho HPC
+
+### A-0 hoàn tất, đã verify (local WSL, KHÔNG phải HPC)
+- **pt1 `56d5fc1`:** gỡ hằng `500000e18` khỏi `Dict::from_world` + test no-leak. `cargo test` 189+170 xanh.
+- **pt2 CrossCurve `13d9817`:** gateway attest source (`approveContractCall(commandId, source)` /
+  `validateContractCall(commandId, expectedSource)`), `ReceiverAxelar` bind `sourceAddress == trustedSource`
+  (relay truyền `ev:sender`); khác biệt vuln/patched vẫn là gateway-validation ở `expressExecute`.
+  Verify (random × 60s): vulnerable 3/3 valid (median 0.6s), **patched 5/5 → 0/3 alert**.
+  `experiments/official_20261113_crosscurve_sourceaddr_after/`.
+- **pt2 PolyNetwork `1149b42`:** lỗ KHÁC crosscurve — manager append `fromContract` sau `args` attacker
+  (args-injection, không phải sourceAddress). Sửa: manager giữ `fromContractContext()` (nguồn tin cậy),
+  `LockProxy.unlock(address,uint256)` đọc context thay vì args; `putCurEpochConPubKeyBytes(address)`.
+  Verify: **patched 3/3 → 0/3 alert**; vulnerable 2/3 → 0/3 (shortcut giả biến mất, còn exploit 2-bước tài liệu
+  mà random 60s không với tới — đúng chỗ seed LLM/C3 phải chứng tỏ). `experiments/official_20261113_polynetwork_fromcontext_after/`.
+- **Paper:** gỡ 2 TODO đã giải quyết trong `main.tex`+`main_bcra.tex` (mutator leak; PolyNetwork abstraction theo
+  QĐ2 = giữ abstraction + câu mô tả đã có).
+- **Trung thực (gap-first):** không nới oracle/mutator để che alert; chỉ tăng độ trung thực fixture (mô hình đúng
+  ràng buộc nguồn mà cầu nối thật enforce). ⇒ **CrossCurve + PolyNetwork giờ là patched-control C1 hợp lệ** (trước
+  chỉ Nomad/Qubit).
+
+### A-1 sẵn sàng (Lõi A = C1 FPR + C2 VER, không cần token LLM)
+- Binary **musl `d9cf542e…`** (commit `1149b42`, static-pie); smoke Nomad OK (vuln 1/1, patched 0/0).
+- Job HPC **`ed5f6cc`** `scripts/official/job_a1_random.sh`: PDF-compliant (account=uit, partition=normal,
+  qos=mig2-35, **no --gres**, 16 cpu, 4h), 280 run (7 fixture × {vuln,patched} × 20 seed × 300s) gom 1 job `xargs -P 14`.
+- **Blocker HPC:** SSH key mất khỏi `%TEMP%` (Connect-Hpc.ps1 trỏ path đã bị dọn) → chờ người dùng khôi phục từ
+  `.ppk` thầy cấp. VPN đang bật (TCP cổng 22 reachable). Luồng khi có key: scp binary → cập nhật repo HPC lên
+  `ed5f6cc` → `sbatch` → đọc `.out/.err` → chép về `experiments/` → báo người dùng (theo PDF).
+- Pilot A-1 **local** (7 fixture × {vuln,patched} × 3 seed × 120s) đang chạy lấy số sơ bộ trong lúc chờ key.
