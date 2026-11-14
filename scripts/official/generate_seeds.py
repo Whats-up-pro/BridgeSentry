@@ -52,6 +52,8 @@ os.environ.setdefault("BRIDGESENTRY_LLM_CACHE", "0")  # default: count every rea
 #                                                     set =1 to reuse cache (Module 1 across regimes)
 os.environ["BRIDGESENTRY_EMBEDDING_CACHE"] = "0"    # reproducible retrieval label
 os.environ.setdefault("PYTHONHASHSEED", "0")        # hash-fallback determinism
+os.environ.setdefault("BRIDGESENTRY_REQUIRE_SEMANTIC_EMBEDDING", "1")  # paper: all-MiniLM-L6-v2 + FAISS;
+#                                                     never silently retrieve with token hashing
 
 BACKENDS = {
     # alias -> (provider_name expected from get_llm_client, required env key)
@@ -77,6 +79,18 @@ def _git_commit() -> str:
         ).strip()
     except Exception:
         return "unknown"
+
+
+def _lib_versions() -> dict:
+    """Installed versions of the retrieval stack, for provenance."""
+    from importlib import metadata
+    out = {}
+    for name in ("sentence-transformers", "torch", "transformers", "faiss-cpu", "numpy"):
+        try:
+            out[name] = metadata.version(name)
+        except metadata.PackageNotFoundError:
+            out[name] = None
+    return out
 
 
 @contextlib.contextmanager
@@ -185,13 +199,6 @@ def main() -> int:
     )
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # ---- detect embedding backend label (sentence-transformers vs hash) ----
-    try:
-        import sentence_transformers  # noqa: F401
-        emb_backend = "sentence_transformers:all-MiniLM-L6-v2"
-    except Exception:
-        emb_backend = "hash_fallback_256d"
-
     from src.module1_semantic.extractor import SemanticExtractor
     from src.module1_semantic.atg_builder import ATGBuilder
     from src.module1_semantic.invariant_synth import InvariantSynthesizer
@@ -266,6 +273,15 @@ def main() -> int:
         scenarios = gen.generate(atg_json, inv)
         t_m2 = time.time() - t1
 
+        # Record the embedding backend that actually ran (not what was importable).
+        if not gen._kb_ready:
+            emb_backend = "none_no_retrieval"
+            emb_dim = None
+        else:
+            emb_backend = gen.embedder.backend or "unknown"
+            emb_dim = (int(gen.embedder._matrix.shape[1])
+                       if gen.embedder._matrix is not None else None)
+
         modes = [s.pop("__gen_mode", "llm") for s in scenarios]
         n_llm = sum(1 for m in modes if m == "llm")
         n_fallback = sum(1 for m in modes if m == "deterministic_fallback")
@@ -297,7 +313,7 @@ def main() -> int:
     )
 
     provenance = {
-        "schema": "generate_seeds/v1",
+        "schema": "generate_seeds/v2",
         "generated_at_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "git_commit": _git_commit(),
         "host": socket.gethostname(),
@@ -319,6 +335,9 @@ def main() -> int:
         "kb_pool_ids": pool_ids,
         "kb_dropped_ids": dropped_ids,
         "embedding_backend": emb_backend,
+        "embedding_dim": emb_dim,
+        "embedding_strict": os.environ.get("BRIDGESENTRY_REQUIRE_SEMANTIC_EMBEDDING"),
+        "embedding_lib_versions": _lib_versions(),
         "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
         "llm_cache": os.environ.get("BRIDGESENTRY_LLM_CACHE"),
         "module1": {

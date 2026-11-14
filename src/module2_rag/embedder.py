@@ -4,6 +4,11 @@ Embedder — Encodes exploit records into vector embeddings and manages FAISS in
 Uses sentence-transformers (all-MiniLM-L6-v2) for encoding.
 FAISS for similarity search.
 
+If sentence-transformers cannot load, encoding falls back to 256-d token
+hashing; ``ExploitEmbedder.backend`` records which one actually ran. Set
+``BRIDGESENTRY_REQUIRE_SEMANTIC_EMBEDDING=1`` to fail instead of falling back
+(official seed generation does this).
+
 Embedding cache
 ---------------
 Encoding 50+ exploit texts via sentence-transformers takes 5-10s on CPU. We
@@ -31,6 +36,19 @@ except Exception:  # pragma: no cover
 
 
 _DEFAULT_CACHE_DIR = ".embedding_cache"
+_CACHE_KEY_VERSION = "v2"  # v2: hash-fallback vectors are never cached
+HASH_FALLBACK_BACKEND = "hash_fallback_256d"
+
+
+def _require_semantic_embedding() -> bool:
+    """True when the silent fallback to hash vectors is forbidden.
+
+    Official seed generation sets BRIDGESENTRY_REQUIRE_SEMANTIC_EMBEDDING=1 so a
+    missing or broken sentence-transformers install fails loudly instead of
+    silently replacing the paper's all-MiniLM-L6-v2 retrieval with token hashing.
+    """
+    flag = os.getenv("BRIDGESENTRY_REQUIRE_SEMANTIC_EMBEDDING", "0").strip().lower()
+    return flag in {"1", "true", "yes", "on"}
 
 
 def _embedding_cache_enabled() -> bool:
@@ -52,6 +70,9 @@ class ExploitEmbedder:
         self.index = None
         self._matrix: np.ndarray | None = None
         self._model = None
+        # Backend actually used for the vectors (set on encode / cache hit), so
+        # provenance records what ran rather than what was importable.
+        self.backend: str | None = None
         self.exploit_texts: list[str] = []
         self.exploits: list[dict[str, Any]] = []
 
@@ -91,12 +112,20 @@ class ExploitEmbedder:
         cache_path = _embedding_cache_dir() / f"{key}.npy"
         if cache_path.exists():
             try:
-                return np.load(cache_path)
+                cached = np.load(cache_path)
+                # Only non-hash vectors are ever written (see below), so a v2 hit
+                # is a semantic embedding.
+                self.backend = f"sentence_transformers:{self.model_name}"
+                return cached
             except (OSError, ValueError):
                 # Corrupt cache file — fall through and overwrite below.
                 pass
 
         embeddings = self._encode_texts(texts)
+        if self.backend == HASH_FALLBACK_BACKEND:
+            # Never cache hash vectors: the key names the semantic model, so a
+            # cached hash matrix would later be served as all-MiniLM-L6-v2.
+            return embeddings
         try:
             # ``cache_path`` already ends in ``.npy`` so np.save writes there directly.
             # Skip atomic rename: a partially-written file is still cheaper to overwrite
@@ -108,7 +137,7 @@ class ExploitEmbedder:
         return embeddings
 
     def _cache_key(self, texts: list[str]) -> str:
-        material = self.model_name + "\n---\n" + "\n\n".join(texts)
+        material = _CACHE_KEY_VERSION + "|" + self.model_name + "\n---\n" + "\n\n".join(texts)
         return hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
 
     def search(self, query: str, top_k: int = 5) -> list[dict]:
@@ -118,6 +147,12 @@ class ExploitEmbedder:
 
         top_k = max(1, min(top_k, len(self.exploits)))
         q = self._encode_texts([query])
+        if q.shape[1] != self._matrix.shape[1]:
+            raise RuntimeError(
+                f"embedding dimension mismatch: index {self._matrix.shape[1]}-d vs "
+                f"query {q.shape[1]}-d (backend changed between index and query; "
+                f"now {self.backend!r})"
+            )
 
         if faiss is not None and self.index is not None and hasattr(self.index, "search"):
             emb = self._matrix.copy()
@@ -167,8 +202,16 @@ class ExploitEmbedder:
 
                 self._model = SentenceTransformer(self.model_name)
             vectors = self._model.encode(texts, normalize_embeddings=False)
+            self.backend = f"sentence_transformers:{self.model_name}"
             return np.asarray(vectors, dtype=np.float32)
-        except Exception:  # pragma: no cover
+        except Exception as exc:
+            if _require_semantic_embedding():
+                raise RuntimeError(
+                    f"semantic embedding ({self.model_name}) unavailable and "
+                    "BRIDGESENTRY_REQUIRE_SEMANTIC_EMBEDDING=1 forbids the "
+                    f"hash fallback: {type(exc).__name__}: {exc}"
+                ) from exc
+            self.backend = HASH_FALLBACK_BACKEND
             return np.asarray([self._hash_embed(t) for t in texts], dtype=np.float32)
 
     def _hash_embed(self, text: str, dim: int = 256) -> np.ndarray:
