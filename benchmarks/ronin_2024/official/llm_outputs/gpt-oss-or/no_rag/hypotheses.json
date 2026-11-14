@@ -1,0 +1,220 @@
+{
+  "bridge_name": "ronin_2024",
+  "scenarios": [
+    {
+      "scenario_id": "ronin_2024_auth_bypass_001",
+      "target_invariant": "inv_authorization",
+      "vulnerability_class": "relay_evidence_forgery",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 token on Ronin, generating canonical message κ with id 0xdeadbeef.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RelayOracle",
+          "function": "submitProof(bytes32,bytes)",
+          "params": {
+            "messageId": "0xdeadbeef",
+            "proof": "0xfeedc0de... (crafted proof with attacker‑controlled root hash)"
+          },
+          "relay_mode": "tampered",
+          "description": "Attacker submits a tampered proof that claims the RoninDeposit emitted the lock event, but the merkle root is forged.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerEOA",
+            "amount": "1000000000000000000",
+            "signers": [
+              "0xAttackerSigner"
+            ]
+          },
+          "description": "Gateway verifies the tampered proof, considers it valid source evidence, and mints/unlocks tokens to attacker.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 token on Ronin, generating canonical message κ with id 0xdeadbeef."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker submits a tampered proof that claims the RoninDeposit emitted the lock event, but the merkle root is forged."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Gateway verifies the tampered proof, considers it valid source evidence, and mints/unlocks tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_2024_uniqueness_replay_01",
+      "target_invariant": "inv_uniqueness",
+      "vulnerability_class": "replay_attack_on_message_consumption",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "1000e18"
+          },
+          "description": "User A locks 1000 tokens on Ronin, generating canonical key κ (nonce, sender, amount).",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": "1000e18",
+            "signers": [
+              "0xValidator1",
+              "0xValidator2",
+              "0xValidator3"
+            ]
+          },
+          "relay_mode": "faithful",
+          "description": "Honest relayer forwards the signed message to Ethereum, consuming κ once.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": "1000e18",
+            "signers": [
+              "0xValidator1",
+              "0xValidator2",
+              "0xValidator3"
+            ]
+          },
+          "relay_mode": "replay",
+          "description": "Attacker replays the same signed payload (same κ) before the contract marks it consumed, causing a second transfer.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User A locks 1000 tokens on Ronin, generating canonical key κ (nonce, sender, amount)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Honest relayer forwards the signed message to Ethereum, consuming κ once."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker replays the same signed payload (same κ) before the contract marks it consumed, causing a second transfer."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_state_consistency_exploit_001",
+      "target_invariant": "inv_state_consistency",
+      "vulnerability_class": "relay_tampering_state_mismatch",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 RON token on Ronin, emitting canonical message kappa with nonce N.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RelayOracle",
+          "function": "submitProof(bytes)",
+          "params": {
+            "proof": "tampered_proof_for_kappa_N"
+          },
+          "relay_mode": "tampered",
+          "description": "Relay operator submits a crafted proof that reports a different amount (e.g., 10x) while keeping the same message hash.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerAddress",
+            "amount": "10000000000000000000",
+            "signers": []
+          },
+          "description": "Gateway processes the tampered proof and releases 10 RON equivalents to attacker, violating state consistency.",
+          "step": 3
+        },
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "totalLocked()",
+          "params": {},
+          "state_predicate": "RoninDeposit.totalLocked() == 0",
+          "description": "Verify that source contract believes no tokens were unlocked, confirming mismatch.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 RON token on Ronin, emitting canonical message kappa with nonce N."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay operator submits a crafted proof that reports a different amount (e.g., 10x) while keeping the same message hash."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Gateway processes the tampered proof and releases 10 RON equivalents to attacker, violating state consistency."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Verify that source contract believes no tokens were unlocked, confirming mismatch."
+        }
+      ]
+    }
+  ]
+}

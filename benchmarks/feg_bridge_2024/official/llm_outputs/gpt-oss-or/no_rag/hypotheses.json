@@ -1,0 +1,1260 @@
+{
+  "bridge_name": "feg_bridge_2024",
+  "scenarios": [
+    {
+      "scenario_id": "feg_bridge_2024_asset_conservation_break_001",
+      "target_invariant": "asset_conservation_deposit_to_release",
+      "vulnerability_class": "relay_message_tampering",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttackerAddr",
+            "amount": "1000000e18"
+          },
+          "description": "Lock 1,000,000 FEG on source chain; e1 emits Locked event.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes,uint256)",
+          "params": {
+            "nonce": "42",
+            "payload": "0x0000000000000000000000000xAttackerAddr0000000000000000000000000000000000000000000000000f4240",
+            "consistencyLevel": "1"
+          },
+          "description": "Relay (core) publishes the canonical message containing amount and recipient.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "message": "tampered_payload"
+          },
+          "mode": "tampered",
+          "description": "Relayer submits a crafted payload where amount field is set to 0 while keeping recipient address unchanged.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "0xWormholeCoreAddress",
+            "payload": "0x0000000000000000000000000xAttackerAddr000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Bridge processes tampered message; e3 releases 0 tokens to attacker, but internal accounting marks release as successful.",
+          "step": 4
+        },
+        {
+          "chain": "destination",
+          "contract": "OfficialToken",
+          "function": "mint(address,uint256)",
+          "params": {
+            "to": "0xAttackerAddr",
+            "amount": "1000000e18"
+          },
+          "description": "Due to missing amount verification, the bridge mints full amount on destination despite zero amount in payload, violating locked_amount == released_amount.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1,000,000 FEG on source chain; e1 emits Locked event."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay (core) publishes the canonical message containing amount and recipient."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relayer submits a crafted payload where amount field is set to 0 while keeping recipient address unchanged."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge processes tampered message; e3 releases 0 tokens to attacker, but internal accounting marks release as successful."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Due to missing amount verification, the bridge mints full amount on destination despite zero amount in payload, violating locked_amount == released_amount."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_2024_totalSupply_mint_exploit_001",
+      "target_invariant": "asset_conservation_total_supply_unchanged",
+      "vulnerability_class": "mintable_token_backdoor",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttackerEOA",
+            "amount": "1000000e18"
+          },
+          "description": "Lock a large amount of source FEG tokens; the bridge records the lock but does not burn the source token (source token is non‑burnable).",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes,uint256)",
+          "params": {
+            "nonce": "0",
+            "payload": "0x000000000000000000000000AttackerEOA...0000000000000f4240",
+            "consistencyLevel": "1"
+          },
+          "description": "Relay a forged Wormhole message containing an inflated amount (1 000 000 FEG) to the destination chain. The attacker controls the relayer and can set the payload arbitrarily.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "encodedMessage": "output_of_WormholeCore_publishMessage"
+          },
+          "relay_mode": "tampered",
+          "description": "Submit the forged message to the destination relayer; the relayer trusts WormholeCore signature verification but does not validate amount against source lock.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "WormholeCore",
+            "payload": "0x000000000000000000000000AttackerEOA...0000000000000f4240"
+          },
+          "description": "Bridge decodes payload and calls OfficialToken.mint(AttackerEOA, 1 000 000 FEG). Destination token is mintable and lacks a totalSupply check.",
+          "step": 4
+        },
+        {
+          "chain": "destination",
+          "contract": "OfficialToken",
+          "function": "balanceOf(address)",
+          "params": {
+            "account": "0xAttackerEOA"
+          },
+          "description": "Attacker now holds minted tokens; totalSupplyDestination increased while totalSupplySource unchanged, violating the invariant.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock a large amount of source FEG tokens; the bridge records the lock but does not burn the source token (source token is non‑burnable)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay a forged Wormhole message containing an inflated amount (1 000 000 FEG) to the destination chain. The attacker controls the relayer and can set the payload arbitrarily."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Submit the forged message to the destination relayer; the relayer trusts WormholeCore signature verification but does not validate amount against source lock."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge decodes payload and calls OfficialToken.mint(AttackerEOA, 1 000 000 FEG). Destination token is mintable and lacks a totalSupply check."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Attacker now holds minted tokens; totalSupplyDestination increased while totalSupplySource unchanged, violating the invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_2024_auth_origin_bypass_01",
+      "target_invariant": "authorization_message_origin",
+      "vulnerability_class": "relay_message_spoofing",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "core",
+          "function": "publishMessage",
+          "params": {
+            "payload": "0xdeadbeef... (encoded: address recipient, uint256 amount)",
+            "nonce": 42,
+            "consistencyLevel": 1
+          },
+          "description": "Attacker, controlling the core relay, emits a forged Wormhole message with a valid nonce but arbitrary payload.",
+          "step": 1
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage",
+          "params": {
+            "vaa": "0x... (the VAA produced in step 1, signed only by attacker’s compromised core key)",
+            "targetChain": "destination"
+          },
+          "relay_mode": "tampered",
+          "description": "Relayer forwards the forged VAA to the destination router, believing it originated from WormholeCore.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage",
+          "params": {
+            "sender": "0xAttackerRelayer",
+            "payload": "0xdeadbeef... (decoded recipient, amount)"
+          },
+          "description": "SmartBridge processes the message; invariant check passes because msg.sender == relayer and verifiedMessage.source is taken from VAA header, which attacker set to WormholeCore address.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "OfficialToken",
+          "function": "mint",
+          "params": {
+            "to": "0xAttackerEOA",
+            "amount": "1000000e18"
+          },
+          "description": "Minted tokens are released to attacker despite no lock on source chain, violating asset conservation but bypassing the authorization invariant.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker, controlling the core relay, emits a forged Wormhole message with a valid nonce but arbitrary payload."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relayer forwards the forged VAA to the destination router, believing it originated from WormholeCore."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "SmartBridge processes the message; invariant check passes because msg.sender == relayer and verifiedMessage.source is taken from VAA header, which attacker set to WormholeCore address."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "destRouter.totalMinted() >= 1000000000000000000",
+          "description": "Minted tokens are released to attacker despite no lock on source chain, violating asset conservation but bypassing the authorization invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_sig_bypass_001",
+      "target_invariant": "authorization_deposit_signature",
+      "vulnerability_class": "signature replay / missing nonce",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "user": "0xAttacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Call deposit with a previously observed valid signature (replay) that authorizes 1 FEG from victim.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes)",
+          "params": {
+            "nonce": "0xdeadbeef",
+            "payload": "0x...encoded(address=0xVictim,amount=1e18)"
+          },
+          "description": "Relay the lock event; attacker controls WormholeCore via compromised relayer, allowing tampered payload.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "message": "0x...payload from previous step"
+          },
+          "mode": "tampered",
+          "description": "Relay the tampered Wormhole message to the destination router.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "0xWormholeCore",
+            "payload": "0x...encoded(address=0xAttacker,amount=1e18)"
+          },
+          "description": "Trigger release; invariant check passes because msg.sender == relayer and source verified as WormholeCore.",
+          "step": 4
+        },
+        {
+          "chain": "destination",
+          "contract": "OfficialToken",
+          "function": "mint(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Attacker receives minted FEG tokens without a valid user signature on source lock.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call deposit with a previously observed valid signature (replay) that authorizes 1 FEG from victim."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay the lock event; attacker controls WormholeCore via compromised relayer, allowing tampered payload."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relay the tampered Wormhole message to the destination router."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Trigger release; invariant check passes because msg.sender == relayer and source verified as WormholeCore."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Attacker receives minted FEG tokens without a valid user signature on source lock."
+        }
+      ]
+    },
+    {
+      "scenario_id": "wormhole_msg_replay_feg_001",
+      "target_invariant": "uniqueness_message_consumed_once",
+      "vulnerability_class": "replay_attack",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 FEG on source chain, triggering WormholeCore.publishMessage.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes,uint256)",
+          "params": {
+            "nonce": "42",
+            "payload": "0x...encoded(to=0xAttacker,amount=1e18)",
+            "consistencyLevel": "1"
+          },
+          "description": "Capture emitted messageId (msgId = keccak256(nonce, payload)).",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(uint64,uint256,bytes)",
+          "params": {
+            "messageId": "0xCapturedMsgId",
+            "nonce": "42",
+            "payload": "0x...encoded(to=0xAttacker,amount=1e18)"
+          },
+          "relay_mode": "faithful",
+          "description": "First honest relay – FEGSmartBridge releases 1 FEG to attacker.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(uint64,uint256,bytes)",
+          "params": {
+            "messageId": "0xCapturedMsgId",
+            "nonce": "42",
+            "payload": "0x...encoded(to=0xAttacker,amount=1e18)"
+          },
+          "relay_mode": "replay",
+          "description": "Malicious replay of the same messageId before processedMessageIds is updated (race condition).",
+          "step": 4
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "0xRelayer",
+            "payload": "0x...encoded(to=0xAttacker,amount=1e18)"
+          },
+          "description": "Second processing of the same messageId mints another 1 FEG, violating uniqueness.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 FEG on source chain, triggering WormholeCore.publishMessage."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Capture emitted messageId (msgId = keccak256(nonce, payload))."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "First honest relay – FEGSmartBridge releases 1 FEG to attacker."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Malicious replay of the same messageId before processedMessageIds is updated (race condition)."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Second processing of the same messageId mints another 1 FEG, violating uniqueness."
+        }
+      ]
+    },
+    {
+      "scenario_id": "replay_nonce_feg_001",
+      "target_invariant": "uniqueness_nonce_non_replay",
+      "vulnerability_class": "nonce_reuse_replay",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000e18"
+          },
+          "description": "Attacker calls deposit with a fresh nonce N (nonce stored internally, but not emitted).",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes)",
+          "params": {
+            "nonce": "N",
+            "payload": "abi.encode(address(0xAttacker),uint256(1000e18),uint256(N))"
+          },
+          "description": "Relayer (or attacker controlling relayer) forwards the message to WormholeCore. The bridge does not record the nonce in usedNonces mapping.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "message": "payload_from_step_2"
+          },
+          "mode": "faithful",
+          "description": "Relayer delivers the message to the destination router.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "address(WormholeCore)",
+            "payload": "abi.encode(address(0xAttacker),uint256(1000e18),uint256(N))"
+          },
+          "description": "Destination router releases (mints) 1000 FEG to attacker. usedNonces mapping on source is never checked, so nonce N remains false.",
+          "step": 4
+        },
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000e18"
+          },
+          "description": "Attacker re‑uses the same nonce N to lock another 1000 FEG. Because usedNonces[N] was never set to true, the require passes, allowing a second release on destination.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker calls deposit with a fresh nonce N (nonce stored internally, but not emitted)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relayer (or attacker controlling relayer) forwards the message to WormholeCore. The bridge does not record the nonce in usedNonces mapping."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relayer delivers the message to the destination router."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Destination router releases (mints) 1000 FEG to attacker. usedNonces mapping on source is never checked, so nonce N remains false."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Attacker re‑uses the same nonce N to lock another 1000 FEG. Because usedNonces[N] was never set to true, the require passes, allowing a second release on destination."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_2024_auth_relayer_sig_bypass_01",
+      "target_invariant": "authorization_relayer_signature",
+      "vulnerability_class": "relayer_signature_forgery",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 FEG on source chain, triggering WormholeCore message emission.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint32 nonce,bytes payload,uint8 consistencyLevel)",
+          "params": {
+            "nonce": "0x1",
+            "payload": "0x...encoded(address=0xAttacker,amount=1e18)",
+            "consistencyLevel": "1"
+          },
+          "description": "Capture the VAA emitted for the lock (real VAA).",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(bytes vaa)",
+          "params": {
+            "vaa": "0xForgedVAA"
+          },
+          "relay_mode": "tampered",
+          "description": "Submit a crafted VAA where the signature set is replaced with attacker‑controlled keys, but the payload remains unchanged.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "0xAttacker",
+            "payload": "0x...encoded(address=0xAttacker,amount=1e18)"
+          },
+          "description": "Bridge releases minted FEG to attacker because verifyVAA incorrectly accepts the tampered VAA.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 FEG on source chain, triggering WormholeCore message emission."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Capture the VAA emitted for the lock (real VAA)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Submit a crafted VAA where the signature set is replaced with attacker‑controlled keys, but the payload remains unchanged."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge releases minted FEG to attacker because verifyVAA incorrectly accepts the tampered VAA."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_double_mint_001",
+      "target_invariant": "asset_conservation_no_double_mint",
+      "vulnerability_class": "mint_overrelease_via_replayable_wormhole_message",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 FEG on source chain; triggers WormholeCore publishMessage.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes,uint256)",
+          "params": {
+            "nonce": "0x1",
+            "payload": "0x...encoded(address=0xAttacker,amount=1000000000000000000)...",
+            "consistencyLevel": "1"
+          },
+          "relay_mode": "faithful",
+          "description": "WormholeCore emits the canonical bridge message containing the deposit details.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "encodedMessage": "0x...same payload as above..."
+          },
+          "relay_mode": "tampered",
+          "description": "Relayer replays the same Wormhole message after the original release has already been processed, exploiting missing replay protection.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "0xWormholeCore",
+            "payload": "0x...encoded(address=0xAttacker,amount=1000000000000000000)..."
+          },
+          "description": "Bridge contract mints OfficialToken to attacker without checking prior releases, violating mintedAmount <= lockedAmount.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 FEG on source chain; triggers WormholeCore publishMessage."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "WormholeCore emits the canonical bridge message containing the deposit details."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relayer replays the same Wormhole message after the original release has already been processed, exploiting missing replay protection."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge contract mints OfficialToken to attacker without checking prior releases, violating mintedAmount <= lockedAmount."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_2024_uniqueness_release_replay_01",
+      "target_invariant": "uniqueness_release_idempotent",
+      "vulnerability_class": "replay_release_without_state_guard",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 FEG on source chain, triggering WormholeCore.publishMessage with messageId=msgId1.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes)",
+          "params": {
+            "nonce": "42",
+            "payload": "0x...encoded(to=0xAttacker, amount=1e18, messageId=msgId1)..."
+          },
+          "description": "Emit the cross‑chain message; the relayer will forward it to destination.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(uint256,bytes)",
+          "params": {
+            "messageId": "msgId1",
+            "payload": "0x...same as above..."
+          },
+          "relay_mode": "faithful",
+          "description": "Standard relay – causes FEGSmartBridge.release to mint 1 FEG to attacker.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(uint256,bytes)",
+          "params": {
+            "messageId": "msgId1",
+            "payload": "0x...same as above..."
+          },
+          "relay_mode": "tampered",
+          "description": "Replay the same messageId after a short delay while the bridge’s released[messageId] flag is not correctly set due to a missing storage write (bug). This triggers a second mint of 1 FEG.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 FEG on source chain, triggering WormholeCore.publishMessage with messageId=msgId1."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Emit the cross‑chain message; the relayer will forward it to destination."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Standard relay – causes FEGSmartBridge.release to mint 1 FEG to attacker."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Replay the same messageId after a short delay while the bridge’s released[messageId] flag is not correctly set due to a missing storage write (bug). This triggers a second mint of 1 FEG."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_2024_relayer_auth_bypass_001",
+      "target_invariant": "authorization_only_trusted_relayer",
+      "vulnerability_class": "authorization",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "amount": "1000000000000000000"
+          },
+          "waypoint": "sourceRouter.totalLocked() >= 1e18",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes,uint256)",
+          "params": {
+            "nonce": "12345",
+            "payload": "0xdeadbeef... (encoded: destination address, amount)",
+            "consistencyLevel": "1"
+          },
+          "relay_mode": "tampered",
+          "waypoint": "core.lastPublishedNonce() == 12345",
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "payload": "0xdeadbeef... (same as above)"
+          },
+          "relay_mode": "replay",
+          "waypoint": "replica.zero_root_accepted == true",
+          "step": 3,
+          "description": "Step 3"
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "release(address,uint256)",
+          "params": {
+            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "amount": "1000000000000000000"
+          },
+          "relay_mode": "faithful",
+          "waypoint": "destinationToken.balanceOf(0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef) >= 1e18",
+          "step": 4,
+          "description": "Step 4"
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Step 4"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_refund_balance_break_001",
+      "target_invariant": "asset_conservation_refund_restores_balance",
+      "vulnerability_class": "refund_logic_misorder",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 FEG token on source chain.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes,uint256)",
+          "params": {
+            "nonce": "42",
+            "payload": "0x... (encoded {to:0xAttacker, amount:1e18})",
+            "consistencyLevel": "1"
+          },
+          "description": "Relay the lock message with a crafted nonce that will later be replayed.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "encodedMessage": "0x... (same payload as above, but with manipulated sequence number to appear as a new message)"
+          },
+          "relay_mode": "tampered",
+          "description": "Relayer forwards a tampered message that passes verification but points to a non‑existent lock.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "0xWormholeCore",
+            "payload": "0x... (release instruction for 1 FEG to attacker)"
+          },
+          "description": "Bridge releases minted FEG on destination chain to attacker.",
+          "step": 4
+        },
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "claimRefund(uint256)",
+          "params": {
+            "lockId": "1"
+          },
+          "description": "Attacker calls refund after timeout; due to missing state update, contract returns locked amount without checking prior release.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 FEG token on source chain."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay the lock message with a crafted nonce that will later be replayed."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relayer forwards a tampered message that passes verification but points to a non‑existent lock."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge releases minted FEG on destination chain to attacker."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Attacker calls refund after timeout; due to missing state update, contract returns locked amount without checking prior release."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_msgid_collision_01",
+      "target_invariant": "uniqueness_message_id_format",
+      "vulnerability_class": "message_id_format_violation",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage",
+          "params": {
+            "payload": "0xdeadbeef",
+            "nonce": 0,
+            "consistencyLevel": 1,
+            "messageId": "0x1234"
+          },
+          "description": "Call WormholeCore.publishMessage with a crafted short messageId (4 bytes) by exploiting an uninitialized storage slot that overwrites the internal id generation logic.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit",
+          "params": {
+            "token": "feg",
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 FEG token, triggering the bridge to forward the malformed message to WormholeCore (edge e2).",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "processMessage",
+          "params": {
+            "messageId": "0x1234",
+            "payload": "0xdeadbeef"
+          },
+          "relay_mode": "tampered",
+          "description": "Relayer accepts the short messageId because it does not validate length, then forwards to FEGSmartBridge.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage",
+          "params": {
+            "sender": "WormholeCore",
+            "payload": "0xdeadbeef"
+          },
+          "description": "FEGSmartBridge releases tokens to attacker address based on the payload, violating the uniqueness invariant.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call WormholeCore.publishMessage with a crafted short messageId (4 bytes) by exploiting an uninitialized storage slot that overwrites the internal id generation logic."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "sourceRouter.totalLocked() >= 1000000000000000000",
+          "description": "Lock 1 FEG token, triggering the bridge to forward the malformed message to WormholeCore (edge e2)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relayer accepts the short messageId because it does not validate length, then forwards to FEGSmartBridge."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "FEGSmartBridge releases tokens to attacker address based on the payload, violating the uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_src_token_lock_bypass_001",
+      "target_invariant": "authorization_source_token_locked",
+      "vulnerability_class": "missing-prelock-check",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "token": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "amount": "1000000000000000000"
+          },
+          "description": "User calls deposit, but the bridge contract does not transfer tokens before emitting the Wormhole message.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes,uint8)",
+          "params": {
+            "nonce": "42",
+            "payload": "0x...encoded(address=attacker, amount=1000000000000000000)...",
+            "consistencyLevel": "1"
+          },
+          "description": "Relay (faithful) forwards the message; attacker can front‑run the publishMessage call to inject a crafted payload before the legitimate lock occurs.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "processMessage(bytes)",
+          "params": {
+            "vaa": "0x...signed by WormholeCore..."
+          },
+          "description": "Relayer (faithful) verifies the VAA and calls FEGSmartBridge.receiveMessage.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "0xWormholeCoreAddress",
+            "payload": "0x...encoded(address=attacker, amount=1000000000000000000)..."
+          },
+          "description": "Bridge releases tokens to attacker on destination chain (minting) while source token never actually locked.",
+          "step": 4
+        },
+        {
+          "chain": "source",
+          "contract": "feg",
+          "function": "balanceOf(address)",
+          "params": {
+            "account": "0xFEGBridgeSrcAddress"
+          },
+          "description": "State predicate: sourceToken.balanceOf(bridge) == 0 < lockedAmount, violating invariant.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User calls deposit, but the bridge contract does not transfer tokens before emitting the Wormhole message."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay (faithful) forwards the message; attacker can front‑run the publishMessage call to inject a crafted payload before the legitimate lock occurs."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relayer (faithful) verifies the VAA and calls FEGSmartBridge.receiveMessage."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge releases tokens to attacker on destination chain (minting) while source token never actually locked."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "State predicate: sourceToken.balanceOf(bridge) == 0 < lockedAmount, violating invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "replay_nonce_feg_001",
+      "target_invariant": "uniqueness_nonce_per_chain",
+      "vulnerability_class": "nonce_replay",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttackerAddr",
+            "amount": "1000e18"
+          },
+          "description": "Attacker initiates a legitimate lock, causing BridgeSrc to emit a Wormhole message with nonce N (e1).",
+          "state_predicate": "usedNonces[sourceChainId][N] == false",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(uint256,bytes,uint256)",
+          "params": {
+            "nonce": "N",
+            "payload": "<encoded(to=0xAttackerAddr, amount=1000e18)>",
+            "consistencyLevel": "1"
+          },
+          "description": "Relayer (controlled by attacker) captures the emitted message and later re‑publishes it with the same nonce N using a delayed/tampered relay mode.",
+          "relay_mode": "tampered",
+          "state_predicate": "messageQueue.contains(N) == true",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "relayer",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sender": "WormholeCore",
+            "payload": "<encoded(to=0xAttackerAddr, amount=1000e18)>"
+          },
+          "description": "Relayer forwards the replayed message to FEGSmartBridge, which validates the payload but only checks signature, not nonce uniqueness on source.",
+          "relay_mode": "faithful",
+          "state_predicate": "usedNonces[sourceChainId][N] == false",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "release(address,uint256)",
+          "params": {
+            "to": "0xAttackerAddr",
+            "amount": "1000e18"
+          },
+          "description": "Bridge releases (mints) tokens again to attacker, violating uniqueness invariant.",
+          "state_predicate": "OfficialToken.balanceOf(0xAttackerAddr) >= 2000e18",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker initiates a legitimate lock, causing BridgeSrc to emit a Wormhole message with nonce N (e1)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relayer (controlled by attacker) captures the emitted message and later re‑publishes it with the same nonce N using a delayed/tampered relay mode."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relayer forwards the replayed message to FEGSmartBridge, which validates the payload but only checks signature, not nonce uniqueness on source."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge releases (mints) tokens again to attacker, violating uniqueness invariant."
+        }
+      ]
+    }
+  ]
+}

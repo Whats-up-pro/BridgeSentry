@@ -1,0 +1,1210 @@
+{
+  "bridge_name": "ronin_2024",
+  "scenarios": [
+    {
+      "scenario_id": "ronin_2024_asset_conservation_break_01",
+      "target_invariant": "asset_conservation_deposit_to_mint",
+      "vulnerability_class": "signature_forgery",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": 1000
+          },
+          "description": "User locks 1000 OfficialToken on Ronin, emitting a Deposit event with nonce N.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerRecipient",
+            "amount": 1000,
+            "signatures": [
+              {
+                "relayer": "0xCompromisedRelayer1",
+                "signature": "0xFAKE_SIG_1",
+                "weight": 30
+              },
+              {
+                "relayer": "0xCompromisedRelayer2",
+                "signature": "0xFAKE_SIG_2",
+                "weight": 30
+              }
+            ]
+          },
+          "description": "Attacker submits forged withdrawal with fabricated relayer signatures that pass the weight check (totalWeight >= minimumWeight). The relay mode is \"tampered\" – signatures are not from genuine validators.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "OfficialToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "0xAttackerRecipient",
+            "value": 1000
+          },
+          "description": "Gateway contract mints/transfers 1000 OfficialToken to attacker, completing the bridge.",
+          "step": 3
+        },
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "unlock(uint256)",
+          "params": {
+            "nonce": "N"
+          },
+          "description": "Attacker never calls unlock; the locked 1000 tokens remain forever, breaking totalLockedRonin == totalMintedEthereum.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "ronin_20220323",
+        "wormhole_20220202",
+        "multichain_20220118"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks 1000 OfficialToken on Ronin, emitting a Deposit event with nonce N."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker submits forged withdrawal with fabricated relayer signatures that pass the weight check (totalWeight >= minimumWeight). The relay mode is \"tampered\" – signatures are not from genuine validators."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Gateway contract mints/transfers 1000 OfficialToken to attacker, completing the bridge."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Attacker never calls unlock; the locked 1000 tokens remain forever, breaking totalLockedRonin == totalMintedEthereum."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_zero_amount_forge_001",
+      "target_invariant": "deposit_amount_positive",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "OfficialToken",
+          "function": "approve",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "0"
+          },
+          "description": "Approve the deposit router with zero allowance to bypass any internal allowance check that only verifies existence, not amount.",
+          "step": 1
+        },
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit",
+          "params": {
+            "depositAmount": "0"
+          },
+          "description": "Call deposit with amount 0. The router’s internal check mistakenly reads allowance > 0 (true because allowance exists) but does not enforce depositAmount > 0, violating the invariant.",
+          "step": 2
+        },
+        {
+          "chain": "relay",
+          "contract": "RoninGatewayV3",
+          "function": "relayMessage",
+          "params": {
+            "srcChain": "Ronin",
+            "dstChain": "Ethereum",
+            "nonce": "12345",
+            "payload": {
+              "recipient": "attackerAddress",
+              "amount": "0",
+              "signatures": [
+                "validRelayerSig"
+              ]
+            },
+            "mode": "faithful"
+          },
+          "description": "Relay the zero‑amount deposit message to Ethereum unchanged.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw",
+          "params": {
+            "recipient": "attackerAddress",
+            "amount": "0",
+            "signerAddresses": [
+              "relayer1",
+              "relayer2"
+            ]
+          },
+          "description": "Execute withdraw on Ethereum. The bridge logic only checks signature weight, not that amount > 0, so tokens are minted with amount 0, but the state change records a successful transfer, allowing the attacker to later replay with a non‑zero amount using the same nonce.",
+          "step": 4
+        },
+        {
+          "chain": "relay",
+          "contract": "RoninGatewayV3",
+          "function": "relayMessage",
+          "params": {
+            "srcChain": "Ronin",
+            "dstChain": "Ethereum",
+            "nonce": "12345",
+            "payload": {
+              "recipient": "attackerAddress",
+              "amount": "1000e18",
+              "signatures": [
+                "validRelayerSig"
+              ]
+            },
+            "mode": "tampered"
+          },
+          "description": "Tamper the relayed payload after the zero‑amount deposit has been recorded, increasing amount to a positive value while keeping the same nonce, exploiting the missing uniqueness check for processedNonces[nonce] == false after a zero‑amount deposit.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [
+        "gempad_20240419",
+        "socket_20240116"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve the deposit router with zero allowance to bypass any internal allowance check that only verifies existence, not amount."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Call deposit with amount 0. The router’s internal check mistakenly reads allowance > 0 (true because allowance exists) but does not enforce depositAmount > 0, violating the invariant."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "relay.message_count > 0",
+          "description": "Relay the zero‑amount deposit message to Ethereum unchanged."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Execute withdraw on Ethereum. The bridge logic only checks signature weight, not that amount > 0, so tokens are minted with amount 0, but the state change records a successful transfer, allowing the attacker to later replay with a non‑zero amount using the same nonce."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "relay.message_count > 0",
+          "description": "Tamper the relayed payload after the zero‑amount deposit has been recorded, increasing amount to a positive value while keeping the same nonce, exploiting the missing uniqueness check for processedNonces[nonce] == false after a zero‑amount deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_2024_mint_zero_exploit_001",
+      "target_invariant": "mint_amount_nonzero",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit",
+          "params": {
+            "amount": 1
+          },
+          "description": "Lock a minimal positive amount to create a valid deposit message; the bridge records depositAmount > 0 satisfying e1.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "relayMessage",
+          "params": {
+            "messageHash": "0xdeadbeef... (hash of deposit)",
+            "relayerSignature": "0x0... (empty signature)",
+            "relayerWeight": 0,
+            "minimumWeight": 0,
+            "nonce": 42,
+            "recipient": "0xAttackerRecipient",
+            "transferAmount": 0,
+            "extraData": []
+          },
+          "relay_mode": "tampered",
+          "description": "Submit a forged relay message with transferAmount set to 0 and an empty signature; due to missing signature verification (logic bug), the contract treats weight check as passed (0 >= 0) and processes the transfer.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "OfficialToken",
+          "function": "transfer",
+          "params": {
+            "to": "0xAttackerRecipient",
+            "value": 0
+          },
+          "description": "The gateway calls transfer with amount 0, violating the invariant that transferAmount > 0 but still emitting a Transfer event, allowing the attacker to claim a successful bridge completion without receiving tokens.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "ronin_20220323",
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock a minimal positive amount to create a valid deposit message; the bridge records depositAmount > 0 satisfying e1."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Submit a forged relay message with transferAmount set to 0 and an empty signature; due to missing signature verification (logic bug), the contract treats weight check as passed (0 >= 0) and processes the transfer."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "The gateway calls transfer with amount 0, violating the invariant that transferAmount > 0 but still emitting a Transfer event, allowing the attacker to claim a successful bridge completion without receiving tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_auth_deposit_bypass_001",
+      "target_invariant": "authorization_deposit_caller",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": 1000
+          },
+          "description": "Attacker calls deposit on RoninDeposit while msg.sender is a malicious contract that has been approved as a delegate for the victim's OfficialToken via ERC20 `approve` with unlimited allowance. The deposit function only checks `msg.sender == tokenOwner` but reads tokenOwner from `OfficialToken.ownerOf(msg.sender)` which is spoofed via a crafted ERC777 hook, allowing the attacker to appear as the token holder.",
+          "step": 1
+        },
+        {
+          "chain": "ronin",
+          "contract": "OfficialToken",
+          "function": "transferFrom(address,address,uint256)",
+          "params": {
+            "from": "victim_address",
+            "to": "RoninDeposit",
+            "amount": 1000
+          },
+          "description": "Because the victim previously granted unlimited allowance to the attacker’s contract, the transferFrom succeeds, locking the victim's tokens without their consent.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker_address",
+            "amount": 1000,
+            "signers": []
+          },
+          "description": "Relay operates in `tampered` mode: attacker intercepts the off‑chain message, replaces the original recipient with their own address, and forwards a forged signature set (empty array) that passes the `isValidSignature` check due to a missing signature verification bug.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "gempad_20240419",
+        "nomad_20220801",
+        "chainswap_20210711"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker calls deposit on RoninDeposit while msg.sender is a malicious contract that has been approved as a delegate for the victim's OfficialToken via ERC20 `approve` with unlimited allowance. The deposit function only checks `msg.sender == tokenOwner` but reads tokenOwner from `OfficialToken.ownerOf(msg.sender)` which is spoofed via a crafted ERC777 hook, allowing the attacker to appear as the token holder."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Because the victim previously granted unlimited allowance to the attacker’s contract, the transferFrom succeeds, locking the victim's tokens without their consent."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relay operates in `tampered` mode: attacker intercepts the off‑chain message, replaces the original recipient with their own address, and forwards a forged signature set (empty array) that passes the `isValidSignature` check due to a missing signature verification bug."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_sig_forge_2024_01",
+      "target_invariant": "authorization_transfer_signature",
+      "vulnerability_class": "signature_forgery",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": 1000
+          },
+          "description": "Lock 1000 OfficialToken on Ronin, generating a cross‑chain message with nonce N.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerWallet",
+            "amount": 1000,
+            "relayerSignature": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "messageHash": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "description": "Submit forged withdraw call with a zero‑signature; due to missing ecrecover check the contract treats it as valid.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "setRelayerWeight(address,uint256)",
+          "params": {
+            "relayer": "0xAttackerRelayer",
+            "weight": 1000
+          },
+          "description": "Exploit an unprotected admin function (found via public getter) to inflate attacker relayer weight above minimumWeight, satisfying the weight check.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerWallet",
+            "amount": 1000,
+            "relayerSignature": "0xAttackerSignature",
+            "messageHash": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "description": "Re‑execute withdraw after weight inflation; now both signature and weight checks pass, transferring tokens to attacker.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "wormhole_20220202",
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1000 OfficialToken on Ronin, generating a cross‑chain message with nonce N."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Submit forged withdraw call with a zero‑signature; due to missing ecrecover check the contract treats it as valid."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Exploit an unprotected admin function (found via public getter) to inflate attacker relayer weight above minimumWeight, satisfying the weight check."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Re‑execute withdraw after weight inflation; now both signature and weight checks pass, transferring tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_2024_min_weight_exploit_01",
+      "target_invariant": "authorization_minimum_weight",
+      "vulnerability_class": "signature_forgery_and_weight_manipulation",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit",
+          "params": {
+            "amount": "1000"
+          },
+          "description": "Lock a positive amount of OfficialToken, creating a deposit message with nonce N.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw",
+          "params": {
+            "recipient": "0xAttackerEOA",
+            "amount": "1000",
+            "signers": [
+              {
+                "relayer": "0xCompromisedRelayer",
+                "signature": "0xFAKE_SIG"
+              }
+            ]
+          },
+          "relay_mode": "tampered",
+          "description": "Submit a forged withdrawal call where the relayerSignature is crafted to appear valid, but the relayerWeight is artificially set to a high value via a manipulated storage slot in the relayer registry (e.g., using a delegatecall to a malicious contract that overwrites weight mapping).",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RelayerRegistry",
+          "function": "setWeight",
+          "params": {
+            "relayer": "0xCompromisedRelayer",
+            "weight": "999999"
+          },
+          "relay_mode": "faithful",
+          "description": "Exploit an unprotected setWeight function (or use a re‑entrancy during withdraw) to inflate the compromised relayer's voting weight above minimumWeight before the withdraw execution checks the invariant.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "processWithdrawal",
+          "params": {
+            "nonce": "N"
+          },
+          "relay_mode": "delayed",
+          "description": "Trigger the final processing after weight inflation; the contract reads relayerWeight >= minimumWeight and passes, releasing tokens to attacker.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "anyswap_20210710",
+        "polynetwork_20210810",
+        "harmony_horizon_20220624"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock a positive amount of OfficialToken, creating a deposit message with nonce N."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Submit a forged withdrawal call where the relayerSignature is crafted to appear valid, but the relayerWeight is artificially set to a high value via a manipulated storage slot in the relayer registry (e.g., using a delegatecall to a malicious contract that overwrites weight mapping)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Exploit an unprotected setWeight function (or use a re‑entrancy during withdraw) to inflate the compromised relayer's voting weight above minimumWeight before the withdraw execution checks the invariant."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Trigger the final processing after weight inflation; the contract reads relayerWeight >= minimumWeight and passes, releasing tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_nonce_replay_2024_01",
+      "target_invariant": "uniqueness_message_nonce",
+      "vulnerability_class": "replay_without_nonce_guard",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": 1000
+          },
+          "description": "User A locks 1000 OfficialToken on Ronin, generating message with nonce N (nonce emitted in Deposit event).",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000,
+            "signers": [
+              "0xRelayer1",
+              "0xRelayer2"
+            ]
+          },
+          "relay_mode": "faithful",
+          "description": "Relayer(s) forward the legitimate deposit message (nonce N) to Ethereum; contract processes it, marks processedNonces[N]=true and transfers 1000 tokens to attacker.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000,
+            "signers": [
+              "0xRelayer1",
+              "0xRelayer2"
+            ]
+          },
+          "relay_mode": "replay",
+          "description": "Attacker re‑broadcasts the same signed message (nonce N) using a replay relay that does not modify the nonce. Because the contract only checks signature weight but not processedNonces before signature verification, the call succeeds a second time, violating the invariant.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "chainswap_20210711"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User A locks 1000 OfficialToken on Ronin, generating message with nonce N (nonce emitted in Deposit event)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relayer(s) forward the legitimate deposit message (nonce N) to Ethereum; contract processes it, marks processedNonces[N]=true and transfers 1000 tokens to attacker."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker re‑broadcasts the same signed message (nonce N) using a replay relay that does not modify the nonce. Because the contract only checks signature weight but not processedNonces before signature verification, the call succeeds a second time, violating the invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_2024_uniqueness_transfer_id_reuse",
+      "target_invariant": "uniqueness_transfer_id",
+      "vulnerability_class": "replay_of_signed_withdrawal",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": 1000
+          },
+          "description": "User A locks 1000 OfficialToken on Ronin, generating a deposit message with nonce N and transferId = keccak(srcChain, dstChain, amount, N).",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000,
+            "signers": [
+              "0xCompromisedRelayer1",
+              "0xCompromisedRelayer2",
+              "0xCompromisedRelayer3"
+            ]
+          },
+          "relay_mode": "faithful",
+          "description": "Relayers submit the signed withdrawal message for nonce N, passing weight check, and tokens are transferred to attacker.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000,
+            "signers": [
+              "0xCompromisedRelayer1",
+              "0xCompromisedRelayer2",
+              "0xCompromisedRelayer3"
+            ]
+          },
+          "relay_mode": "replay",
+          "description": "Attacker re‑broadcasts the exact same signed message (same transferId) before the contract marks the nonce as processed, causing a second transfer of the same locked amount.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "ronin_20220323",
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User A locks 1000 OfficialToken on Ronin, generating a deposit message with nonce N and transferId = keccak(srcChain, dstChain, amount, N)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relayers submit the signed withdrawal message for nonce N, passing weight check, and tokens are transferred to attacker."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker re‑broadcasts the exact same signed message (same transferId) before the contract marks the nonce as processed, causing a second transfer of the same locked amount."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_uniqueness_unlock_replay_001",
+      "target_invariant": "uniqueness_one_time_unlock",
+      "vulnerability_class": "replay_without_nonce_mark",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit",
+          "params": {
+            "amount": 1000,
+            "nonce": 42
+          },
+          "description": "Lock 1000 OfficialToken on Ronin, generating a deposit message with nonce 42.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw",
+          "params": {
+            "recipient": "0xAttackerAddr",
+            "amount": 1000,
+            "signers": [
+              "0xCompromisedRelayer1",
+              "0xCompromisedRelayer2",
+              "0xCompromisedRelayer3",
+              "0xCompromisedRelayer4",
+              "0xCompromisedRelayer5"
+            ],
+            "signature": "0xFAKE_SIG_FOR_NONCE_42"
+          },
+          "relay_mode": "faithful",
+          "description": "First legitimate unlock on Ethereum; unlockExecuted[42] set to true.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw",
+          "params": {
+            "recipient": "0xAttackerAddr",
+            "amount": 1000,
+            "signers": [
+              "0xCompromisedRelayer1",
+              "0xCompromisedRelayer2",
+              "0xCompromisedRelayer3",
+              "0xCompromisedRelayer4",
+              "0xCompromisedRelayer5"
+            ],
+            "signature": "0xFAKE_SIG_FOR_NONCE_42"
+          },
+          "relay_mode": "replay",
+          "description": "Replay the same withdraw call before unlockExecuted[42] is cleared (due to missing state update), causing a second transfer.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "ronin_20220323",
+        "nomad_20220801"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1000 OfficialToken on Ronin, generating a deposit message with nonce 42."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "First legitimate unlock on Ethereum; unlockExecuted[42] set to true."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Replay the same withdraw call before unlockExecuted[42] is cleared (due to missing state update), causing a second transfer."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_whitelist_bypass_2024_01",
+      "target_invariant": "authorization_relayer_whitelist",
+      "vulnerability_class": "signature_forgery_and_relayer_key_reuse",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerEOA",
+            "amount": "1000000000000000000",
+            "signers": [
+              "0xCompromisedRelayer"
+            ]
+          },
+          "mode": "tampered",
+          "state_predicates": [
+            "whitelistedRelayers[0xCompromisedRelayer] == false",
+            "processedNonces[nonce] == false"
+          ],
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "1000000000000000000"
+          },
+          "mode": "faithful",
+          "state_predicates": [
+            "sourceRouter.totalLocked() >= 1000000000000000000"
+          ],
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerEOA",
+            "amount": "1000000000000000000",
+            "signers": [
+              "0xCompromisedRelayer"
+            ]
+          },
+          "mode": "replay",
+          "state_predicates": [
+            "processedNonces[nonce] == true"
+          ],
+          "step": 3,
+          "description": "Step 3"
+        }
+      ],
+      "retrieved_exploits": [
+        "evodefi_20220607",
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_2024_asset_conservation_break_001",
+      "target_invariant": "asset_conservation_total_supply",
+      "vulnerability_class": "signature_forgery_and_replay",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "1000000"
+          },
+          "description": "Lock a modest amount of OfficialToken to generate a legitimate deposit message. This creates a signed event with nonce N.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerEOA",
+            "amount": "1000000",
+            "signatures": [
+              "0xForgedSig"
+            ]
+          },
+          "relay_mode": "faithful",
+          "description": "Submit the genuine withdrawal using the valid relayer signature; the bridge mints 1,000,000 tokens on Ethereum.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerEOA",
+            "amount": "1000000",
+            "signatures": [
+              "0xForgedSig"
+            ]
+          },
+          "relay_mode": "replay",
+          "description": "Replay the same signed message (nonce N) after the bridge’s processedNonces check is bypassed via a storage slot overwrite (e.g., using a proxy upgrade or delegatecall bug). This mints an additional 1,000,000 tokens without additional lock.",
+          "step": 3
+        },
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "0"
+          },
+          "relay_mode": "tampered",
+          "description": "Exploit a missing zero‑check on the Ronin side (similar to qubit fake_deposit) to emit a deposit event with amount 0 but a new nonce M, causing the bridge to think tokens are locked while none are.",
+          "step": 4
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerEOA",
+            "amount": "500000",
+            "signatures": [
+              "0xForgedSig"
+            ]
+          },
+          "relay_mode": "delayed",
+          "description": "After the zero‑amount deposit, wait for the bridge’s batch finalisation window, then submit a withdrawal for 500,000 tokens using the same forged signature. The bridge mints tokens that were never locked.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [
+        "ronin_20220323",
+        "qubit_20220127",
+        "wormhole_20220202"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock a modest amount of OfficialToken to generate a legitimate deposit message. This creates a signed event with nonce N."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Submit the genuine withdrawal using the valid relayer signature; the bridge mints 1,000,000 tokens on Ethereum."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Replay the same signed message (nonce N) after the bridge’s processedNonces check is bypassed via a storage slot overwrite (e.g., using a proxy upgrade or delegatecall bug). This mints an additional 1,000,000 tokens without additional lock."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Exploit a missing zero‑check on the Ronin side (similar to qubit fake_deposit) to emit a deposit event with amount 0 but a new nonce M, causing the bridge to think tokens are locked while none are."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "After the zero‑amount deposit, wait for the bridge’s batch finalisation window, then submit a withdrawal for 500,000 tokens using the same forged signature. The bridge mints tokens that were never locked."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_2024_uniqueness_relay_proof_once_exploit_001",
+      "target_invariant": "uniqueness_relay_proof_once",
+      "vulnerability_class": "replay_attack_due_to_missing_proof_consumption",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": 1000
+          },
+          "description": "User A locks 1000 OfficialToken on Ronin, generating depositHash H and emitting RelayProof(H).",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000,
+            "signers": [
+              "0xRelayer1",
+              "0xRelayer2"
+            ]
+          },
+          "relay_mode": "faithful",
+          "description": "Honest relayers forward proof H to Ethereum, minting 1000 tokens to attacker (first legitimate mint).",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000,
+            "signers": [
+              "0xRelayer1",
+              "0xRelayer2"
+            ]
+          },
+          "relay_mode": "replay",
+          "description": "Attacker re‑submits the same RelayProof(H) before the contract marks it used, causing a second mint of 1000 tokens.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "gempad_20240419",
+        "bnbbridge_20221007",
+        "ronin_20220323"
+      ],
+      "state_predicates": [
+        "usedProofs[H] == false after first withdraw",
+        "usedProofs[H] == true after second withdraw",
+        "balanceOf(0xAttacker, Ethereum) == 2000"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User A locks 1000 OfficialToken on Ronin, generating depositHash H and emitting RelayProof(H)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Honest relayers forward proof H to Ethereum, minting 1000 tokens to attacker (first legitimate mint)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker re‑submits the same RelayProof(H) before the contract marks it used, causing a second mint of 1000 tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_mint_auth_bypass_001",
+      "target_invariant": "authorization_mint_caller",
+      "vulnerability_class": "signature_forgery",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": 1000
+          },
+          "description": "Lock 1000 OfficialToken on Ronin, emitting a Deposit event with nonce N.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RelayOracle",
+          "function": "submitProof(bytes)",
+          "params": {
+            "proof": "0xdeadbeef... (crafted Merkle proof that includes the Deposit event but with manipulated root)"
+          },
+          "relay_mode": "tampered",
+          "description": "Relay a tampered proof that convinces the bridge that the Deposit originated from RoninGatewayV3 instead of RoninDeposit.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0xAttackerEOA",
+            "amount": 1000,
+            "signatures": [
+              "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ]
+          },
+          "relay_mode": "faithful",
+          "description": "Call withdraw with a forged empty signature; due to the tampered proof the contract believes msg.sender == RoninGatewayV3 and skips the authorization check, minting tokens to attacker.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "OfficialToken",
+          "function": "balanceOf(address)",
+          "params": {
+            "account": "0xAttackerEOA"
+          },
+          "description": "Verify that attacker now holds 1000 newly minted tokens.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "wormhole_20220202",
+        "qubit_20220127"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1000 OfficialToken on Ronin, emitting a Deposit event with nonce N."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay a tampered proof that convinces the bridge that the Deposit originated from RoninGatewayV3 instead of RoninDeposit."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Call withdraw with a forged empty signature; due to the tampered proof the contract believes msg.sender == RoninGatewayV3 and skips the authorization check, minting tokens to attacker."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Verify that attacker now holds 1000 newly minted tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_refund_replay_2024_01",
+      "target_invariant": "uniqueness_refund_once",
+      "vulnerability_class": "replayable_refund_logic",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "deposit",
+          "params": {
+            "amount": 1000
+          },
+          "description": "Lock 1000 OfficialToken on Ronin, creating depositId = 0 and emitting DepositLocked(0, msg.sender, 1000).",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000,
+            "signatures": [
+              "0xValidRelayerSig"
+            ]
+          },
+          "description": "Relayer processes the deposit, transfers 1000 OfficialToken to attacker on Ethereum.",
+          "step": 2
+        },
+        {
+          "chain": "ronin",
+          "contract": "RoninDeposit",
+          "function": "refund",
+          "params": {
+            "depositId": 0
+          },
+          "description": "Attacker calls refund before the contract marks the deposit as processed; due to missing nonce check, refund succeeds and returns 1000 tokens.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw",
+          "params": {
+            "recipient": "0xAttacker",
+            "amount": 1000,
+            "signatures": [
+              "0xValidRelayerSig"
+            ]
+          },
+          "mode": "replay",
+          "description": "Attacker replays the same withdraw message (same nonce) on Ethereum; the gateway lacks replay protection, allowing a second transfer of 1000 tokens.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "gempad_20240419",
+        "thorchain_20210629"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1000 OfficialToken on Ronin, creating depositId = 0 and emitting DepositLocked(0, msg.sender, 1000)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relayer processes the deposit, transfers 1000 OfficialToken to attacker on Ethereum."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker calls refund before the contract marks the deposit as processed; due to missing nonce check, refund succeeds and returns 1000 tokens."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Attacker replays the same withdraw message (same nonce) on Ethereum; the gateway lacks replay protection, allowing a second transfer of 1000 tokens."
+        }
+      ]
+    }
+  ]
+}
