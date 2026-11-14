@@ -1,0 +1,344 @@
+{
+  "bridge_name": "feg_bridge_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "FEGBridgeSrc",
+      "node_type": "router",
+      "chain": "source",
+      "address": "this",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
+      "node_type": "token",
+      "chain": "source",
+      "address": "feg",
+      "functions": []
+    },
+    {
+      "node_id": "WormholeCore",
+      "node_type": "relay",
+      "chain": "source",
+      "address": "core",
+      "functions": []
+    },
+    {
+      "node_id": "FEGSmartBridge",
+      "node_type": "bridge",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "address",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "relayer",
+      "node_type": "address",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "WormholeCore",
+      "node_type": "router",
+      "chain": "source",
+      "address": "unknown",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "msg.sender",
+      "dst": "FEGBridgeSrc",
+      "label": "lock",
+      "token": "OfficialToken",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "FEGSmartBridge",
+      "dst": "account (external address)",
+      "label": "release",
+      "token": "FEG",
+      "conditions": [
+        "op == OP_RELEASE",
+        "trustedSource[sourceAddress] == true"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "op == OP_RELEASE"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "trustedSource[sourceAddress] == true"
+          }
+        }
+      ],
+      "function_signature": "receiveMessage(address,bytes)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "msg.sender",
+      "dst": "WormholeCore",
+      "label": "message",
+      "token": null,
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "publishMessage(bytes)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_locked_equals_released",
+      "category": "asset_conservation",
+      "description": "The cumulative amount of OfficialToken locked on the source chain must always equal the cumulative amount of FEG released on the destination chain.",
+      "predicate": "totalLocked == totalReleased",
+      "solidity_assertion": "assert(totalLocked == totalReleased);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_lock_amount_must_be_positive",
+      "category": "asset_conservation",
+      "description": "A lock operation (e1) must never accept a zero or negative amount.",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Lock amount must be > 0\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_release_cannot_exceed_locked",
+      "category": "asset_conservation",
+      "description": "The sum of all released amounts must never exceed the sum of all locked amounts.",
+      "predicate": "totalReleased <= totalLocked",
+      "solidity_assertion": "assert(totalReleased <= totalLocked);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_balance_decreases_on_release",
+      "category": "asset_conservation",
+      "description": "When a release (e2) occurs, the internal accounting of locked tokens is decreased by the released amount.",
+      "predicate": "lockedBalance[msg.sender] >= releaseAmount",
+      "solidity_assertion": "require(lockedBalance[msg.sender] >= releaseAmount, \"Insufficient locked balance for release\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_underflow_on_lock",
+      "category": "asset_conservation",
+      "description": "Locking tokens must not cause the source token balance of the sender to underflow.",
+      "predicate": "balances[msg.sender] >= amount",
+      "solidity_assertion": "require(balances[msg.sender] >= amount, \"Underflow on lock\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_trusted_source_can_release",
+      "category": "authorization",
+      "description": "A release (e2) is allowed only if the originating source address is marked as trusted.",
+      "predicate": "trustedSource[sourceAddress] == true",
+      "solidity_assertion": "require(trustedSource[sourceAddress], \"Source not trusted\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_release_requires_valid_operation_code",
+      "category": "authorization",
+      "description": "The release handler must be invoked with the exact operation code OP_RELEASE.",
+      "predicate": "op == OP_RELEASE",
+      "solidity_assertion": "require(op == OP_RELEASE, \"Invalid operation code\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_message_publish_only_by_relayer",
+      "category": "authorization",
+      "description": "Publishing a Wormhole message (e3) can be performed only by the designated relayer address.",
+      "predicate": "msg.sender == relayer",
+      "solidity_assertion": "require(msg.sender == relayer, \"Only relayer can publish messages\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_deposit_caller_is_msg_sender",
+      "category": "authorization",
+      "description": "The deposit function (e1) must be called directly by the user who wants to lock tokens; proxy calls are not allowed.",
+      "predicate": "msg.sender == depositor",
+      "solidity_assertion": "require(msg.sender == depositor, \"Caller must be depositor\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_admin_can_update_trusted_source",
+      "category": "authorization",
+      "description": "Only the admin address may add or remove entries in the trustedSource mapping.",
+      "predicate": "msg.sender == admin",
+      "solidity_assertion": "require(msg.sender == admin, \"Only admin can modify trusted sources\");",
+      "related_edges": [],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_nonce_processed_once",
+      "category": "uniqueness",
+      "description": "Each message nonce emitted by WormholeCore must be processed at most once by the bridge.",
+      "predicate": "processedNonces[nonce] == false",
+      "solidity_assertion": "require(!processedNonces[nonce], \"Nonce already processed\"); processedNonces[nonce] = true;",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_id_processed_once",
+      "category": "uniqueness",
+      "description": "A message identified by its hash (msgHash) may be consumed only a single time.",
+      "predicate": "processedMessages[msgHash] == false",
+      "solidity_assertion": "require(!processedMessages[msgHash], \"Message already processed\"); processedMessages[msgHash] = true;",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_release_not_called_twice_for_same_transfer",
+      "category": "uniqueness",
+      "description": "The release function cannot be invoked twice for the same (sourceAddress, amount, nonce) tuple.",
+      "predicate": "releaseRecord[sourceAddress][nonce] == false",
+      "solidity_assertion": "require(!releaseRecord[sourceAddress][nonce], \"Transfer already released\"); releaseRecord[sourceAddress][nonce] = true;",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_lock_cannot_be_reentered_before_release",
+      "category": "uniqueness",
+      "description": "A user cannot lock a new amount with the same nonce before the previous transfer has been released.",
+      "predicate": "activeLocks[msg.sender][nonce] == false",
+      "solidity_assertion": "require(!activeLocks[msg.sender][nonce], \"Previous lock with same nonce pending\"); activeLocks[msg.sender][nonce] = true;",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_no_duplicate_publish_for_same_payload",
+      "category": "uniqueness",
+      "description": "The WormholeCore publishMessage (e3) must not be called twice with identical payload bytes.",
+      "predicate": "publishedPayloads[payloadHash] == false",
+      "solidity_assertion": "require(!publishedPayloads[payloadHash], \"Payload already published\"); publishedPayloads[payloadHash] = true;",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply_unchanged_on_lock",
+      "category": "asset_conservation",
+      "description": "Locking OfficialToken does not change the total supply of the token on the source chain.",
+      "predicate": "totalSupplyBefore == totalSupplyAfter",
+      "solidity_assertion": "assert(totalSupplyBefore == totalSupplyAfter);",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_release_cannot_process_unlocked_nonce",
+      "category": "uniqueness",
+      "description": "A release (e2) must reference a nonce that was previously locked; otherwise it is rejected.",
+      "predicate": "lockedNonces[nonce] == true",
+      "solidity_assertion": "require(lockedNonces[nonce], \"Nonce not previously locked\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}
