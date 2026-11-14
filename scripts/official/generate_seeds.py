@@ -56,6 +56,7 @@ os.environ.setdefault("PYTHONHASHSEED", "0")        # hash-fallback determinism
 BACKENDS = {
     # alias -> (provider_name expected from get_llm_client, required env key)
     "gpt-oss": ("nvidia", "NVIDIA_API_KEY"),
+    "gpt-oss-or": ("nvidia", "NVIDIA_API_KEY"),  # gpt-oss-120b via OpenRouter (failover host)
     "gpt5": ("openai", "OPENAI_API_KEY"),
     "openai": ("openai", "OPENAI_API_KEY"),
 }
@@ -135,6 +136,17 @@ def main() -> int:
     from src.module2_rag.holdout import REGIMES
     if args.regime not in REGIMES:
         ap.error(f"--regime must be one of {REGIMES}")
+
+    # OpenRouter failover for gpt-oss: point the nvidia slot at OpenRouter so
+    # the rest of the resolution (single-backend, provenance) is unchanged.
+    if args.model == "gpt-oss-or":
+        for src, dst in (("OPENROUTER_API_KEY", "NVIDIA_API_KEY"),
+                         ("OPENROUTER_BASE_URL", "NVIDIA_BASE_URL"),
+                         ("OPENROUTER_MODEL", "NVIDIA_MODEL")):
+            v = os.getenv(src)
+            if v:
+                os.environ[dst] = v
+        args.model = "gpt-oss"
 
     expected_provider, req_key = BACKENDS[args.model]
 
@@ -295,6 +307,7 @@ def main() -> int:
         "backend_alias": args.model,
         "provider": provider.provider_name,
         "model": resolved_model,
+        "base_url": (os.environ.get("NVIDIA_BASE_URL") if provider.provider_name == "nvidia" else None),
         "parser_only_module1": args.parser_only,
         "temperature_requested": args.temperature,
         "temperature_effective": temp_eff,  # null == omitted (reasoning model default)
