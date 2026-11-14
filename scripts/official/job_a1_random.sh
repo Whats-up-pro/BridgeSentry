@@ -3,7 +3,7 @@
 #SBATCH --partition=normal
 #SBATCH --qos=mig2-35
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=16G
 #SBATCH --time=04:00:00
 #SBATCH --output=logs/a1_%j.out
@@ -11,7 +11,7 @@
 #
 # A-1 (Core A): C1 FPR + C2 VER on the 7 on-chain fixtures, RANDOM seeds, 20
 # seeds x {vulnerable, patched}, official oracle, CPU-only (no --gres) per the
-# verified HPC facts (partition=normal, qos=mig2-35). Follows Huong_dan_HPC_
+# verified HPC facts (partition=normal, qos=mig2-35, MAX 8 cpu/job). Follows Huong_dan_HPC_
 # dungtrt.pdf: login/prepare/submit only; many runs batched into ONE job via
 # xargs -P; results copied back to the repo afterwards.
 #
@@ -55,9 +55,9 @@ for b in nomad qubit polynetwork ronin_2024 crosscurve verus feg_bridge_2024; do
     done
   done
 done
-echo "A-1: $(wc -l < "$OUT/jobs.txt") runs, 16 cpus, -P 14"
+echo "A-1: $(wc -l < "$OUT/jobs.txt") runs, 8 cpus, -P 7"
 
-BRIDGESENTRY_OFFICIAL_STRICT_SEEDS=0 xargs -P 14 -L1 scripts/official/run_official.sh < "$OUT/jobs.txt"
+BRIDGESENTRY_OFFICIAL_STRICT_SEEDS=0 xargs -P 7 -L1 scripts/official/run_official.sh < "$OUT/jobs.txt"
 XRC=$?
 
 python3 scripts/official/aggregate_official.py "$OUT"
