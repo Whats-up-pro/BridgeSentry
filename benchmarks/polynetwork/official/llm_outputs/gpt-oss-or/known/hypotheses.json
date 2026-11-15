@@ -1,0 +1,1327 @@
+{
+  "bridge_name": "polynetwork",
+  "scenarios": [
+    {
+      "scenario_id": "poly_2024_asset_conservation_exploit",
+      "target_invariant": "asset_conservation_lock_unlock",
+      "vulnerability_class": "authorization_context_mismatch",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "LockProxy",
+          "function": "deposit",
+          "params": {
+            "token": "OfficialToken",
+            "amount": 1000000,
+            "recipient": "0xAttackerProxy"
+          },
+          "description": "Attacker calls LockProxy.deposit to lock 1,000,000 OfficialToken. The lock creates transferId T1 and records lockedAmount[T1] = 1,000,000.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "relayMessage",
+          "params": {
+            "targetChain": "destination",
+            "targetContract": "destLockProxy",
+            "payload": {
+              "function": "unlock",
+              "args": {
+                "to": "0xAttacker",
+                "amount": 1000000,
+                "transferId": "T1"
+              }
+            },
+            "mode": "tampered"
+          },
+          "description": "Attacker compromises the manager relay (e.g., via compromised off‑chain key) and sends a tampered cross‑chain message that claims the context is the registeredProxy, bypassing the ICrossChainContext check.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock",
+          "params": {
+            "to": "0xAttacker",
+            "amount": 1000000,
+            "transferId": "T1"
+          },
+          "description": "destLockProxy executes unlock, crediting 1,000,000 OfficialToken to attacker on destination chain. unlockedAmount[T1] = 1,000,000.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "LockProxy",
+          "function": "withdraw",
+          "params": {
+            "token": "OfficialToken",
+            "amount": 1000000,
+            "to": "0xAttacker"
+          },
+          "description": "Attacker re‑enters LockProxy (via a re‑entrancy bug in the deposit callback) to call withdraw before the bridge updates lockedAmount[T1], effectively extracting the locked tokens while the invariant still sees lockedAmount[T1] = 1,000,000.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker calls LockProxy.deposit to lock 1,000,000 OfficialToken. The lock creates transferId T1 and records lockedAmount[T1] = 1,000,000."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker compromises the manager relay (e.g., via compromised off‑chain key) and sends a tampered cross‑chain message that claims the context is the registeredProxy, bypassing the ICrossChainContext check."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "destLockProxy executes unlock, crediting 1,000,000 OfficialToken to attacker on destination chain. unlockedAmount[T1] = 1,000,000."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Attacker re‑enters LockProxy (via a re‑entrancy bug in the deposit callback) to call withdraw before the bridge updates lockedAmount[T1], effectively extracting the locked tokens while the invariant still sees lockedAmount[T1] = 1,000,000."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_2024_total_supply_exploit",
+      "target_invariant": "asset_conservation_total_supply",
+      "vulnerability_class": "authorization_logic_bug",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "LockProxy",
+          "function": "deposit",
+          "params": {
+            "token": "OfficialToken",
+            "amount": 1000000
+          },
+          "description": "User locks a large amount of OfficialToken via SrcDeposit (edge e4).",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "manager",
+          "function": "relayMessage",
+          "params": {
+            "targetChain": "Destination",
+            "targetContract": "destLockProxy",
+            "payload": "0xdeadbeef",
+            "mode": "tampered"
+          },
+          "description": "Relay (manager) is compromised to send a tampered unlock message that calls destLockProxy.unlock with amount = 0 while still marking the transfer as processed.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock",
+          "params": {
+            "recipient": "attackerAddress",
+            "amount": 0
+          },
+          "description": "destLockProxy processes the tampered message; no tokens are minted on destination, but the source lock remains recorded.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "LockProxy",
+          "function": "unlock",
+          "params": {
+            "recipient": "attackerAddress",
+            "amount": 1000000
+          },
+          "description": "Attacker calls manager (msg.sender == manager) after forging manager context to satisfy ICrossChainContext(manager).fromContractContext() == registeredProxy, triggering edge e2 and releasing the locked tokens back to attacker.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "meterio_20220205"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks a large amount of OfficialToken via SrcDeposit (edge e4)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay (manager) is compromised to send a tampered unlock message that calls destLockProxy.unlock with amount = 0 while still marking the transfer as processed."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "destLockProxy processes the tampered message; no tokens are minted on destination, but the source lock remains recorded."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Attacker calls manager (msg.sender == manager) after forging manager context to satisfy ICrossChainContext(manager).fromContractContext() == registeredProxy, triggering edge e2 and releasing the locked tokens back to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "polynetwork_auth_unlock_manager_exploit_01",
+      "target_invariant": "authorization_unlock_by_manager",
+      "vulnerability_class": "off_chain_key_compromise_and_replay",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "verifyHeaderAndExecuteTx",
+          "params": {
+            "target": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "data": "0x000000000000000000000000attacker_address000000000000000000000000000000000000000000000000000000000000000a",
+            "relayer": "manager"
+          },
+          "description": "Forge a header that the keeper (msg.sender) accepts, causing EthCrossChainData to call LockProxy.unlock with attacker as recipient. The relayer field is set to the legitimate manager address, satisfying the first condition.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "LockProxy",
+          "function": "unlock",
+          "params": {
+            "recipient": "0xAttackerAddress00000000000000000000000000000000",
+            "amount": "1000000e18"
+          },
+          "description": "LockProxy executes unlock; msg.sender is manager (as injected in previous step), bypassing the invariant check.",
+          "step": 2
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "relayMessage",
+          "params": {
+            "destChainId": "destination",
+            "destContract": "destLockProxy",
+            "payload": "0x000000000000000000000000AttackerAddress000000000000000000000000000000000000000000000000000000000000000a"
+          },
+          "description": "Manager (trusted relay) forwards the unlock payload to the destination chain. Relay mode: faithful (no delay, no tampering).",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock",
+          "params": {
+            "recipient": "0xAttackerAddress00000000000000000000000000000000",
+            "amount": "1000000e18"
+          },
+          "description": "Destination lock proxy releases tokens to attacker, completing the cross‑chain theft.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Forge a header that the keeper (msg.sender) accepts, causing EthCrossChainData to call LockProxy.unlock with attacker as recipient. The relayer field is set to the legitimate manager address, satisfying the first condition."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "destRouter.totalMinted() > 0 && sourceRouter.refunded > 0",
+          "description": "LockProxy executes unlock; msg.sender is manager (as injected in previous step), bypassing the invariant check."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Manager (trusted relay) forwards the unlock payload to the destination chain. Relay mode: faithful (no delay, no tampering)."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Destination lock proxy releases tokens to attacker, completing the cross‑chain theft."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_auth_context_mismatch_01",
+      "target_invariant": "authorization_context_match",
+      "vulnerability_class": "relay_context_spoof",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "verifyHeaderAndExecuteTx",
+          "params": {
+            "target": "LockProxy",
+            "method": "unlock",
+            "data": "0x000000000000000000000000deadbeefdeadbeefdeadbeefdeadbeefdeadbeef00000000000000000000000000000000000000000000000000000000000f4240",
+            "origin": "manager"
+          },
+          "description": "Relay (manager) submits a forged header where the embedded cross‑chain context points to attacker‑controlled proxy address (0xdead…dead). The relay operates in **tampered** mode, altering the `fromContractContext` field.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "LockProxy",
+          "function": "unlock",
+          "params": {
+            "recipient": "0xAttackerWallet",
+            "amount": "1000000000000000000"
+          },
+          "description": "LockProxy receives the unlock call. `msg.sender == manager` passes because the forged manager address is accepted, but `ICrossChainContext(manager).fromContractContext()` now returns the attacker‑controlled proxy, breaking the invariant.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "OfficialToken",
+          "function": "transfer",
+          "params": {
+            "to": "0xAttackerWallet",
+            "value": "1000000000000000000"
+          },
+          "description": "Standard ERC‑20 transfer executed as part of the unlock flow, moving the stolen tokens to the attacker.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Relay (manager) submits a forged header where the embedded cross‑chain context points to attacker‑controlled proxy address (0xdead…dead). The relay operates in **tampered** mode, altering the `fromContractContext` field."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "LockProxy receives the unlock call. `msg.sender == manager` passes because the forged manager address is accepted, but `ICrossChainContext(manager).fromContractContext()` now returns the attacker‑controlled proxy, breaking the invariant."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Standard ERC‑20 transfer executed as part of the unlock flow, moving the stolen tokens to the attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "polynetwork_header_bypass_01",
+      "target_invariant": "authorization_verify_header",
+      "vulnerability_class": "off_chain_message_forgery",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "setKeeper(address)",
+          "params": {
+            "newKeeper": "0xAttackerControlled"
+          },
+          "description": "Forge a keeper update by submitting a transaction that calls the internal `keeper(address)` setter via a compromised admin key (mirrors the historic Polynet exploit).",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": "1000000e18"
+          },
+          "description": "Lock a large amount of OfficialToken, generating a cross‑chain transfer identifier `transferId`.",
+          "step": 2
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "payload": "0xdeadbeef... (crafted payload containing fake header and unlock call for transferId)"
+          },
+          "relay_mode": "tampered",
+          "description": "Relay a tampered message where the header fields are forged to make `verifyHeaderAndExecuteTx` return true, bypassing the invariant.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "recipient": "0xAttackerControlled",
+            "amount": "1000000e18"
+          },
+          "description": "Execute the unlock on the destination chain; the bridge’s internal `verifyHeaderAndExecuteTx` check is bypassed, so the transaction proceeds.",
+          "step": 4
+        },
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "setKeeper(address)",
+          "params": {
+            "newKeeper": "0xOriginalKeeper"
+          },
+          "description": "Restore the original keeper to hide the tampering after the exploit.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Forge a keeper update by submitting a transaction that calls the internal `keeper(address)` setter via a compromised admin key (mirrors the historic Polynet exploit)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Lock a large amount of OfficialToken, generating a cross‑chain transfer identifier `transferId`."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relay a tampered message where the header fields are forged to make `verifyHeaderAndExecuteTx` return true, bypassing the invariant."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Execute the unlock on the destination chain; the bridge’s internal `verifyHeaderAndExecuteTx` check is bypassed, so the transaction proceeds."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Restore the original keeper to hide the tampering after the exploit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_nonce_replay_001",
+      "target_invariant": "uniqueness_transfer_nonce",
+      "vulnerability_class": "replay_without_nonce_check",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "amount": "1000000000000000000"
+          },
+          "description": "Lock 1 ETH‑equivalent OfficialToken on source chain; generates transferId=0 and nonce=0.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "target": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "method": "unlock(address,uint256)",
+            "payload": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef0000000000000000000000000000000000000000000000000de0b6b3a7640000",
+            "origin": "registeredProxy"
+          },
+          "relay_mode": "faithful",
+          "description": "Manager relays the unlock message to destination chain, marking nonce=0 as processed.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "amount": "1000000000000000000"
+          },
+          "description": "Destination bridge releases tokens to attacker; processedNonces[0] set to true.",
+          "step": 3
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "target": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "method": "unlock(address,uint256)",
+            "payload": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef0000000000000000000000000000000000000000000000000de0b6b3a7640000",
+            "origin": "registeredProxy"
+          },
+          "relay_mode": "tampered",
+          "description": "Attacker re‑submits the same payload to manager after forcing a short delay; manager does not re‑check processedNonces on source side, allowing replay.",
+          "step": 4
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "amount": "1000000000000000000"
+          },
+          "description": "Second unlock executes because destination contract only checks its own processedNonces mapping, which is reset due to a missing state sync; nonce 0 is considered unused, violating uniqueness.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "crosscurve_20260131"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1 ETH‑equivalent OfficialToken on source chain; generates transferId=0 and nonce=0."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Manager relays the unlock message to destination chain, marking nonce=0 as processed."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Destination bridge releases tokens to attacker; processedNonces[0] set to true."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Attacker re‑submits the same payload to manager after forcing a short delay; manager does not re‑check processedNonces on source side, allowing replay."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Second unlock executes because destination contract only checks its own processedNonces mapping, which is reset due to a missing state sync; nonce 0 is considered unused, violating uniqueness."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_replay_msg_001",
+      "target_invariant": "uniqueness_message_id",
+      "vulnerability_class": "replay_without_nonce",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "method": "unlock(uint256)",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000004d2"
+          },
+          "description": "User initiates a legitimate cross‑chain unlock message; the bridge emits msgId=0xAAA.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "message": "0xAAA|0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef|unlock(uint256)|0x000...04d2"
+          },
+          "relay_mode": "faithful",
+          "description": "Manager forwards the message to destination; seenMessageIds[0xAAA] set to true.",
+          "step": 2
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "message": "0xAAA|0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef|unlock(uint256)|0x000...04d2"
+          },
+          "relay_mode": "tampered",
+          "description": "Attacker re‑submits the same raw payload after a short delay, exploiting missing nonce check; manager processes again because it does not verify seenMessageIds before relaying.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "recipient": "0xAttackerAddress000000000000000000000000",
+            "amount": 1234
+          },
+          "description": "Destination lock proxy executes unlock twice, releasing double the tokens.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User initiates a legitimate cross‑chain unlock message; the bridge emits msgId=0xAAA."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Manager forwards the message to destination; seenMessageIds[0xAAA] set to true."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker re‑submits the same raw payload after a short delay, exploiting missing nonce check; manager processes again because it does not verify seenMessageIds before relaying."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Destination lock proxy executes unlock twice, releasing double the tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_unique_lock_replay_001",
+      "target_invariant": "uniqueness_lock_once",
+      "vulnerability_class": "replay_without_nonce_check",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": 1000,
+            "nonce": 42
+          },
+          "description": "Lock 1000 OfficialToken with nonce 42; lockRecords[attacker][42] set to non‑zero.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "message": "0x<encoded unlock for nonce 42>"
+          },
+          "relay_mode": "tampered",
+          "description": "Manager (relay) forwards the unlock message to destination but attacker intercepts and re‑encodes it with a different tx hash, preserving the original nonce.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": 1000
+          },
+          "description": "First unlock executed, passes manager check (msg.sender == manager) and context match.",
+          "step": 3
+        },
+        {
+          "chain": "source",
+          "contract": "manager",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "message": "0x<same encoded unlock for nonce 42>"
+          },
+          "relay_mode": "replay",
+          "description": "Attacker replays the exact same unlock message; destLockProxy does not re‑verify lockRecords, allowing a second unlock.",
+          "step": 4
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "to": "0xAttacker",
+            "amount": 1000
+          },
+          "description": "Second unlock occurs, violating uniqueness invariant; lockRecords[attacker][42] still non‑zero but not checked.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "multichain_20220118"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1000 OfficialToken with nonce 42; lockRecords[attacker][42] set to non‑zero."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Manager (relay) forwards the unlock message to destination but attacker intercepts and re‑encodes it with a different tx hash, preserving the original nonce."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "First unlock executed, passes manager check (msg.sender == manager) and context match."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Attacker replays the exact same unlock message; destLockProxy does not re‑verify lockRecords, allowing a second unlock."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Second unlock occurs, violating uniqueness invariant; lockRecords[attacker][42] still non‑zero but not checked."
+        }
+      ]
+    },
+    {
+      "scenario_id": "s9_signature_forgery_polynetwork",
+      "target_invariant": "authorization_crosschain_caller",
+      "vulnerability_class": "signature_forgery",
+      "confidence": 0.75,
+      "actions": [
+        {
+          "step": 1,
+          "chain": "relay",
+          "action": "tamper",
+          "params": {
+            "field": "signatures",
+            "value": "0xforged"
+          },
+          "description": "Inject forged guardian/validator signatures (Wormhole-style)"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "bridge",
+          "function": "verifyAndExecute",
+          "params": {
+            "amount": "203666000000000000000000"
+          },
+          "description": "Submit forged signature bundle to destination"
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "crosscurve_20260131",
+        "rubic_20221225",
+        "multichain_xscope",
+        "chainswap_20210711"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "relay.pendingMessage.amount != sourceRouter.deposits(nonce).amount",
+          "description": "Inject forged guardian/validator signatures (Wormhole-style)"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "destRouter.totalMinted() >= 203666000000000000000000",
+          "description": "Submit forged signature bundle to destination"
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_zero_amount_lock_exploit_001",
+      "target_invariant": "asset_conservation_positive_amount",
+      "vulnerability_class": "missing_amount_check_in_deposit",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": 0
+          },
+          "description": "Attacker calls deposit with amount = 0, bypassing the intended >0 check due to malformed condition parsing in edge e4.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "manager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "target": "LockProxy",
+            "method": "unlock",
+            "data": "0x000000000000000000000000attacker_address0000000000000000000000000000000000000000000000000000000000000000",
+            "origin": "SrcDeposit"
+          },
+          "relay_mode": "faithful",
+          "description": "Relay forwards the lock event (with zero amount) to the destination chain unchanged.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "recipient": "attacker_address",
+            "amount": 0
+          },
+          "description": "Destination lock proxy processes the zero‑amount unlock, emitting an event that appears legitimate.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "LockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "recipient": "attacker_address",
+            "amount": 0
+          },
+          "description": "Manager (msg.sender) invokes unlock on source LockProxy with zero amount, satisfying e2 conditions (msg.sender == manager && context match).",
+          "step": 4
+        },
+        {
+          "chain": "ethereum",
+          "contract": "OfficialToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "attacker_address",
+            "amount": 0
+          },
+          "description": "No token movement occurs, but the bridge state records a lock of zero, violating the invariant that amount > 0.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "ronin_20240806"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker calls deposit with amount = 0, bypassing the intended >0 check due to malformed condition parsing in edge e4."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay forwards the lock event (with zero amount) to the destination chain unchanged."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Destination lock proxy processes the zero‑amount unlock, emitting an event that appears legitimate."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Manager (msg.sender) invokes unlock on source LockProxy with zero amount, satisfying e2 conditions (msg.sender == manager && context match)."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "No token movement occurs, but the bridge state records a lock of zero, violating the invariant that amount > 0."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_header_replay_001",
+      "target_invariant": "uniqueness_header_processed_once",
+      "vulnerability_class": "replay_of_verified_header",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "verifyHeaderAndExecuteTx",
+          "params": {
+            "target": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "headerHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "payload": "0x",
+            "origin": "0x0000000000000000000000000000000000000000"
+          },
+          "description": "Submit a forged header that matches a previously processed header hash; the manager (msg.sender) is a compromised keeper address that can call verifyHeaderAndExecuteTx.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "manager",
+          "function": "relayHeader",
+          "params": {
+            "headerHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "signature": "0x0"
+          },
+          "description": "Relay the same header to the destination chain using a tampered relay mode (replay) where the manager does not update processedHeaders mapping.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock",
+          "params": {
+            "to": "0xattackeraddress0000000000000000000000000000",
+            "amount": "1000000000000000000"
+          },
+          "description": "Because the header was processed again, destLockProxy unlocks tokens a second time for the same transfer identifier.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "wormhole_20220202"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Submit a forged header that matches a previously processed header hash; the manager (msg.sender) is a compromised keeper address that can call verifyHeaderAndExecuteTx."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay the same header to the destination chain using a tampered relay mode (replay) where the manager does not update processedHeaders mapping."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Because the header was processed again, destLockProxy unlocks tokens a second time for the same transfer identifier."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_auth_manager_replace_001",
+      "target_invariant": "authorization_manager_is_registered",
+      "vulnerability_class": "unauthorized_manager_update",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "manager",
+          "function": "setManager(address)",
+          "params": {
+            "newManager": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "description": "Exploit missing access control on manager contract; attacker calls setManager to point to malicious address.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "LockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "recipient": "0xattackerwallet0000000000000000000000000000",
+            "amount": "1000000000000000000"
+          },
+          "description": "With manager now pointing to attacker, call unlock; msg.sender == manager passes, bypassing invariant.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "manager",
+          "function": "setManager(address)",
+          "params": {
+            "newManager": "IMMUTABLE_MANAGER_ADDRESS"
+          },
+          "description": "Restore original manager to hide tampering after exfiltration.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "qanxbridge_20220518"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit missing access control on manager contract; attacker calls setManager to point to malicious address."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "With manager now pointing to attacker, call unlock; msg.sender == manager passes, bypassing invariant."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Restore original manager to hide tampering after exfiltration."
+        }
+      ]
+    },
+    {
+      "scenario_id": "s13_replay_attack_polynetwork",
+      "target_invariant": "uniqueness_unlock_once_per_transfer",
+      "vulnerability_class": "replay_attack",
+      "confidence": 0.75,
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "bridge",
+          "function": "dispatch",
+          "params": {
+            "amount": "203666000000000000000000",
+            "nonce": "1"
+          },
+          "description": "Legitimate deposit on source chain"
+        },
+        {
+          "step": 2,
+          "chain": "relay",
+          "action": "faithful",
+          "params": {},
+          "description": "Relay message to destination"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "bridge",
+          "function": "proveAndProcess",
+          "params": {},
+          "description": "First process on destination (legitimate)"
+        },
+        {
+          "step": 4,
+          "chain": "relay",
+          "action": "replay",
+          "params": {
+            "replay_index": "0"
+          },
+          "description": "Replay same relay message"
+        },
+        {
+          "step": 5,
+          "chain": "destination",
+          "contract": "bridge",
+          "function": "proveAndProcess",
+          "params": {},
+          "description": "Process replayed message (double mint)"
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "evodefi_20220607",
+        "ronin_20220323",
+        "multichain_xscope",
+        "multichain_20220118"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "sourceRouter.totalLocked() >= 203666000000000000000000",
+          "description": "Legitimate deposit on source chain"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "relay.message_count > 0",
+          "description": "Relay message to destination"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "replica.processedMessages(messageHash) == true",
+          "description": "First process on destination (legitimate)"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "relay.message_count > sourceRouter.deposits_count",
+          "description": "Replay same relay message"
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "replica.processedMessages(messageHash) == true",
+          "description": "Process replayed message (double mint)"
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_auth_unlock_amount_mismatch_01",
+      "target_invariant": "authorization_unlock_amount_match",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": 1000
+          },
+          "description": "User locks 1000 OfficialToken on source chain, creating transferId T1. State predicate: `SrcDeposit.lockedAmount[T1] == 1000`.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "manager",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "payload": "abi.encodeWithSignature(\"unlock(address,uint256)\", attackerAddress, 2000)"
+          },
+          "relay_mode": "tampered",
+          "description": "Compromised manager relays a forged unlock payload to destination, inflating amount to 2000. State predicate: `manager.lastRelayedPayload == payload`.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "to": "attackerAddress",
+            "amount": 2000
+          },
+          "description": "destLockProxy executes unlock because msg.sender == manager and context matches registeredProxy. State predicate: `destLockProxy.unlockedAmount[T1] == 2000`.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "target": "destLockProxy",
+            "method": "unlock",
+            "data": "0x...",
+            "relayer": "manager"
+          },
+          "relay_mode": "faithful",
+          "description": "Bridge finalizes the cross‑chain message, confirming the unlock. State predicate: `EthCrossChainData.processed[T1] == true`.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "nomad_20220801"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks 1000 OfficialToken on source chain, creating transferId T1. State predicate: `SrcDeposit.lockedAmount[T1] == 1000`."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Compromised manager relays a forged unlock payload to destination, inflating amount to 2000. State predicate: `manager.lastRelayedPayload == payload`."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "destLockProxy executes unlock because msg.sender == manager and context matches registeredProxy. State predicate: `destLockProxy.unlockedAmount[T1] == 2000`."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge finalizes the cross‑chain message, confirming the unlock. State predicate: `EthCrossChainData.processed[T1] == true`."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_fake_unlock_2024_01",
+      "target_invariant": "asset_conservation_no_mint_without_lock",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "amount": 0
+          },
+          "description": "Call deposit with amount=0; contract only checks amount>0 via malformed condition tokens, allowing the call to succeed without locking any OfficialToken.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "manager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "target": "destLockProxy",
+            "method": "unlock(address,uint256)",
+            "data": "0xdeadbeef... (encoded unlock for attacker, amount=1000000)",
+            "relayer": "0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed"
+          },
+          "relay_mode": "tampered",
+          "description": "Relay manager (compromised or colluding) forwards a forged unlock message to destination despite no prior lock event.",
+          "step": 2
+        },
+        {
+          "chain": "polygon",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "to": "0xattackeraddressattackeraddressattackeraddress",
+            "amount": 1000000
+          },
+          "description": "destLockProxy executes unlock, minting (or releasing) 1,000,000 OfficialToken to attacker. No corresponding lock exists on source, violating minted <= locked.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "bnbbridge_20221007",
+        "evodefi_20220607"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call deposit with amount=0; contract only checks amount>0 via malformed condition tokens, allowing the call to succeed without locking any OfficialToken."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay manager (compromised or colluding) forwards a forged unlock message to destination despite no prior lock event."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "destLockProxy executes unlock, minting (or releasing) 1,000,000 OfficialToken to attacker. No corresponding lock exists on source, violating minted <= locked."
+        }
+      ]
+    },
+    {
+      "scenario_id": "poly_uniqueness_msgid_replay_01",
+      "target_invariant": "uniqueness_crosschain_message_id",
+      "vulnerability_class": "message_id_replay",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "dst": "Polygon",
+            "payload": "0xabcdef"
+          },
+          "description": "User initiates a legitimate cross‑chain transfer; the bridge computes messageId = keccak256(msg.sender, dst, nonce) where nonce = 1.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "manager",
+          "function": "relayMessage(bytes)",
+          "params": {
+            "message": "0x<raw_message_from_step_1>"
+          },
+          "relay_mode": "tampered",
+          "description": "Attacker, controlling the off‑chain manager, re‑encodes the same raw message but modifies the internal nonce field to 1 again while keeping msg.sender unchanged, creating a duplicate messageId.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "EthCrossChainData",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "keeper": "0x<manager_address>",
+            "dst": "Polygon",
+            "payload": "0xabcdef",
+            "toContract": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "relay_mode": "faithful",
+          "description": "Manager forwards the tampered message to the router; the router recomputes messageId using the supplied nonce (still 1) and erroneously treats it as new because it does not store used nonces per sender/destination.",
+          "step": 3
+        },
+        {
+          "chain": "polygon",
+          "contract": "destLockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "recipient": "0xattacker",
+            "amount": "1000e18"
+          },
+          "description": "Destination contract processes the duplicate message and releases tokens a second time, violating uniqueness of messageId and causing double unlock.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "chainswap_20210711"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User initiates a legitimate cross‑chain transfer; the bridge computes messageId = keccak256(msg.sender, dst, nonce) where nonce = 1."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker, controlling the off‑chain manager, re‑encodes the same raw message but modifies the internal nonce field to 1 again while keeping msg.sender unchanged, creating a duplicate messageId."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Manager forwards the tampered message to the router; the router recomputes messageId using the supplied nonce (still 1) and erroneously treats it as new because it does not store used nonces per sender/destination."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Destination contract processes the duplicate message and releases tokens a second time, violating uniqueness of messageId and causing double unlock."
+        }
+      ]
+    }
+  ]
+}

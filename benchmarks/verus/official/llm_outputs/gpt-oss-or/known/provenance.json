@@ -1,7 +1,7 @@
 {
-  "schema": "generate_seeds/v1",
-  "generated_at_utc": "2026-11-14T02:59:57.796257+00:00",
-  "git_commit": "bca8cbadd5d5214e746147b97c446ff81095cdc4",
+  "schema": "generate_seeds/v2",
+  "generated_at_utc": "2026-11-14T06:34:18.899362+00:00",
+  "git_commit": "99092969beb6ff3ffc2a9f8b73a67bc7bc43a1bd",
   "host": "DESKTOP-EBDFL9C",
   "python": "3.12.3",
   "fixture": "verus",
@@ -19,8 +19,14 @@
   "top_k": 5,
   "regime": "known",
   "kb_snapshot_sha256_full": "b92a980e824297e59e470fe8615ad146756008274c26b41557c17c2f380e4723",
-  "kb_pool_sha256": "179f09575010766d18e5a693f651738e1f4cfba5560453e87a35809dde9bbd71",
-  "kb_pool_size": 52,
+  "kb_size_full": 52,
+  "kb_audit_excluded": {
+    "fegtoken_20240220": "kb_audit #7: no source confirms an FEG key compromise on 2024-02-20; the cited tweet returns 404",
+    "gempad_20240419": "kb_audit #8: GemPad is a token-locker platform, not a bridge; the real incident is a Locker V2 reentrancy on 2024-12-17, so date, root cause, vulnerability class and attack stage are all wrong"
+  },
+  "kb_snapshot_sha256_audited": "19d55d5fbd4980df9c35fd5bfa17865aaa7491eac4c7df4db24535089311730d",
+  "kb_pool_sha256": "123587aedab6cb6e66cdb941b44f1bc2f6445c5a8961fce29431244062f9e664",
+  "kb_pool_size": 50,
   "kb_pool_ids": [
     "anyswap_20210710",
     "anyswap_xscope",
@@ -30,8 +36,6 @@
     "crosscurve_20260131",
     "evodefi_20220607",
     "feg_bridge_20241229",
-    "fegtoken_20240220",
-    "gempad_20240419",
     "harmony_horizon_20220624",
     "lifinance_20220320",
     "meter_io_xscope",
@@ -76,7 +80,16 @@
     "wormhole_xscope"
   ],
   "kb_dropped_ids": [],
-  "embedding_backend": "hash_fallback_256d",
+  "embedding_backend": "sentence_transformers:all-MiniLM-L6-v2",
+  "embedding_dim": 384,
+  "embedding_strict": "1",
+  "embedding_lib_versions": {
+    "sentence-transformers": "6.3.0",
+    "torch": "2.15.0+cpu",
+    "transformers": "5.23.0",
+    "faiss-cpu": "1.15.1",
+    "numpy": "2.5.4"
+  },
   "pythonhashseed": "0",
   "llm_cache": "0",
   "module1": {
@@ -85,193 +98,155 @@
     "n_contracts": 2,
     "n_nodes": 5,
     "n_edges": 2,
-    "n_invariants": 19,
-    "latency_s": 32.483
+    "n_invariants": 15,
+    "latency_s": 25.314
   },
   "module2": {
-    "n_scenarios": 19,
-    "n_llm": 19,
+    "n_scenarios": 15,
+    "n_llm": 15,
     "n_fallback": 0,
-    "actions_total": 67,
-    "actions_mapped": 66,
-    "latency_s": 170.637,
+    "actions_total": 57,
+    "actions_mapped": 57,
+    "latency_s": 109.659,
     "per_scenario": [
       {
-        "scenario_id": "verus_replay_payout_break_asset_conservation_001",
+        "scenario_id": "verus_asset_conservation_break_01",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518"
+        ],
+        "n_actions": 4
+      },
+      {
+        "scenario_id": "verus_auth_mint_sig_forge_01",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518",
+          "chainswap_20210711",
+          "wormhole_20220202"
+        ],
+        "n_actions": 4
+      },
+      {
+        "scenario_id": "verus_duplicate_export_2026_11_14",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518"
+        ],
+        "n_actions": 5
+      },
+      {
+        "scenario_id": "verus_refund_balance_mismatch_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518",
+          "thorchain_20210629"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "verus_auth_unlock_forge_01",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518",
+          "bnbbridge_20221007"
+        ],
+        "n_actions": 4
+      },
+      {
+        "scenario_id": "verus_refund_double_claim_2024_11",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518"
+        ],
+        "n_actions": 4
+      },
+      {
+        "scenario_id": "verus_sig_zero_exploit_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "chainswap_20210711",
+          "wormhole_20220202",
+          "multichain_20220118"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "verus_nonce_replay_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518"
+        ],
+        "n_actions": 5
+      },
+      {
+        "scenario_id": "verus_supply_overmint_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "evodefi_20220607",
+          "meterio_20220205"
+        ],
+        "n_actions": 5
+      },
+      {
+        "scenario_id": "verus_auth_bypass_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "verus_mint_replay_e1_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "verus_20260518",
+          "qubit_20220127"
+        ],
+        "n_actions": 4
+      },
+      {
+        "scenario_id": "verus_fake_proof_token_mismatch_01",
         "gen_mode": "llm",
         "retrieved_exploits": [
           "nomad_20220801",
-          "multichain_20220118"
+          "bnbbridge_20221007"
         ],
         "n_actions": 3
       },
       {
-        "scenario_id": "verus_negative_balance_reentrancy_2026",
+        "scenario_id": "verus_negative_balance_exploit_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "verus_20260518",
-          "feg_bridge_20241229",
-          "crosscurve_20260131"
-        ],
-        "n_actions": 5
-      },
-      {
-        "scenario_id": "verus_export_zero_amount_reentrancy_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518"
-        ],
-        "n_actions": 5
-      },
-      {
-        "scenario_id": "verus_payout_overmint_2026_11",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518"
-        ],
-        "n_actions": 2
-      },
-      {
-        "scenario_id": "verus_token_mismatch_exploit_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518",
-          "multichain_20220118"
-        ],
-        "n_actions": 5
-      },
-      {
-        "scenario_id": "verus_export_id_bypass_2026_11_14",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518"
-        ],
-        "n_actions": 2
-      },
-      {
-        "scenario_id": "verus_auth_bypass_export_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518"
-        ],
-        "n_actions": 2
-      },
-      {
-        "scenario_id": "verus_notary_sig_bypass_2024_11",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "multichain_20220118",
-          "ronin_20240806",
-          "feg_bridge_20241229"
-        ],
-        "n_actions": 3
-      },
-      {
-        "scenario_id": "verus_recipient_zero_payout_2024_11",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518"
-        ],
-        "n_actions": 3
-      },
-      {
-        "scenario_id": "verus_proof_bypass_2026_01",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518",
-          "multichain_20220118"
-        ],
-        "n_actions": 4
-      },
-      {
-        "scenario_id": "verus_replay_double_payout_2024",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "wormhole_20211202",
-          "polyNetwork_20210323",
-          "verus_20260518"
-        ],
-        "n_actions": 4
-      },
-      {
-        "scenario_id": "verus_replay_commitment_not_cleared_2024",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518"
-        ],
-        "n_actions": 5
-      },
-      {
-        "scenario_id": "verus_dup_lock_replay_2024_11_14",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518",
-          "multichain_20220118"
-        ],
-        "n_actions": 3
-      },
-      {
-        "scenario_id": "verus_nonce_replay_via_selfdestruct_2026_11_14",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518",
-          "feg_bridge_20241229"
-        ],
-        "n_actions": 5
-      },
-      {
-        "scenario_id": "replay_msghash_double_payout_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
+          "nomad_20220801",
           "wormhole_20220202",
-          "polynetwork_20210304",
-          "thorchain_20210723"
+          "polyNetwork_20211223"
         ],
         "n_actions": 3
       },
       {
-        "scenario_id": "scenario_20231114_001",
+        "scenario_id": "verus_notary_auth_bypass_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "verus_20260518",
-          "nomad_20220801"
+          "nomad_20220801",
+          "polynetwork_20210810"
         ],
         "n_actions": 3
       },
       {
-        "scenario_id": "verus_bridge_total_supply_mint_exploit_001",
+        "scenario_id": "verus_exportId_reuse_2026_11",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "feg_bridge_20241229",
-          "nomad_20220801"
+          "verus_20260518"
         ],
         "n_actions": 4
-      },
-      {
-        "scenario_id": "verus_sig_mismatch_2024_11_14",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518",
-          "multichain_20220118",
-          "feg_bridge_20241229"
-        ],
-        "n_actions": 3
-      },
-      {
-        "scenario_id": "verus_sig_mismatch_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "verus_20260518",
-          "feg_bridge_20241229"
-        ],
-        "n_actions": 3
       }
     ]
   },
   "usage": {
-    "api_calls": 22,
-    "prompt_tokens": 55693,
-    "completion_tokens": 39633,
-    "total_tokens": 95326
+    "api_calls": 18,
+    "prompt_tokens": 51461,
+    "completion_tokens": 11586,
+    "total_tokens": 63047
   }
 }

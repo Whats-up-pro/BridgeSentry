@@ -1,7 +1,7 @@
 {
-  "schema": "generate_seeds/v1",
-  "generated_at_utc": "2026-11-14T03:11:03.393045+00:00",
-  "git_commit": "5a6536d53619f83ce27e6eb3314f24a0ac88c551",
+  "schema": "generate_seeds/v2",
+  "generated_at_utc": "2026-11-14T06:20:28.139362+00:00",
+  "git_commit": "99092969beb6ff3ffc2a9f8b73a67bc7bc43a1bd",
   "host": "DESKTOP-EBDFL9C",
   "python": "3.12.3",
   "fixture": "ronin_2024",
@@ -19,16 +19,20 @@
   "top_k": 5,
   "regime": "temporal",
   "kb_snapshot_sha256_full": "b92a980e824297e59e470fe8615ad146756008274c26b41557c17c2f380e4723",
-  "kb_pool_sha256": "33c8e48d0c976e560ff589120d7da53a6da75c9146964130068b446f1c8b1510",
-  "kb_pool_size": 36,
+  "kb_size_full": 52,
+  "kb_audit_excluded": {
+    "fegtoken_20240220": "kb_audit #7: no source confirms an FEG key compromise on 2024-02-20; the cited tweet returns 404",
+    "gempad_20240419": "kb_audit #8: GemPad is a token-locker platform, not a bridge; the real incident is a Locker V2 reentrancy on 2024-12-17, so date, root cause, vulnerability class and attack stage are all wrong"
+  },
+  "kb_snapshot_sha256_audited": "19d55d5fbd4980df9c35fd5bfa17865aaa7491eac4c7df4db24535089311730d",
+  "kb_pool_sha256": "942f059a67d178ac877a9ad3ce41d2715aa278a2bc82e67c5c19bd3d9182c889",
+  "kb_pool_size": 34,
   "kb_pool_ids": [
     "anyswap_20210710",
     "bnbbridge_20221007",
     "bridgemutual_20220507",
     "chainswap_20210711",
     "evodefi_20220607",
-    "fegtoken_20240220",
-    "gempad_20240419",
     "harmony_horizon_20220624",
     "lifinance_20220320",
     "meterio_20220205",
@@ -77,7 +81,16 @@
     "verus_20260518",
     "wormhole_xscope"
   ],
-  "embedding_backend": "hash_fallback_256d",
+  "embedding_backend": "sentence_transformers:all-MiniLM-L6-v2",
+  "embedding_dim": 384,
+  "embedding_strict": "1",
+  "embedding_lib_versions": {
+    "sentence-transformers": "6.3.0",
+    "torch": "2.15.0+cpu",
+    "transformers": "5.23.0",
+    "faiss-cpu": "1.15.1",
+    "numpy": "2.5.4"
+  },
   "pythonhashseed": "0",
   "llm_cache": "0",
   "module1": {
@@ -87,71 +100,68 @@
     "n_nodes": 4,
     "n_edges": 2,
     "n_invariants": 14,
-    "latency_s": 31.559
+    "latency_s": 30.232
   },
   "module2": {
     "n_scenarios": 14,
     "n_llm": 14,
     "n_fallback": 0,
-    "actions_total": 51,
-    "actions_mapped": 51,
-    "latency_s": 94.222,
+    "actions_total": 50,
+    "actions_mapped": 50,
+    "latency_s": 84.975,
     "per_scenario": [
       {
-        "scenario_id": "ronin_2024_asset_conservation_break_01",
+        "scenario_id": "ronin_2024_invariant_break_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
           "ronin_20220323",
-          "wormhole_20220202",
-          "multichain_20220118"
+          "evodefi_20220607"
         ],
         "n_actions": 4
       },
       {
-        "scenario_id": "ronin_deposit_zero_amount_forge_001",
+        "scenario_id": "ronin_deposit_zero_amount_exploit_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "gempad_20240419",
-          "socket_20240116"
+          "qubit_20220127",
+          "meterio_20220205"
         ],
         "n_actions": 5
       },
       {
-        "scenario_id": "ronin_2024_mint_zero_exploit_001",
+        "scenario_id": "ronin_2024_mint_amount_zero_exploit",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "nomad_20220801",
+          "meterio_20220205",
+          "metpassport_20220206"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "ronin_deposit_auth_bypass_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
           "ronin_20220323",
-          "polynetwork_20210810"
+          "evodefi_20220607"
         ],
-        "n_actions": 3
+        "n_actions": 5
       },
       {
-        "scenario_id": "ronin_auth_deposit_bypass_001",
+        "scenario_id": "ronin_auth_sig_forge_01",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "gempad_20240419",
-          "nomad_20220801",
-          "chainswap_20210711"
-        ],
-        "n_actions": 3
-      },
-      {
-        "scenario_id": "ronin_sig_forge_2024_01",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "multichain_20220118",
-          "wormhole_20220202",
-          "polynetwork_20210810"
+          "ronin_20220323",
+          "nomad_20220801"
         ],
         "n_actions": 4
       },
       {
-        "scenario_id": "ronin_2024_min_weight_exploit_01",
+        "scenario_id": "ronin_auth_relayer_exploit_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "anyswap_20210710",
-          "polynetwork_20210810",
-          "harmony_horizon_20220624"
+          "ronin_20220323",
+          "socket_20240116"
         ],
         "n_actions": 4
       },
@@ -159,8 +169,8 @@
         "scenario_id": "ronin_nonce_replay_2024_01",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "polynetwork_20210810",
-          "chainswap_20210711"
+          "nomad_20220801",
+          "qubit_20220127"
         ],
         "n_actions": 3
       },
@@ -168,26 +178,28 @@
         "scenario_id": "ronin_2024_uniqueness_transfer_id_reuse",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "ronin_20220323",
-          "polynetwork_20210810"
+          "polynetwork_20210810",
+          "multichain_20220118"
         ],
         "n_actions": 3
       },
       {
-        "scenario_id": "ronin_uniqueness_unlock_replay_001",
+        "scenario_id": "ronin_2024_uniqueness_unlock_replay_01",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "ronin_20220323",
+          "pnetwork_20210919",
+          "qubit_20220127",
+          "metpassport_20220206"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "ronin_2024_validator_set_mismatch_01",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "chainswap_20210711",
+          "polynetwork_20210810",
           "nomad_20220801"
-        ],
-        "n_actions": 3
-      },
-      {
-        "scenario_id": "ronin_whitelist_bypass_2024_01",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "evodefi_20220607",
-          "polynetwork_20210810"
         ],
         "n_actions": 3
       },
@@ -196,45 +208,46 @@
         "gen_mode": "llm",
         "retrieved_exploits": [
           "ronin_20220323",
-          "qubit_20220127",
-          "wormhole_20220202"
-        ],
-        "n_actions": 5
-      },
-      {
-        "scenario_id": "ronin_2024_uniqueness_relay_proof_once_exploit_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "gempad_20240419",
-          "bnbbridge_20221007",
-          "ronin_20220323"
+          "evodefi_20220607"
         ],
         "n_actions": 3
       },
       {
-        "scenario_id": "ronin_mint_auth_bypass_001",
+        "scenario_id": "ronin_sig_replay_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "wormhole_20220202",
-          "qubit_20220127"
+          "multichain_20220118",
+          "anyswap_20210710",
+          "nomad_20220801"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "ronin_2024_auth_vote_weight_exploit_01",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "nomad_20220801",
+          "orbit_20240101",
+          "chainswap_20210711"
         ],
         "n_actions": 4
       },
       {
-        "scenario_id": "ronin_refund_replay_2024_01",
+        "scenario_id": "ronin_double_mint_2024_01",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "gempad_20240419",
-          "thorchain_20210629"
+          "qubit_20220127",
+          "bnbbridge_20221007",
+          "pnetwork_20210919"
         ],
-        "n_actions": 4
+        "n_actions": 3
       }
     ]
   },
   "usage": {
     "api_calls": 17,
-    "prompt_tokens": 45021,
-    "completion_tokens": 9901,
-    "total_tokens": 54922
+    "prompt_tokens": 45209,
+    "completion_tokens": 9579,
+    "total_tokens": 54788
   }
 }

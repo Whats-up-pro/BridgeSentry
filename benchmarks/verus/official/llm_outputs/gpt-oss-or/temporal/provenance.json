@@ -1,7 +1,7 @@
 {
-  "schema": "generate_seeds/v1",
-  "generated_at_utc": "2026-11-14T03:31:23.660634+00:00",
-  "git_commit": "5a6536d53619f83ce27e6eb3314f24a0ac88c551",
+  "schema": "generate_seeds/v2",
+  "generated_at_utc": "2026-11-14T06:50:19.683320+00:00",
+  "git_commit": "99092969beb6ff3ffc2a9f8b73a67bc7bc43a1bd",
   "host": "DESKTOP-EBDFL9C",
   "python": "3.12.3",
   "fixture": "verus",
@@ -19,8 +19,14 @@
   "top_k": 5,
   "regime": "temporal",
   "kb_snapshot_sha256_full": "b92a980e824297e59e470fe8615ad146756008274c26b41557c17c2f380e4723",
-  "kb_pool_sha256": "d5c648682379e2d8379f923f5f59cdcf61e3ebb3c1dd06992272e340b4267ef7",
-  "kb_pool_size": 39,
+  "kb_size_full": 52,
+  "kb_audit_excluded": {
+    "fegtoken_20240220": "kb_audit #7: no source confirms an FEG key compromise on 2024-02-20; the cited tweet returns 404",
+    "gempad_20240419": "kb_audit #8: GemPad is a token-locker platform, not a bridge; the real incident is a Locker V2 reentrancy on 2024-12-17, so date, root cause, vulnerability class and attack stage are all wrong"
+  },
+  "kb_snapshot_sha256_audited": "19d55d5fbd4980df9c35fd5bfa17865aaa7491eac4c7df4db24535089311730d",
+  "kb_pool_sha256": "f212aae36894bd59a737e7124311b661541bfa5db1507a1ac72f94bef2e03dd2",
+  "kb_pool_size": 37,
   "kb_pool_ids": [
     "anyswap_20210710",
     "bnbbridge_20221007",
@@ -29,8 +35,6 @@
     "crosscurve_20260131",
     "evodefi_20220607",
     "feg_bridge_20241229",
-    "fegtoken_20240220",
-    "gempad_20240419",
     "harmony_horizon_20220624",
     "lifinance_20220320",
     "meterio_20220205",
@@ -77,7 +81,16 @@
     "verus_20260518",
     "wormhole_xscope"
   ],
-  "embedding_backend": "hash_fallback_256d",
+  "embedding_backend": "sentence_transformers:all-MiniLM-L6-v2",
+  "embedding_dim": 384,
+  "embedding_strict": "1",
+  "embedding_lib_versions": {
+    "sentence-transformers": "6.3.0",
+    "torch": "2.15.0+cpu",
+    "transformers": "5.23.0",
+    "faiss-cpu": "1.15.1",
+    "numpy": "2.5.4"
+  },
   "pythonhashseed": "0",
   "llm_cache": "0",
   "module1": {
@@ -87,87 +100,90 @@
     "n_nodes": 5,
     "n_edges": 2,
     "n_invariants": 14,
-    "latency_s": 31.431
+    "latency_s": 26.522
   },
   "module2": {
     "n_scenarios": 14,
-    "n_llm": 14,
-    "n_fallback": 0,
-    "actions_total": 53,
-    "actions_mapped": 53,
-    "latency_s": 194.71,
+    "n_llm": 13,
+    "n_fallback": 1,
+    "actions_total": 51,
+    "actions_mapped": 49,
+    "latency_s": 813.545,
     "per_scenario": [
-      {
-        "scenario_id": "verus_replay_payout_2024_11",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "polynetwork_20210810",
-          "wormhole_20220202",
-          "nomad_20220225"
-        ],
-        "n_actions": 4
-      },
-      {
-        "scenario_id": "verus_bridge_negative_balance_exploit_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "feg_bridge_20241229",
-          "ronin_20240806"
-        ],
-        "n_actions": 4
-      },
-      {
-        "scenario_id": "verus_notary_upgrade_exploit_2024_11",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "ronin_20240806"
-        ],
-        "n_actions": 3
-      },
-      {
-        "scenario_id": "verus_export_sig_forge_01",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "multichain_20220118",
-          "ronin_20240806"
-        ],
-        "n_actions": 4
-      },
-      {
-        "scenario_id": "verus_export_replay_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "qubit_20220127",
-          "anyswap_20210710"
-        ],
-        "n_actions": 3
-      },
-      {
-        "scenario_id": "verus_nonce_replay_2024_11",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "crosscurve_20260131",
-          "socket_20240116",
-          "multichain_20220118"
-        ],
-        "n_actions": 5
-      },
-      {
-        "scenario_id": "verus_export_zero_amount_exploit_001",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "ronin_20240806",
-          "metpassport_20220206"
-        ],
-        "n_actions": 5
-      },
       {
         "scenario_id": "verus_bridge_asset_conservation_break_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "crosscurve_20260131",
+          "qubit_20220127",
+          "evodefi_20220607"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "verus_auth_mint_forge_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "chainswap_20210711",
+          "multichain_20220118"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "s3_replay_attack_verus",
+        "gen_mode": "deterministic_fallback",
+        "retrieved_exploits": [
+          "meterio_20220205",
+          "qubit_20220127",
           "evodefi_20220607",
+          "metpassport_20220206",
+          "wormhole_20220202"
+        ],
+        "n_actions": 5
+      },
+      {
+        "scenario_id": "verus_refund_mismatch_exploit_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "thorchain_20210629",
+          "metpassport_20220206"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "verus_auth_refund_bypass_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "thorchain_20210629",
+          "crosscurve_20260131",
           "feg_bridge_20241229"
+        ],
+        "n_actions": 4
+      },
+      {
+        "scenario_id": "verus_nonce_replay_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "multichain_20220118",
+          "chainswap_20210711"
+        ],
+        "n_actions": 4
+      },
+      {
+        "scenario_id": "verus_notary_double_sign_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "multichain_20220118",
+          "chainswap_20210711",
+          "polynetwork_20210810"
+        ],
+        "n_actions": 4
+      },
+      {
+        "scenario_id": "verus_asset_conservation_exploit_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "qubit_20220127",
+          "evodefi_20220607"
         ],
         "n_actions": 4
       },
@@ -175,28 +191,27 @@
         "scenario_id": "verus_bridge_auth_bypass_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "feg_bridge_20241229",
-          "multichain_20220118",
-          "crosscurve_20260131"
+          "meterio_20220205",
+          "chainswap_20210711"
         ],
         "n_actions": 3
       },
       {
-        "scenario_id": "verus_exportid_collision_001",
+        "scenario_id": "verus_mint_replay_e1_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "polynetwork_20210810",
-          "multichain_20230715"
+          "qubit_20220127",
+          "wormhole_20220202"
         ],
-        "n_actions": 3
+        "n_actions": 5
       },
       {
-        "scenario_id": "verus_sig_chain_replay_001",
+        "scenario_id": "verus_auth_hash_mismatch_exploit_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
+          "chainswap_20210711",
           "multichain_20220118",
-          "crosscurve_20260131",
-          "nomad_20220801"
+          "thorchain_20210716"
         ],
         "n_actions": 3
       },
@@ -204,27 +219,26 @@
         "scenario_id": "verus_double_refund_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "socket_20240116",
+          "qubit_20220127",
+          "thorchain_20210629"
+        ],
+        "n_actions": 3
+      },
+      {
+        "scenario_id": "verus_invariant_break_001",
+        "gen_mode": "llm",
+        "retrieved_exploits": [
+          "qubit_20220127",
           "meterio_20220205"
         ],
-        "n_actions": 4
+        "n_actions": 3
       },
       {
-        "scenario_id": "verus_bridge_locked_decrement_exploit_001",
+        "scenario_id": "verus_mint_zero_amount_exploit_001",
         "gen_mode": "llm",
         "retrieved_exploits": [
-          "crosscurve_20260131",
-          "feg_bridge_20241229"
-        ],
-        "n_actions": 4
-      },
-      {
-        "scenario_id": "verus_invariant_bypass_20231114",
-        "gen_mode": "llm",
-        "retrieved_exploits": [
-          "crosscurve_20260131",
-          "feg_bridge_20241229",
-          "multichain_20220118"
+          "qubit_20220127",
+          "chainswap_20210711"
         ],
         "n_actions": 4
       }
@@ -232,8 +246,8 @@
   },
   "usage": {
     "api_calls": 17,
-    "prompt_tokens": 48656,
-    "completion_tokens": 15758,
-    "total_tokens": 64414
+    "prompt_tokens": 47872,
+    "completion_tokens": 24526,
+    "total_tokens": 72398
   }
 }

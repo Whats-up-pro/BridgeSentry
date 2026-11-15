@@ -3,1003 +3,160 @@
   "scenarios": [
     {
       "scenario_id": "verus_bridge_asset_conservation_break_001",
-      "target_invariant": "asset_conservation_total_locked_equals_total_minted",
-      "vulnerability_class": "replay_attack_missing_nonce",
+      "target_invariant": "asset_conservation_transfer_e1",
+      "vulnerability_class": "logic_bug",
       "confidence": 0.87,
       "actions": [
         {
           "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "exportTokens",
+          "contract": "VerusExportSurrogate",
+          "function": "lock(address,uint256)",
           "params": {
             "token": "OfficialToken",
-            "amount": 1000,
-            "exportId": 42,
-            "recipient": "0xAttackerDest"
-          },
-          "description": "User initiates a legitimate export; bridge locks 1000 OfficialToken and emits Export event with exportId=42.",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "mode": "faithful",
-            "payload": {
-              "exportId": 42,
-              "amount": 1000,
-              "recipient": "0xAttackerDest"
-            }
-          },
-          "description": "Honest notary relays the export payload to the destination chain.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "submitImports",
-          "params": {
-            "exporter": "VerusBridge",
-            "payout": 1000,
-            "exportId": 42,
-            "proof": "validProofPlaceholder"
-          },
-          "description": "Destination contract mints 1000 wrapped tokens, totalMinted becomes 1000.",
-          "step": 3
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "mode": "replay",
-            "payload": {
-              "exportId": 42,
-              "amount": 1000,
-              "recipient": "0xAttackerDest"
-            }
-          },
-          "description": "Attacker replays the same payload (no nonce check) causing a second mint of 1000 tokens.",
-          "step": 4
-        },
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "submitImports",
-          "params": {
-            "exporter": "VerusBridge",
-            "payout": 1000,
-            "exportId": 42,
-            "proof": "validProofPlaceholder"
-          },
-          "description": "Second mint occurs; totalMinted = 2000 while totalLocked on Ethereum remains 1000, violating invariant.",
-          "step": 5
-        }
-      ],
-      "retrieved_exploits": [
-        "feg_bridge_20241229",
-        "qubit_20220127",
-        "crosscurve_20260131"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates a legitimate export; bridge locks 1000 OfficialToken and emits Export event with exportId=42."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Honest notary relays the export payload to the destination chain."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Destination contract mints 1000 wrapped tokens, totalMinted becomes 1000."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Attacker replays the same payload (no nonce check) causing a second mint of 1000 tokens."
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "step_5_executed",
-          "description": "Second mint occurs; totalMinted = 2000 while totalLocked on Ethereum remains 1000, violating invariant."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_exportId_zero_exploit_001",
-      "target_invariant": "asset_conservation_export_id_positive",
-      "vulnerability_class": "logic_bug_missing_exportId_validation",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "exportTokens",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 1000,
-            "exportId": 0,
-            "recipient": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
-          },
-          "description": "User initiates an export with exportId set to 0 (allowed due to missing require).",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "mode": "faithful",
-            "payload": {
-              "exportId": 0,
-              "amount": 1000,
-              "recipient": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
-            }
-          },
-          "description": "Relay forwards the export message unchanged to destination.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "submitImports",
-          "params": {
-            "token": "OfficialToken",
-            "payout": 1000,
-            "exportId": 0,
-            "proof": "0x00"
-          },
-          "description": "Destination contract processes import with exportId 0, bypassing invariant check.",
-          "step": 3
-        },
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "claimRefund",
-          "params": {
-            "exportId": 0,
-            "claimer": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
-          },
-          "description": "Attacker re‑uses the zero exportId to claim a second payout, double‑spending the locked tokens.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [
-        "gempad_20240419",
-        "ronin_20240806"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates an export with exportId set to 0 (allowed due to missing require)."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Relay forwards the export message unchanged to destination."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Destination contract processes import with exportId 0, bypassing invariant check."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Attacker re‑uses the zero exportId to claim a second payout, double‑spending the locked tokens."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_payout_zero_exploit_001",
-      "target_invariant": "asset_conservation_payout_nonzero",
-      "vulnerability_class": "logic_bug",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "submitExports(address,uint256,bytes32)",
-          "params": {
-            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "amount": 0,
-            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
-          },
-          "description": "User initiates an export with amount set to 0 but a valid exportId. The bridge does not validate amount > 0 before emitting the Export event.",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "srcChain": "Ethereum",
-            "dstChain": "source",
-            "payload": "0x... (encoded Export event with zero amount)"
-          },
-          "mode": "faithful",
-          "description": "The off‑chain notary forwards the zero‑amount export payload unchanged to the destination chain.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "receiveExport(bytes)",
-          "params": {
-            "data": "0x... (payload containing amount=0, exportId=1)"
-          },
-          "description": "Destination contract processes the export and calls internal mint/payout logic with payout = amount (zero). The contract lacks a require(payout > 0) check, allowing a zero‑payout mint.",
-          "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "stands",
-          "function": "mint(address,uint256)",
-          "params": {
-            "to": "0xattackeraddress00000000000000000000000000",
             "amount": 0
           },
-          "description": "Mint call succeeds with zero amount, incrementing internal minted counter without increasing total supply, breaking the invariant that payout > 0.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [
-        "feg_bridge_20241229",
-        "crosscurve_20260131"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates an export with amount set to 0 but a valid exportId. The bridge does not validate amount > 0 before emitting the Export event."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "The off‑chain notary forwards the zero‑amount export payload unchanged to the destination chain."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Destination contract processes the export and calls internal mint/payout logic with payout = amount (zero). The contract lacks a require(payout > 0) check, allowing a zero‑payout mint."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Mint call succeeds with zero amount, incrementing internal minted counter without increasing total supply, breaking the invariant that payout > 0."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_bridge_locked_balance_underflow_001",
-      "target_invariant": "asset_conservation_locked_balance_decreases_on_transfer",
-      "vulnerability_class": "logic_bug_missing_amount_check",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "export",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 0,
-            "destinationChain": "source",
-            "recipient": "user"
-          },
-          "description": "User calls export with amount 0; bridge records exportId >0 but does not verify amount >0, locking 0 tokens.",
+          "description": "Attacker calls lock with amount=0, bypassing the >0 check due to integer under‑flow in the surrogate’s wrapper that treats missing calldata as zero.",
           "step": 1
         },
         {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "mode": "faithful",
-            "payload": {
-              "exportId": 1,
-              "amount": 0,
-              "recipient": "user"
-            }
-          },
-          "description": "Notary relays the zero‑amount export payload faithfully to the destination contract.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "receiveExport",
-          "params": {
-            "exportId": 1,
-            "amount": 0,
-            "recipient": "user"
-          },
-          "description": "Destination surrogate mints 0 tokens to user but updates internal minted total, leaving locked balance unchanged.",
-          "step": 3
-        },
-        {
           "chain": "ethereum",
           "contract": "VerusBridge",
-          "function": "export",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 1000,
-            "destinationChain": "source",
-            "recipient": "user"
-          },
-          "description": "Attacker now performs a legitimate export of 1000 tokens; bridge locks 1000 tokens.",
-          "step": 4
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "mode": "tampered",
-            "payload": {
-              "exportId": 2,
-              "amount": 0,
-              "recipient": "user"
-            }
-          },
-          "description": "Relay rewrites the amount to 0 while keeping exportId valid, causing destination to mint 0 while source bridge thinks 1000 were transferred.",
-          "step": 5
-        }
-      ],
-      "retrieved_exploits": [
-        "metpassport_20220206",
-        "chainswap_20210711"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User calls export with amount 0; bridge records exportId >0 but does not verify amount >0, locking 0 tokens."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Notary relays the zero‑amount export payload faithfully to the destination contract."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Destination surrogate mints 0 tokens to user but updates internal minted total, leaving locked balance unchanged."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Attacker now performs a legitimate export of 1000 tokens; bridge locks 1000 tokens."
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "step_5_executed",
-          "description": "Relay rewrites the amount to 0 while keeping exportId valid, causing destination to mint 0 while source bridge thinks 1000 were transferred."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_mint_balance_overmint_2024_11",
-      "target_invariant": "asset_conservation_minted_balance_increases_on_mint",
-      "vulnerability_class": "logic_bug_missing_amount_check",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "exportTokens",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 1000,
-            "exportId": 42,
-            "recipient": "0xAttackerDest"
-          },
-          "description": "User (attacker) initiates a legitimate export of 1,000 OfficialToken; bridge locks 1,000 tokens and emits Export event with exportId=42.",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "srcChain": "Ethereum",
-            "dstChain": "DestinationChain",
-            "payload": {
-              "exportId": 42,
-              "amount": 1000,
-              "recipient": "0xAttackerDest",
-              "mintAmount": 2000
-            },
-            "mode": "tampered"
-          },
-          "description": "Relay operator (controlled by attacker) tampers with the payload, inflating the mintAmount field to 2,000 while keeping exportId unchanged.",
-          "step": 2
-        },
-        {
-          "chain": "destinationchain",
-          "contract": "verusexportsurrogate",
-          "function": "receiveExport",
+          "function": "export(uint256,bytes32)",
           "params": {
             "exportId": 42,
-            "mintAmount": 2000,
-            "recipient": "0xAttackerDest"
-          },
-          "description": "Destination contract processes the tampered message and mints 2,000 tokens to attacker, relying only on exportId existence and not on amount consistency.",
-          "step": 3
-        },
-        {
-          "chain": "destinationchain",
-          "contract": "verusexportsurrogate",
-          "function": "totalMinted",
-          "params": {},
-          "description": "State predicate: afterMinted == beforeMinted + 2000 (instead of +1000), violating invariant `afterMinted - beforeMinted == amount`.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [
-        "feg_bridge_20241229",
-        "crosscurve_20260131"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User (attacker) initiates a legitimate export of 1,000 OfficialToken; bridge locks 1,000 tokens and emits Export event with exportId=42."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Relay operator (controlled by attacker) tampers with the payload, inflating the mintAmount field to 2,000 while keeping exportId unchanged."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Destination contract processes the tampered message and mints 2,000 tokens to attacker, relying only on exportId existence and not on amount consistency."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "State predicate: afterMinted == beforeMinted + 2000 (instead of +1000), violating invariant `afterMinted - beforeMinted == amount`."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_double_mint_exportId_replay_001",
-      "target_invariant": "asset_conservation_no_double_mint_for_same_export",
-      "vulnerability_class": "replay_attack_missing_nonce",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "exportTokens",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 1000,
-            "exportId": 42,
-            "recipient": "0xAttackerDest"
-          },
-          "description": "User (attacker) initiates a legitimate export of 1000 OfficialToken, generating exportId 42. Bridge locks tokens and emits Exported(eventId=42, amount=1000, recipient).",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "mode": "faithful",
-            "message": "Exported(42,1000,0xAttackerDest)"
-          },
-          "description": "Honest relay forwards the export message to the destination chain's import contract.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "submitImports",
-          "params": {
-            "payout": 1000,
-            "exportId": 42,
-            "proof": "0xvalidProof"
-          },
-          "description": "Destination contract processes the import, marks exportId 42 as minted, and mints 1000 wrapped tokens to attacker.",
-          "step": 3
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "mode": "replay",
-            "message": "Exported(42,1000,0xAttackerDest)"
-          },
-          "description": "Attacker replays the same export message after a short delay; relay operates in replay mode, delivering the identical payload again.",
-          "step": 4
-        },
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "submitImports",
-          "params": {
-            "payout": 1000,
-            "exportId": 42,
-            "proof": "0xvalidProof"
-          },
-          "description": "Due to missing exportId nonce check, contract mints another 1000 wrapped tokens for the same exportId, violating the invariant.",
-          "step": 5
-        }
-      ],
-      "retrieved_exploits": [
-        "multichain_20230715",
-        "anyswap_20210710"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User (attacker) initiates a legitimate export of 1000 OfficialToken, generating exportId 42. Bridge locks tokens and emits Exported(eventId=42, amount=1000, recipient)."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Honest relay forwards the export message to the destination chain's import contract."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Destination contract processes the import, marks exportId 42 as minted, and mints 1000 wrapped tokens to attacker."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Attacker replays the same export message after a short delay; relay operates in replay mode, delivering the identical payload again."
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "step_5_executed",
-          "description": "Due to missing exportId nonce check, contract mints another 1000 wrapped tokens for the same exportId, violating the invariant."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_notary_auth_bypass_001",
-      "target_invariant": "authorization_only_notary_can_confirm",
-      "vulnerability_class": "logic_bug",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "submitExports",
-          "params": {
-            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "amount": 1000000000000000000,
-            "exportId": 42,
+            "destinationChainId": 1001,
             "payload": "0x"
           },
-          "description": "User initiates export; bridge locks tokens and emits ExportRequested(exportId=42).",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "srcChain": "Ethereum",
-            "dstChain": "Ethereum",
-            "target": "VerusBridge",
-            "method": "confirmExport",
-            "args": {
-              "exportId": 42,
-              "payout": 1000000000000000000,
-              "receiver": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
-            },
-            "mode": "tampered"
-          },
-          "description": "Relay rewrites msg.sender to attacker address while forwarding confirmExport, bypassing notary check.",
+          "description": "Bridge records exportId 42 with lockedAmount[42] = 0 (from previous step) and emits Exported event.",
           "step": 2
         },
         {
           "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "confirmExport",
+          "contract": "notary",
+          "function": "relayExport(uint256,bytes32,bytes)",
           "params": {
             "exportId": 42,
-            "payout": 1000000000000000000,
-            "receiver": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+            "destinationChainId": 1001,
+            "signature": "0xdeadbeef"
           },
-          "description": "Bridge processes confirmation; due to tampered relay, msg.sender != notary but check is bypassed, releasing locked tokens to attacker.",
+          "relay_mode": "faithful",
+          "description": "Notary forwards the export proof to the destination router.",
           "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "mint(uint256,bytes32)",
+          "params": {
+            "exportId": 42,
+            "amount": 1000
+          },
+          "description": "Destination side mints 1000 OfficialToken on the target chain based solely on the exportId, trusting the proof and ignoring lockedAmount check.",
+          "step": 4
         }
       ],
       "retrieved_exploits": [
-        "feg_bridge_20241229",
-        "crosscurve_20260131"
+        "meterio_20220205",
+        "qubit_20220127"
       ],
       "waypoints": [
         {
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "User initiates export; bridge locks tokens and emits ExportRequested(exportId=42)."
+          "description": "Attacker calls lock with amount=0, bypassing the >0 check due to integer under‑flow in the surrogate’s wrapper that treats missing calldata as zero."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Relay rewrites msg.sender to attacker address while forwarding confirmExport, bypassing notary check."
+          "description": "Bridge records exportId 42 with lockedAmount[42] = 0 (from previous step) and emits Exported event."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "Bridge processes confirmation; due to tampered relay, msg.sender != notary but check is bypassed, releasing locked tokens to attacker."
+          "description": "Notary forwards the export proof to the destination router."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Destination side mints 1000 OfficialToken on the target chain based solely on the exportId, trusting the proof and ignoring lockedAmount check."
         }
       ]
     },
     {
-      "scenario_id": "verus_sig_forge_2024_11",
-      "target_invariant": "authorization_signature_valid",
+      "scenario_id": "verus_sig_forge_2024_01",
+      "target_invariant": "authorization_mint_requires_valid_proof_e1",
       "vulnerability_class": "signature_forgery",
       "confidence": 0.92,
       "actions": [
         {
           "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "lockTokens(uint256 amount, bytes32 exportId)",
+          "params": {
+            "amount": "1000e18",
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "description": "User locks OfficialToken in the export surrogate, creating exportId and emitting Exported(exportId, amount).",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "signExport(bytes32 exportId, uint256 payout, uint256 nonce)",
+          "params": {
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "payout": "1000e18",
+            "nonce": "1"
+          },
+          "description": "Honest notary signs the export (normally). Attacker records the signature S.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "signExport(bytes32 exportId, uint256 payout, uint256 nonce)",
+          "params": {
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "payout": "0",
+            "nonce": "2"
+          },
+          "description": "Attacker re‑uses the same exportId but crafts a second signature with payout=0 and a fresh nonce, exploiting that the bridge only checks `verifySignature(notary, keccak256(exportId, payout, nonce))` without ensuring nonce monotonicity.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
           "contract": "VerusBridge",
-          "function": "exportTokens",
+          "function": "submitImports(address to, uint256 payout, bytes32 exportId, bytes signature)",
           "params": {
-            "token": "OfficialToken",
-            "amount": 1000000,
-            "recipient": "attacker_address_placeholder",
-            "exportId": 0,
-            "signature": "0x0000000000000000000000000000000000000000000000000000000000000000"
+            "to": "attacker_address",
+            "payout": "0",
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "signature": "S_attacker"
           },
-          "description": "User (attacker) initiates export with exportId set to 0 and a zeroed signature. The bridge does not check exportId>0 before signature verification, allowing a bypass of verifySignature.",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "sourceChain": "Ethereum",
-            "destChain": "source",
-            "payload": {
-              "exportId": 0,
-              "payout": 1000000,
-              "recipient": "attacker_address_placeholder",
-              "signature": "0x0000000000000000000000000000000000000000000000000000000000000000"
-            },
-            "mode": "tampered"
-          },
-          "description": "Relay forwards the malformed payload without alteration; mode 'tampered' indicates the relay is allowed to forward a payload that fails signature verification because the bridge contract only checks signature after exportId>0.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "submitImports",
-          "params": {
-            "importer": "attacker_address_placeholder",
-            "amount": 1000000,
-            "exportId": 0,
-            "signature": "0x0000000000000000000000000000000000000000000000000000000000000000"
-          },
-          "description": "Destination contract processes import; verifySignature(exportId, signature, notaryPublicKey) returns true because exportId==0 triggers a shortcut in the verification logic (e.g., early‑return true for zero id). Tokens are minted to attacker.",
-          "step": 3
-        }
-      ],
-      "retrieved_exploits": [
-        "multichain_20220118",
-        "feg_bridge_20241229"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User (attacker) initiates export with exportId set to 0 and a zeroed signature. The bridge does not check exportId>0 before signature verification, allowing a bypass of verifySignature."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Relay forwards the malformed payload without alteration; mode 'tampered' indicates the relay is allowed to forward a payload that fails signature verification because the bridge contract only checks signature after exportId>0."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Destination contract processes import; verifySignature(exportId, signature, notaryPublicKey) returns true because exportId==0 triggers a shortcut in the verification logic (e.g., early‑return true for zero id). Tokens are minted to attacker."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_auth_token_transfer_bypass_001",
-      "target_invariant": "authorization_token_transfer_allowed",
-      "vulnerability_class": "reentrancy_via_unchecked_external_call",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "verus",
-          "function": "exportTokens",
-          "params": {
-            "amount": 1000000,
-            "destinationChain": "Polygon",
-            "recipient": "0xAttackerControlled"
-          },
-          "description": "User calls VerusBridge.exportTokens which internally calls OfficialToken.transferFrom(user, address(this), amount) then emits Export event. The bridge does not check the return value of transferFrom before emitting.",
-          "step": 1
-        },
-        {
-          "chain": "ethereum",
-          "contract": "OfficialToken",
-          "function": "transferFrom",
-          "params": {
-            "from": "user",
-            "to": "VerusBridge",
-            "amount": 1000000
-          },
-          "description": "OfficialToken is a malicious ERC20 that returns false on transferFrom but does not revert. The bridge proceeds because it does not require the call result.",
-          "step": 2
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "srcChain": "Ethereum",
-            "dstChain": "Polygon",
-            "payload": {
-              "exportId": 42,
-              "amount": 1000000,
-              "recipient": "0xAttackerControlled"
-            },
-            "mode": "faithful"
-          },
-          "description": "Notary relays the Export event payload to the destination chain unchanged.",
-          "step": 3
-        },
-        {
-          "chain": "polygon",
-          "contract": "verusexportsurrogate",
-          "function": "receiveExport",
-          "params": {
-            "exportId": 42,
-            "amount": 1000000,
-            "recipient": "0xAttackerControlled"
-          },
-          "description": "Surrogate mints 1,000,000 wrapped OfficialToken on Polygon for attacker, assuming the source lock succeeded.",
+          "description": "Attacker submits import with forged signature that passes verification because the bridge recomputes the hash with the supplied payout (0). The invariant expects a valid proof for the *actual* payout, but the contract only checks signature validity, allowing mint of 0 tokens while still marking export as processed.",
           "step": 4
         },
         {
           "chain": "ethereum",
           "contract": "VerusBridge",
-          "function": "totalLocked",
-          "params": {},
-          "description": "State predicate: VerusBridge.totalLocked() == 0 (no tokens actually locked).",
+          "function": "submitImports(address to, uint256 payout, bytes32 exportId, bytes signature)",
+          "params": {
+            "to": "attacker_address",
+            "payout": "1000e18",
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "signature": "S_honest"
+          },
+          "description": "Immediately after, attacker re‑submits the same exportId with the honest notary signature (payout=1000e18). Because the bridge does not track used exportIds per nonce, it mints 1000 OfficialToken to attacker, violating the invariant.",
           "step": 5
         }
       ],
       "retrieved_exploits": [
-        "multichain_20220118",
-        "feg_bridge_20241229"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User calls VerusBridge.exportTokens which internally calls OfficialToken.transferFrom(user, address(this), amount) then emits Export event. The bridge does not check the return value of transferFrom before emitting."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "OfficialToken is a malicious ERC20 that returns false on transferFrom but does not revert. The bridge proceeds because it does not require the call result."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Notary relays the Export event payload to the destination chain unchanged."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Surrogate mints 1,000,000 wrapped OfficialToken on Polygon for attacker, assuming the source lock succeeded."
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "step_5_executed",
-          "description": "State predicate: VerusBridge.totalLocked() == 0 (no tokens actually locked)."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_exportid_mismatch_01",
-      "target_invariant": "authorization_export_id_matches_payload",
-      "vulnerability_class": "logic_bug",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "exportTokens",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 1000,
-            "exportId": "0xAAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA1"
-          },
-          "description": "User locks 1,000 OfficialToken on the source chain; bridge creates payload with exportId = 0xAAA…",
-          "waypoint": "sourceBridge.totalLocked() >= 1000 && payload.exportId == 0xAAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA1",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "payload": {
-              "token": "OfficialToken",
-              "amount": 1000,
-              "exportId": "0xBBB222BBB222BBB222BBB222BBB222BBB222BBB222BBB222BBB222BBB222BBB2"
-            },
-            "exportIdParam": "0xAAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA1"
-          },
-          "mode": "tampered",
-          "description": "The off‑chain relay (controlled by the attacker) rewrites the payload.exportId to 0xBBB… while leaving the exportId argument unchanged.",
-          "waypoint": "relay.mode == \"tampered\" && payload.exportId != exportIdParam",
-          "step": 2
-        },
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "submitImports",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 1000,
-            "exportId": "0xAAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA111AAA1"
-          },
-          "mode": "faithful",
-          "description": "VerusBridge receives the relayed message and calls submitImports with exportId = 0xAAA…; the contract trusts the payload and mints tokens despite exportId mismatch.",
-          "waypoint": "VerusBridge.totalMinted() == previousTotalMinted + 1000 && exportId != payload.exportId",
-          "step": 3
-        },
-        {
-          "chain": "ethereum",
-          "contract": "OfficialToken",
-          "function": "transfer",
-          "params": {
-            "to": "attacker_address_placeholder",
-            "amount": 1000
-          },
-          "description": "Attacker withdraws the freshly minted tokens to their own address.",
-          "waypoint": "balanceOf(attacker_address_placeholder) >= 1000",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [
-        "crosscurve_20260131"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User locks 1,000 OfficialToken on the source chain; bridge creates payload with exportId = 0xAAA…"
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "The off‑chain relay (controlled by the attacker) rewrites the payload.exportId to 0xBBB… while leaving the exportId argument unchanged."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "VerusBridge receives the relayed message and calls submitImports with exportId = 0xAAA…; the contract trusts the payload and mints tokens despite exportId mismatch."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Attacker withdraws the freshly minted tokens to their own address."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_auth_bypass_001",
-      "target_invariant": "authorization_check_cc_values_passes",
-      "vulnerability_class": "logic_bug_missing_auth_on_relay",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "submitExports(address,uint256,bytes32)",
-          "params": {
-            "to": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "payout": 0,
-            "exportId": 0
-          },
-          "description": "User initiates an export with zero payout and zero exportId; bridge does not yet call checkCCValues.",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "messageId": "0xfeedfacefeedfacefeedfacefeedfacefeedface",
-            "payload": "0x...encoded submitImports with payout=0, exportId=0..."
-          },
-          "relay_mode": "tampered",
-          "description": "Malicious notary relays a forged import message to the destination router, omitting the checkCCValues call.",
-          "step": 2
-        },
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "submitImports(address,uint256,bytes32)",
-          "params": {
-            "from": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "payout": 0,
-            "exportId": 0
-          },
-          "description": "Bridge processes the imported payload; due to missing internal guard, checkCCValues returns false but is not enforced, allowing zero‑value mint.",
-          "step": 3
-        },
-        {
-          "chain": "ethereum",
-          "contract": "OfficialToken",
-          "function": "mint(address,uint256)",
-          "params": {
-            "to": "0xattackeraddressattackeraddressattackeraddress",
-            "amount": 1000000
-          },
-          "description": "Attacker mints a large amount of OfficialToken despite zero payout, violating the invariant.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [
-        "feg_bridge_20241229",
+        "chainswap_20210711",
+        "wormhole_20220202",
         "multichain_20220118"
       ],
       "waypoints": [
@@ -1007,195 +164,205 @@
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "User initiates an export with zero payout and zero exportId; bridge does not yet call checkCCValues."
+          "description": "User locks OfficialToken in the export surrogate, creating exportId and emitting Exported(exportId, amount)."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Malicious notary relays a forged import message to the destination router, omitting the checkCCValues call."
+          "description": "Honest notary signs the export (normally). Attacker records the signature S."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "Bridge processes the imported payload; due to missing internal guard, checkCCValues returns false but is not enforced, allowing zero‑value mint."
+          "description": "Attacker re‑uses the same exportId but crafts a second signature with payout=0 and a fresh nonce, exploiting that the bridge only checks `verifySignature(notary, keccak256(exportId, payout, nonce))` without ensuring nonce monotonicity."
         },
         {
           "waypoint_id": "w4",
           "after_step": 4,
           "predicate": "step_4_executed",
-          "description": "Attacker mints a large amount of OfficialToken despite zero payout, violating the invariant."
+          "description": "Attacker submits import with forged signature that passes verification because the bridge recomputes the hash with the supplied payout (0). The invariant expects a valid proof for the *actual* payout, but the contract only checks signature validity, allowing mint of 0 tokens while still marking export as processed."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Immediately after, attacker re‑submits the same exportId with the honest notary signature (payout=1000e18). Because the bridge does not track used exportIds per nonce, it mints 1000 OfficialToken to attacker, violating the invariant."
         }
       ]
     },
     {
-      "scenario_id": "verus_bridge_selfdestruct_router_exploit_2024_10",
-      "target_invariant": "authorization_caller_is_bridge_router",
-      "vulnerability_class": "upgradeable_contract_selfdestruct",
+      "scenario_id": "verus_e1_double_mint_20231114",
+      "target_invariant": "uniqueness_export_processed_once_e1",
+      "vulnerability_class": "replay_without_nonce",
       "confidence": 0.87,
       "actions": [
         {
           "chain": "ethereum",
           "contract": "VerusBridge",
-          "function": "upgradeTo(address)",
-          "params": {
-            "newImpl": "0xMaliciousImplAddress000000000000000000000001"
-          },
-          "mode": "faithful",
-          "description": "Governance (or owner) upgrades the router implementation to a malicious contract that can self‑destruct the original logic.",
-          "step": 1
-        },
-        {
-          "chain": "ethereum",
-          "contract": "MaliciousImpl",
-          "function": "selfdestruct(address payable)",
-          "params": {
-            "beneficiary": "0xAttackerEOA0000000000000000000000000002"
-          },
-          "mode": "tampered",
-          "description": "Attacker triggers the newly‑installed implementation to self‑destruct, removing the legitimate VerusBridge code.",
-          "step": 2
-        },
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "callExport(address,uint256,bytes32)",
-          "params": {
-            "token": "0xOfficialTokenAddress0000000000000000000003",
-            "amount": "10000000000000000000000",
-            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdead"
-          },
-          "mode": "faithful",
-          "description": "Attacker deploys a malicious contract at the original VerusBridge address (using CREATE2 after self‑destruct) that forwards a crafted call to the token's export function.",
-          "step": 3
-        },
-        {
-          "chain": "ethereum",
-          "contract": "OfficialToken",
           "function": "export(address,uint256,bytes32)",
           "params": {
-            "to": "0xAttackerEOA0000000000000000000000000002",
-            "amount": "10000000000000000000000",
-            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdead"
+            "to": "0xAttackerDest",
+            "amount": "1000e18",
+            "exportId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001"
           },
-          "mode": "tampered",
-          "description": "The malicious router (now at VerusBridge address) calls the token's export function. msg.sender equals VerusBridge, so the authorization check passes, but no assets were locked on the source side.",
+          "description": "Lock 1000 OfficialToken on source chain and emit Export event with exportId X.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayExport(bytes)",
+          "params": {
+            "payload": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001|0xAttackerDest|1000e18"
+          },
+          "relay_mode": "faithful",
+          "description": "Honest notary forwards the export payload to destination router.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "to": "0xAttackerDest",
+            "amount": "1000e18",
+            "exportId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001"
+          },
+          "description": "First mint on destination chain; processed[exportId] set to true.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayExport(bytes)",
+          "params": {
+            "payload": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001|0xAttackerDest|1000e18"
+          },
+          "relay_mode": "replay",
+          "description": "Attacker replays the same payload after a short delay; notary does not check processed flag.",
           "step": 4
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "to": "0xAttackerDest",
+            "amount": "1000e18",
+            "exportId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001"
+          },
+          "description": "Second mint occurs, violating uniqueness invariant.",
+          "step": 5
         }
       ],
-      "state_predicates": [
-        "VerusBridge.implementation() == 0xMaliciousImplAddress000000000000000000000001",
-        "VerusBridge.codeSize() == 0",
-        "VerusBridge.totalLocked() == 0",
-        "OfficialToken.totalMinted() == previous_totalMinted + 1000000e18"
-      ],
       "retrieved_exploits": [
-        "ronin_20240806",
-        "multichain_20230715"
+        "qubit_20220127",
+        "wormhole_20220202"
       ],
       "waypoints": [
         {
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "Governance (or owner) upgrades the router implementation to a malicious contract that can self‑destruct the original logic."
+          "description": "Lock 1000 OfficialToken on source chain and emit Export event with exportId X."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Attacker triggers the newly‑installed implementation to self‑destruct, removing the legitimate VerusBridge code."
+          "description": "Honest notary forwards the export payload to destination router."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "Attacker deploys a malicious contract at the original VerusBridge address (using CREATE2 after self‑destruct) that forwards a crafted call to the token's export function."
+          "description": "First mint on destination chain; processed[exportId] set to true."
         },
         {
           "waypoint_id": "w4",
           "after_step": 4,
           "predicate": "step_4_executed",
-          "description": "The malicious router (now at VerusBridge address) calls the token's export function. msg.sender equals VerusBridge, so the authorization check passes, but no assets were locked on the source side."
+          "description": "Attacker replays the same payload after a short delay; notary does not check processed flag."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Second mint occurs, violating uniqueness invariant."
         }
       ]
     },
     {
-      "scenario_id": "replay_export_id_double_mint",
-      "target_invariant": "uniqueness_export_id_used_once",
-      "vulnerability_class": "replay_attack_missing_reentrancy_guard",
+      "scenario_id": "verus_refund_mismatch_exploit_001",
+      "target_invariant": "asset_conservation_refund_preserves_balance_e1",
+      "vulnerability_class": "logic_bug_refund_miscalculation",
       "confidence": 0.87,
       "actions": [
         {
           "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "export",
+          "contract": "VerusExportSurrogate",
+          "function": "lock(address,uint256,bytes)",
           "params": {
-            "amount": "1000e18",
-            "destChain": "DestinationChain"
+            "token": "OfficialToken",
+            "amount": 0,
+            "memo": "0xdeadbeef"
           },
-          "description": "Legitimate user locks OfficialToken on Ethereum, bridge emits exportId X.",
-          "waypoint": "VerusBridge.totalLocked() == prevLocked + 1000e18 && usedExportIds[X] == false",
+          "description": "Lock zero tokens while supplying a crafted memo that encodes a large `exportId` and a bogus `lockedAmount` field. The router records `lockedAmount[exportId] = 0` but later uses the memo's amount for refund calculations.",
           "step": 1
         },
         {
-          "chain": "destinationchain",
+          "chain": "ethereum",
           "contract": "VerusBridge",
-          "function": "submitImports",
+          "function": "submitImports(address,uint256,bytes32)",
           "params": {
-            "to": "attacker",
-            "amount": "1000e18",
-            "exportId": "X"
+            "importer": "0xAttacker",
+            "exportId": "0xdeadbeef",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000f4240"
           },
-          "relay_mode": "faithful",
-          "description": "Off‑chain notary (relay) forwards the import message; bridge mints 1000 tokens to attacker and marks exportId as used.",
-          "waypoint": "OfficialToken.balanceOf(attacker) == 1000e18 && usedExportIds[X] == true",
+          "description": "Trigger the import processing path. The bridge reads `payload` as the refund amount (1,000,000 wei) and credits the attacker, while `lockedAmount[exportId]` remains 0.",
           "step": 2
         },
         {
-          "chain": "destinationchain",
+          "chain": "ethereum",
           "contract": "VerusBridge",
-          "function": "submitImports",
+          "function": "refundExport(uint256)",
           "params": {
-            "to": "attacker",
-            "amount": "1000e18",
-            "exportId": "X"
+            "exportId": "0xdeadbeef"
           },
-          "relay_mode": "replay",
-          "description": "Attacker re‑plays the same import transaction via a compromised relay before the usedExportIds flag is persisted (re‑entrancy bug), causing a second mint.",
-          "waypoint": "OfficialToken.balanceOf(attacker) == 2000e18 && usedExportIds[X] == true",
+          "description": "Invoke the refund routine. Due to the logic bug, the contract emits `Refund(exportId, refundAmount)` where `refundAmount` is taken from the stored payload, not from `lockedAmount`. The invariant `refundAmount == lockedAmount` is violated.",
           "step": 3
         }
       ],
       "retrieved_exploits": [
-        "gempad_20240419",
-        "rubic_20221225"
+        "thorchain_20210629",
+        "metpassport_20220206"
       ],
       "waypoints": [
         {
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "Legitimate user locks OfficialToken on Ethereum, bridge emits exportId X."
+          "description": "Lock zero tokens while supplying a crafted memo that encodes a large `exportId` and a bogus `lockedAmount` field. The router records `lockedAmount[exportId] = 0` but later uses the memo's amount for refund calculations."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Off‑chain notary (relay) forwards the import message; bridge mints 1000 tokens to attacker and marks exportId as used."
+          "description": "Trigger the import processing path. The bridge reads `payload` as the refund amount (1,000,000 wei) and credits the attacker, while `lockedAmount[exportId]` remains 0."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "Attacker re‑plays the same import transaction via a compromised relay before the usedExportIds flag is persisted (re‑entrancy bug), causing a second mint."
+          "description": "Invoke the refund routine. Due to the logic bug, the contract emits `Refund(exportId, refundAmount)` where `refundAmount` is taken from the stored payload, not from `lockedAmount`. The invariant `refundAmount == lockedAmount` is violated."
         }
       ]
     },
     {
-      "scenario_id": "verus_nonce_replay_2024_11",
-      "target_invariant": "uniqueness_message_nonce_monotonic",
+      "scenario_id": "verus_auth_bypass_unlock_20231114",
+      "target_invariant": "authorization_unlock_requires_original_sender_e1",
       "vulnerability_class": "logic_bug",
       "confidence": 0.87,
       "actions": [
@@ -1205,140 +372,777 @@
           "function": "exportTokens",
           "params": {
             "token": "OfficialToken",
-            "amount": 1000,
-            "destinationChain": "source",
-            "recipient": "attacker_address"
+            "amount": "1000e18",
+            "destChain": "BSC",
+            "destRecipient": "0xAttackerAddr"
           },
-          "description": "User initiates a legitimate export; notary emits relay message with nonce N.",
+          "description": "Attacker initiates a legitimate export, causing VerusBridge to lock 1000 OfficialToken and record exporter[exportId] = attacker address.",
           "step": 1
         },
         {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "tamperMessage",
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayExport",
           "params": {
-            "originalNonce": "N",
-            "newNonce": "N",
-            "payload": "same as original"
+            "exportId": "0xExportIdFromPrevTx",
+            "payload": "bytes32(keccak256(abi.encodePacked(...)))"
           },
-          "relay_mode": "tampered",
-          "description": "Attacker intercepts the off‑chain relay and re‑broadcasts the exact same message (nonce N) after a short delay, exploiting missing replay protection.",
+          "relay_mode": "delayed",
+          "description": "Notary (relay) forwards the export payload to the destination router but delays the confirmation of the export on‑chain, keeping the export in a pending state.",
           "step": 2
         },
         {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "submitImports",
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "unlock",
           "params": {
-            "exporter": "VerusBridge",
-            "exportId": 1,
-            "payloadHash": "0xdeadbeef..."
+            "exportId": "0xExportIdFromPrevTx"
           },
-          "description": "Destination contract processes the replayed message; invariant check `msg.nonce > lastProcessedNonce` fails but is bypassed due to bug, minting tokens again.",
+          "description": "Attacker calls unlock directly on the surrogate router before the notary finalizes the export. The contract checks only that exportId exists and that payout > 0, but mistakenly uses msg.sender == exporter[exportId] check that can be bypassed because exporter mapping is never set for surrogate exports.",
           "step": 3
         },
         {
           "chain": "ethereum",
-          "contract": "OfficialToken",
-          "function": "transfer",
+          "contract": "VerusExportSurrogate",
+          "function": "claimTokens",
           "params": {
-            "to": "attacker_address",
-            "amount": 1000
+            "exportId": "0xExportIdFromPrevTx",
+            "recipient": "0xAttackerAddr"
           },
-          "description": "Attacker now holds duplicated tokens on source chain while original tokens remain locked on Ethereum.",
+          "description": "Due to the faulty authorization, the surrogate releases the locked tokens to the attacker even though the original exporter has not yet been confirmed.",
           "step": 4
         }
       ],
       "retrieved_exploits": [
-        "feg_bridge_20241229",
-        "crosscurve_20260131"
+        "nomad_20220801",
+        "polynetwork_20210810"
       ],
       "waypoints": [
         {
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "User initiates a legitimate export; notary emits relay message with nonce N."
+          "description": "Attacker initiates a legitimate export, causing VerusBridge to lock 1000 OfficialToken and record exporter[exportId] = attacker address."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Attacker intercepts the off‑chain relay and re‑broadcasts the exact same message (nonce N) after a short delay, exploiting missing replay protection."
+          "description": "Notary (relay) forwards the export payload to the destination router but delays the confirmation of the export on‑chain, keeping the export in a pending state."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "Destination contract processes the replayed message; invariant check `msg.nonce > lastProcessedNonce` fails but is bypassed due to bug, minting tokens again."
+          "description": "Attacker calls unlock directly on the surrogate router before the notary finalizes the export. The contract checks only that exportId exists and that payout > 0, but mistakenly uses msg.sender == exporter[exportId] check that can be bypassed because exporter mapping is never set for surrogate exports."
         },
         {
           "waypoint_id": "w4",
           "after_step": 4,
           "predicate": "step_4_executed",
-          "description": "Attacker now holds duplicated tokens on source chain while original tokens remain locked on Ethereum."
+          "description": "Due to the faulty authorization, the surrogate releases the locked tokens to the attacker even though the original exporter has not yet been confirmed."
         }
       ]
     },
     {
-      "scenario_id": "verus_uniqueness_replay_001",
-      "target_invariant": "uniqueness_relay_message_processed_once",
-      "vulnerability_class": "replay_without_nonce",
+      "scenario_id": "verus_refund_replay_001",
+      "target_invariant": "uniqueness_refund_once_e1",
+      "vulnerability_class": "logic_bug",
       "confidence": 0.92,
       "actions": [
         {
           "chain": "ethereum",
           "contract": "VerusBridge",
-          "function": "exportTokens",
+          "function": "exportTokens(address,uint256,bytes)",
           "params": {
             "token": "OfficialToken",
-            "amount": 1000,
-            "recipient": "0xAttackerAddr",
-            "exportId": 42
+            "amount": "1000e18",
+            "memo": "0xdeadbeef"
           },
-          "description": "User initiates a legitimate export; bridge emits RelayMessage(hash H) with exportId 42.",
+          "description": "Lock 1000 OfficialToken on source chain, creating exportId X. VerusBridge emits Exported(X, amount).",
           "step": 1
         },
         {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayExport(bytes32)",
           "params": {
-            "messageHash": "H",
-            "payload": "0x...encoded export data..."
+            "exportId": "X"
           },
-          "mode": "faithful",
-          "description": "Honest notary forwards the message to destination chain; processedMessages[H] set to true.",
+          "relay_mode": "faithful",
+          "description": "Notary forwards the export payload to destination router (VerusExportSurrogate).",
           "step": 2
         },
         {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "processExport(bytes32,uint256,address)",
           "params": {
-            "messageHash": "H",
-            "payload": "0x...encoded export data..."
+            "exportId": "X",
+            "amount": "1000e18",
+            "receiver": "attacker_address"
           },
-          "mode": "tampered",
-          "description": "Attacker re‑broadcasts the same hash H with altered payload (e.g., changed recipient to attacker) before the destination contract clears the processed flag.",
+          "description": "Destination router credits attacker with 1000 OfficialToken and records exportId as processed.",
           "step": 3
         },
         {
-          "chain": "source",
-          "contract": "verusexportsurrogate",
-          "function": "submitImports",
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "refundExport(bytes32)",
+          "params": {
+            "exportId": "X"
+          },
+          "description": "Attacker calls refundExport before the bridge marks exportId as refunded. Due to missing check on exportId state (only checks refunded[exportId] but never sets it on successful processing), the call succeeds and transfers the locked tokens back to attacker.",
+          "step": 4
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "refundExport(bytes32)",
+          "params": {
+            "exportId": "X"
+          },
+          "description": "Replay the refund call (relay_mode: replay). Because the contract never updates refunded[X] after first refund, the second call also succeeds, draining the bridge’s locked pool.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [
+        "thorchain_20210628",
+        "thorchain_20210629",
+        "metpassport_20220206"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 1000 OfficialToken on source chain, creating exportId X. VerusBridge emits Exported(X, amount)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Notary forwards the export payload to destination router (VerusExportSurrogate)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Destination router credits attacker with 1000 OfficialToken and records exportId as processed."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Attacker calls refundExport before the bridge marks exportId as refunded. Due to missing check on exportId state (only checks refunded[exportId] but never sets it on successful processing), the call succeeds and transfers the locked tokens back to attacker."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Replay the refund call (relay_mode: replay). Because the contract never updates refunded[X] after first refund, the second call also succeeds, draining the bridge’s locked pool."
+        }
+      ]
+    },
+    {
+      "scenario_id": "replay_nonce_verus_e1_001",
+      "target_invariant": "authorization_notary_cannot_replay_e1",
+      "vulnerability_class": "signature_forgery",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "exportTokens(address,uint256,bytes)",
+          "params": {
+            "to": "0xAttackerRecipient",
+            "amount": "1000e18",
+            "signature": "0xFAKE_NOTARY_SIG_WITH_NONCE_1"
+          },
+          "description": "Lock tokens and submit a notarized export with nonce=1. The notary contract signs the payload but the bridge does not enforce uniqueness of nonce per exportId.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayExport(bytes)",
+          "params": {
+            "exportData": "0xExportPayloadWithNonce1"
+          },
+          "relay_mode": "faithful",
+          "description": "Notary forwards the export to the destination router; the bridge records usedNonces[exportId][1] = true.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "importTokens(address,uint256,bytes32)",
+          "params": {
+            "from": "0xExportId",
+            "amount": "1000e18",
+            "nonce": "1"
+          },
+          "description": "Attacker calls importTokens with the same exportId and nonce before the bridge updates the usedNonces mapping (race condition).",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayImport(bytes)",
+          "params": {
+            "importData": "0xImportPayloadWithNonce1"
+          },
+          "relay_mode": "delayed",
+          "description": "Notary delays the second relay, allowing the attacker to front‑run the import transaction and cause the bridge to accept the replayed nonce.",
+          "step": 4
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "finalizeImport(address,uint256)",
+          "params": {
+            "recipient": "0xAttackerRecipient",
+            "amount": "1000e18"
+          },
+          "description": "Bridge releases tokens to attacker a second time, violating usedNonces check.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "chainswap_20210711",
+        "nomad_20220801"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock tokens and submit a notarized export with nonce=1. The notary contract signs the payload but the bridge does not enforce uniqueness of nonce per exportId."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Notary forwards the export to the destination router; the bridge records usedNonces[exportId][1] = true."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker calls importTokens with the same exportId and nonce before the bridge updates the usedNonces mapping (race condition)."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Notary delays the second relay, allowing the attacker to front‑run the import transaction and cause the bridge to accept the replayed nonce."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Bridge releases tokens to attacker a second time, violating usedNonces check."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_e1_double_mint_001",
+      "target_invariant": "asset_conservation_no_double_mint_e1",
+      "vulnerability_class": "fake_deposit_logic_bug",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "lock(uint256 amount, bytes32 exportId)",
+          "params": {
+            "amount": 0,
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "description": "Lock zero tokens while still emitting Export event with non‑zero exportId.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayExport(bytes32 exportId, uint256 claimedAmount)",
+          "params": {
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "claimedAmount": 1000000
+          },
+          "relay_mode": "tampered",
+          "description": "Notary (malicious relay) reports a large claimedAmount for the exportId despite zero lock.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "mintExport(address to, uint256 amount, bytes32 exportId)",
+          "params": {
+            "to": "0xAttackerAddress000000000000000000000000000000",
+            "amount": 1000000,
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "description": "Bridge mints tokens on destination side based on relayed claim, violating mintedAmount > lockedAmount.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock zero tokens while still emitting Export event with non‑zero exportId."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Notary (malicious relay) reports a large claimedAmount for the exportId despite zero lock."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Bridge mints tokens on destination side based on relayed claim, violating mintedAmount > lockedAmount."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_mint_zero_payout_exploit_001",
+      "target_invariant": "authorization_mint_requires_positive_amount_e1",
+      "vulnerability_class": "logic_bug_missing_zero_check",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "export(uint256 amount, bytes32 exportId)",
+          "params": {
+            "amount": 0,
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "description": "Lock zero OfficialToken amount; bridge records export with exportId.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayImport(address to, uint256 payout, bytes32 exportId)",
+          "params": {
+            "to": "attacker_address_placeholder",
+            "payout": 0,
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "relay_mode": "tampered",
+          "description": "Notary (malicious relay) submits import with zero payout, bypassing internal check because bridge only validates exportId existence.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "OfficialToken",
+          "function": "mint(address to, uint256 amount)",
+          "params": {
+            "to": "attacker_address_placeholder",
+            "amount": 1000000
+          },
+          "description": "Due to missing positive‑payout guard in VerusBridge.import handling, the bridge calls token.mint with attacker‑controlled amount despite payout==0.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "chainswap_20210711",
+        "meterio_20220205"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock zero OfficialToken amount; bridge records export with exportId."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Notary (malicious relay) submits import with zero payout, bypassing internal check because bridge only validates exportId existence."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Due to missing positive‑payout guard in VerusBridge.import handling, the bridge calls token.mint with attacker‑controlled amount despite payout==0."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_exportId_zero_injection_001",
+      "target_invariant": "uniqueness_exportId_nonzero_e1",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "exportTokens(address,uint256,bytes32)",
+          "params": {
+            "to": "0xAttackerControlled",
+            "amount": "1000e18",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Lock tokens on source chain using a crafted exportId of zero; the bridge router does not validate exportId before emitting Export event.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayExport(bytes32,uint256,address,bytes32)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "amount": "1000e18",
+            "receiver": "0xAttackerControlled",
+            "signature": "0xdeadbeef"
+          },
+          "relay_mode": "tampered",
+          "description": "Notary (relay) is compromised; it forwards the zero exportId to the destination router despite lack of verification.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "payer": "0xAttackerControlled",
+            "amount": "1000e18",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Destination router accepts the import because it only checks amount>0 and signature, not exportId uniqueness; tokens are minted to attacker.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "evodefi_20220607",
+        "multichain_xscope"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock tokens on source chain using a crafted exportId of zero; the bridge router does not validate exportId before emitting Export event."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Notary (relay) is compromised; it forwards the zero exportId to the destination router despite lack of verification."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Destination router accepts the import because it only checks amount>0 and signature, not exportId uniqueness; tokens are minted to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_notary_timeout_exploit_001",
+      "target_invariant": "authorization_only_notary_can_set_timeout_e1",
+      "vulnerability_class": "authorization_bypass",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "setExportTimeout(uint256)",
+          "params": {
+            "newTimeout": 0
+          },
+          "mode": "tampered",
+          "waypoint": "VerusExportSurrogate.exportTimeout() == 0",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "export(address,uint256,bytes)",
           "params": {
             "token": "OfficialToken",
-            "amount": 1000,
-            "exportId": 42,
-            "proof": "0x...malicious proof..."
+            "amount": 1000000,
+            "payload": "0x"
           },
-          "description": "Destination contract processes the tampered message, minting tokens to attacker while processedMessages[H] is still false due to missing state sync.",
+          "mode": "faithful",
+          "waypoint": "VerusBridge.pendingExports(exportId).amount == 1000000 && VerusBridge.pendingExports(exportId).timeout == 0",
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "relayExport(uint256)",
+          "params": {
+            "exportId": "exportId"
+          },
+          "mode": "delayed",
+          "waypoint": "VerusBridge.exportProcessed(exportId) == true",
+          "step": 3,
+          "description": "Step 3"
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "finalizeImport(address,uint256)",
+          "params": {
+            "recipient": "attacker_address",
+            "amount": 1000000
+          },
+          "mode": "faithful",
+          "waypoint": "OfficialToken.balanceOf(attacker_address) >= 1000000",
+          "step": 4,
+          "description": "Step 4"
+        }
+      ],
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "polynetwork_20210810"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Step 4"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_invariant_break_001",
+      "target_invariant": "asset_conservation_total_supply_unchanged_e1",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "lock(address,uint256)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": "1000000e18"
+          },
+          "description": "Lock a large amount of OfficialToken in the surrogate router; the bridge records `lockedTotal += amount` but does not emit a corresponding mint event on the destination side due to missing exportId verification.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": "0",
+            "exportId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+          },
+          "relay_mode": "tampered",
+          "description": "Relay a forged import proof with amount=0 while the bridge internally increments `mintedTotal` by the amount claimed in the original export (the notary does not validate that the amount in the proof matches the amount locked).",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "refund(address,uint256)",
+          "params": {
+            "recipient": "attacker_address",
+            "amount": "500000e18"
+          },
+          "description": "Trigger a partial refund on the source chain; `refundedTotal` is increased, but the bridge’s internal accounting mistakenly subtracts the refunded amount twice due to a signed‑overflow bug, leaving `lockedTotal + mintedTotal - refundedTotal` > `bridgeInitialSupply`.",
+          "step": 3
+        }
+      ],
+      "retrieved_exploits": [
+        "evodefi_20220607",
+        "multichain_20220118"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock a large amount of OfficialToken in the surrogate router; the bridge records `lockedTotal += amount` but does not emit a corresponding mint event on the destination side due to missing exportId verification."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relay a forged import proof with amount=0 while the bridge internally increments `mintedTotal` by the amount claimed in the original export (the notary does not validate that the amount in the proof matches the amount locked)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Trigger a partial refund on the source chain; `refundedTotal` is increased, but the bridge’s internal accounting mistakenly subtracts the refunded amount twice due to a signed‑overflow bug, leaving `lockedTotal + mintedTotal - refundedTotal` > `bridgeInitialSupply`."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_duplicate_export_event_001",
+      "target_invariant": "uniqueness_no_duplicate_export_events_e1",
+      "vulnerability_class": "reentrancy_event_duplication",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "lock(uint256 amount, bytes calldata data)",
+          "params": {
+            "amount": "1000e18",
+            "data": "0xdeadbeef"
+          },
+          "description": "User locks tokens, triggering VerusBridge.export(uint256 exportId, ...) which emits Export event. The lock function calls an external untrusted contract (attacker) via a callback before marking exportEventEmitted[exportId] = true.",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "AttackerCallback",
+          "function": "receiveLockCallback(uint256 exportId)",
+          "params": {
+            "exportId": "1"
+          },
+          "description": "Re‑enter VerusBridge.export with the same exportId before the flag is set, causing a second Export event emission.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "export(uint256 exportId, address to, uint256 amount)",
+          "params": {
+            "exportId": "1",
+            "to": "0xAttackerAddress",
+            "amount": "1000e18"
+          },
+          "description": "Second export call emits duplicate Export event; state flag still false due to ordering bug.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "finalizeExport(uint256 exportId)",
+          "params": {
+            "exportId": "1"
+          },
+          "description": "Bridge finalizes export, marking exportEventEmitted[exportId] = true after both events have been emitted.",
           "step": 4
         }
       ],
       "retrieved_exploits": [
-        "pnetwork_20210920",
+        "multichain_20220118",
+        "evodefi_20220607"
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks tokens, triggering VerusBridge.export(uint256 exportId, ...) which emits Export event. The lock function calls an external untrusted contract (attacker) via a callback before marking exportEventEmitted[exportId] = true."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Re‑enter VerusBridge.export with the same exportId before the flag is set, causing a second Export event emission."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Second export call emits duplicate Export event; state flag still false due to ordering bug."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Bridge finalizes export, marking exportEventEmitted[exportId] = true after both events have been emitted."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_sig_mismatch_exploit_001",
+      "target_invariant": "authorization_signature_must_match_exportId_e1",
+      "vulnerability_class": "signature_forgery",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "ethereum",
+          "contract": "VerusExportSurrogate",
+          "function": "lock(uint256 amount, bytes calldata data)",
+          "params": {
+            "amount": "1000e18",
+            "data": "0x"
+          },
+          "description": "User locks OfficialToken in the surrogate router, creating exportId = 0xdeadbeef01 (derived from internal nonce).",
+          "step": 1
+        },
+        {
+          "chain": "ethereum",
+          "contract": "notary",
+          "function": "signExport(uint256 exportId, bytes32 payload)",
+          "params": {
+            "exportId": "0xdeadbeef02",
+            "payload": "0xabcdef..."
+          },
+          "relay_mode": "faithful",
+          "description": "Attacker forges a signature for a *different* exportId (0xdeadbeef02) but reuses the same signature bytes when submitting import.",
+          "step": 2
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "submitImports(address recipient, uint256 amount, bytes32 exportId)",
+          "params": {
+            "recipient": "attacker_address",
+            "amount": "1000e18",
+            "exportId": "0xdeadbeef01"
+          },
+          "description": "Bridge calls submitImports with the original exportId but supplies the forged signature from previous step. The contract extracts exportId from signature (0xdeadbeef02) which does not match the supplied exportId, but due to missing validation the check is bypassed.",
+          "step": 3
+        },
+        {
+          "chain": "ethereum",
+          "contract": "VerusBridge",
+          "function": "releaseTokens(address to, uint256 amount)",
+          "params": {
+            "to": "attacker_address",
+            "amount": "1000e18"
+          },
+          "description": "Bridge releases the locked OfficialToken to attacker, completing the double‑spend.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [
+        "multichain_20220118",
         "chainswap_20210711"
       ],
       "waypoints": [
@@ -1346,250 +1150,25 @@
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "User initiates a legitimate export; bridge emits RelayMessage(hash H) with exportId 42."
+          "description": "User locks OfficialToken in the surrogate router, creating exportId = 0xdeadbeef01 (derived from internal nonce)."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Honest notary forwards the message to destination chain; processedMessages[H] set to true."
+          "description": "Attacker forges a signature for a *different* exportId (0xdeadbeef02) but reuses the same signature bytes when submitting import."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "Attacker re‑broadcasts the same hash H with altered payload (e.g., changed recipient to attacker) before the destination contract clears the processed flag."
+          "description": "Bridge calls submitImports with the original exportId but supplies the forged signature from previous step. The contract extracts exportId from signature (0xdeadbeef02) which does not match the supplied exportId, but due to missing validation the check is bypassed."
         },
         {
           "waypoint_id": "w4",
           "after_step": 4,
           "predicate": "step_4_executed",
-          "description": "Destination contract processes the tampered message, minting tokens to attacker while processedMessages[H] is still false due to missing state sync."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_sig_replay_001",
-      "target_invariant": "uniqueness_no_replay_of_signature",
-      "vulnerability_class": "signature_reuse",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "export(uint256 amount, bytes calldata signature)",
-          "params": {
-            "amount": 1000,
-            "signature": "0xdeadbeefcafebabefeedface1234567890abcdef1234567890abcdef12345678"
-          },
-          "description": "User initiates a legitimate export; bridge stores signatureHash = keccak256(signature) in usedSignatures mapping.",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage(bytes calldata payload, bytes calldata signature)",
-          "params": {
-            "payload": "0x...encoded exportId=1, amount=1000, recipient=user",
-            "signature": "0xdeadbeefcafebabefeedface1234567890abcdef1234567890abcdef12345678"
-          },
-          "mode": "faithful",
-          "description": "Notary relays the export message to destination chain; signatureHash is recorded as used.",
-          "step": 2
-        },
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "export(uint256 amount, bytes calldata signature)",
-          "params": {
-            "amount": 500,
-            "signature": "0xdeadbeefcafebabefeedface1234567890abcdef1234567890abcdef12345678"
-          },
-          "description": "Attacker re‑uses the same signatureHash for a second export with different amount, violating uniqueness invariant.",
-          "step": 3
-        }
-      ],
-      "retrieved_exploits": [
-        "chainswap_20210711",
-        "crosscurve_20260131"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates a legitimate export; bridge stores signatureHash = keccak256(signature) in usedSignatures mapping."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Notary relays the export message to destination chain; signatureHash is recorded as used."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Attacker re‑uses the same signatureHash for a second export with different amount, violating uniqueness invariant."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_uniqueness_double_export_001",
-      "target_invariant": "uniqueness_one_transfer_per_user_per_export",
-      "vulnerability_class": "replay_without_nonce",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "exportTokens",
-          "params": {
-            "to": "0xAttackerAddress",
-            "amount": 1000000000000000000,
-            "exportId": 42,
-            "payload": "0x"
-          },
-          "description": "User initiates a legitimate export; userExportCount[user][42] becomes 1.",
-          "step": 1
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "relayMessage",
-          "params": {
-            "mode": "tampered",
-            "originalMessageHash": "0xhash_of_export_42",
-            "newExportId": 42,
-            "newNonce": 0
-          },
-          "description": "Relay re‑broadcasts the same export message with a forged signature (empty signer) while keeping exportId unchanged, exploiting missing nonce check.",
-          "step": 2
-        },
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "submitImports",
-          "params": {
-            "importer": "0xAttackerAddress",
-            "payout": 1000000000000000000,
-            "exportId": 42,
-            "signature": "0x0000000000000000000000000000000000000000000000000000000000000000"
-          },
-          "description": "Bridge processes the replayed import; userExportCount[user][42] is not re‑checked, allowing a second mint.",
-          "step": 3
-        }
-      ],
-      "retrieved_exploits": [
-        "chainswap_20210711",
-        "crosscurve_20260131"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates a legitimate export; userExportCount[user][42] becomes 1."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Relay re‑broadcasts the same export message with a forged signature (empty signer) while keeping exportId unchanged, exploiting missing nonce check."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Bridge processes the replayed import; userExportCount[user][42] is not re‑checked, allowing a second mint."
-        }
-      ]
-    },
-    {
-      "scenario_id": "verus_reentrancy_double_lock_001",
-      "target_invariant": "uniqueness_locked_token_nonreentrant",
-      "vulnerability_class": "reentrancy_logic_bug",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "lockTransfer",
-          "params": {
-            "token": "OfficialToken",
-            "amount": "1000e18",
-            "receiver": "user"
-          },
-          "description": "User initiates first lock; lockTransfer sets lockedInProgress = true and calls external token contract (ERC20.transferFrom).",
-          "step": 1
-        },
-        {
-          "chain": "ethereum",
-          "contract": "OfficialToken",
-          "function": "transferFrom",
-          "params": {
-            "from": "user",
-            "to": "VerusBridge",
-            "value": "1000e18"
-          },
-          "description": "During the external call, attacker’s malicious ERC20 token contract re‑enters VerusBridge.lockTransfer via fallback, re‑executing lockTransfer before lockedInProgress is cleared.",
-          "step": 2
-        },
-        {
-          "chain": "ethereum",
-          "contract": "VerusBridge",
-          "function": "lockTransfer",
-          "params": {
-            "token": "OfficialToken",
-            "amount": "1000e18",
-            "receiver": "user"
-          },
-          "description": "Re‑entered call locks the same tokens a second time, violating !lockedInProgress.",
-          "step": 3
-        },
-        {
-          "chain": "offchain",
-          "contract": "relay",
-          "function": "submitImports",
-          "params": {
-            "exportId": "1",
-            "payout": "2000e18",
-            "payload": "0x..."
-          },
-          "mode": "faithful",
-          "description": "Relay processes the duplicated lock as a single export, minting 2000 tokens on destination chain, netting attacker profit.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [
-        "ronin_20240806",
-        "feg_bridge_20241229",
-        "crosscurve_20260131"
-      ],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates first lock; lockTransfer sets lockedInProgress = true and calls external token contract (ERC20.transferFrom)."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "During the external call, attacker’s malicious ERC20 token contract re‑enters VerusBridge.lockTransfer via fallback, re‑executing lockTransfer before lockedInProgress is cleared."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Re‑entered call locks the same tokens a second time, violating !lockedInProgress."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Relay processes the duplicated lock as a single export, minting 2000 tokens on destination chain, netting attacker profit."
+          "description": "Bridge releases the locked OfficialToken to attacker, completing the double‑spend."
         }
       ]
     }

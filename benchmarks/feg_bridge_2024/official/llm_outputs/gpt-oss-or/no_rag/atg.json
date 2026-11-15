@@ -40,7 +40,7 @@
     {
       "node_id": "relayer",
       "node_type": "relay",
-      "chain": "destination",
+      "chain": "any",
       "address": "relayer",
       "functions": []
     },
@@ -138,20 +138,62 @@
     {
       "edge_id": "e2",
       "src": "FEGBridgeSrc",
-      "dst": "WormholeCore (publishMessage)",
-      "label": "message",
+      "dst": "WormholeCore",
+      "label": "publishMessage",
       "token": "feg",
       "conditions": [
-        "n",
+        "a",
+        "f",
+        "t",
+        "e",
+        "r",
+        " ",
+        "l",
         "o",
-        "n",
-        "e"
+        "c",
+        "k"
       ],
       "condition_objects": [
         {
           "type": "generic",
           "params": {
-            "expression": "n"
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "f"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
           }
         },
         {
@@ -163,13 +205,13 @@
         {
           "type": "generic",
           "params": {
-            "expression": "n"
+            "expression": "c"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "e"
+            "expression": "k"
           }
         }
       ],
@@ -180,7 +222,7 @@
       "src": "FEGSmartBridge",
       "dst": "account (from payload)",
       "label": "release",
-      "token": "feg",
+      "token": "OfficialToken",
       "conditions": [
         "o",
         "p",
@@ -584,8 +626,8 @@
     {
       "invariant_id": "asset_conservation_deposit_to_release",
       "category": "asset_conservation",
-      "description": "The total amount of FEG tokens locked on the source chain must equal the total amount released (minted) on the destination chain for each transfer.",
-      "predicate": "locked_amount[e1] == released_amount[e3]",
+      "description": "The total amount of FEG tokens locked on the source chain must equal the amount of OfficialToken minted/released on the destination chain for each successful transfer.",
+      "predicate": "lockedAmount[e1] == releasedAmount[e3]",
       "solidity_assertion": "require(lockedAmount == releasedAmount, \"Asset conservation violation: locked != released\");",
       "related_edges": [
         "e1",
@@ -596,11 +638,11 @@
       }
     },
     {
-      "invariant_id": "asset_conservation_total_supply_unchanged",
+      "invariant_id": "asset_conservation_total_supply",
       "category": "asset_conservation",
-      "description": "The sum of totalSupply on source token and totalSupply on destination token must remain constant across the bridge.",
-      "predicate": "totalSupplySource == totalSupplyDestination",
-      "solidity_assertion": "assert(sourceToken.totalSupply() == destinationToken.totalSupply() && \"Total supply mismatch across chains\");",
+      "description": "The sum of locked FEG tokens plus the total supply of OfficialToken on the destination must remain constant across the bridge.",
+      "predicate": "totalSupply(OfficialToken) + totalLocked(FEGBridgeSrc) == constantInitialSupply",
+      "solidity_assertion": "assert(totalSupply(officialToken) + totalLocked == INITIAL_SUPPLY);",
       "related_edges": [
         "e1",
         "e3"
@@ -610,27 +652,26 @@
       }
     },
     {
-      "invariant_id": "authorization_message_origin",
+      "invariant_id": "authorization_publish_message",
       "category": "authorization",
-      "description": "A release on the destination chain (e3) is only allowed if the corresponding message was emitted by the trusted WormholeCore contract on the source chain (e2).",
-      "predicate": "msgSender == relayer && verifiedMessageSource == address(WormholeCore)",
-      "solidity_assertion": "require(msg.sender == relayer && verifiedMessage.source == address(WormholeCore), \"Unauthorized release\");",
+      "description": "Only the FEGBridgeSrc contract may call WormholeCore.publishMessage after a successful lock.",
+      "predicate": "msg.sender == address(FEGBridgeSrc) && edge == e2",
+      "solidity_assertion": "require(msg.sender == address(FEGBridgeSrc), \"Unauthorized publishMessage\");",
       "related_edges": [
-        "e2",
-        "e3"
+        "e2"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
       }
     },
     {
-      "invariant_id": "authorization_deposit_signature",
+      "invariant_id": "authorization_release_requires_valid_proof",
       "category": "authorization",
-      "description": "The deposit function (e1) must be called with a valid signature from the user authorizing the lock of the specified amount.",
-      "predicate": "isValidSignature(user, amount, signature)",
-      "solidity_assertion": "require(isValidSignature(msg.sender, amount, sig), \"Invalid deposit signature\");",
+      "description": "FEGSmartBridge.release can only mint OfficialToken when the Wormhole proof verifies the original lock transaction.",
+      "predicate": "verifyProof(payload) == true && edge == e3",
+      "solidity_assertion": "require(verifyProof(payload), \"Invalid Wormhole proof\");",
       "related_edges": [
-        "e1"
+        "e3"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
@@ -639,11 +680,10 @@
     {
       "invariant_id": "uniqueness_message_consumed_once",
       "category": "uniqueness",
-      "description": "Each Wormhole message ID emitted in e2 can be processed by e3 at most once.",
+      "description": "Each Wormhole message ID may be processed by FEGSmartBridge at most once.",
       "predicate": "processedMessageIds[messageId] == false",
       "solidity_assertion": "require(!processedMessageIds[messageId], \"Message already processed\"); processedMessageIds[messageId] = true;",
       "related_edges": [
-        "e2",
         "e3"
       ],
       "metadata": {
@@ -651,10 +691,10 @@
       }
     },
     {
-      "invariant_id": "uniqueness_nonce_non_replay",
+      "invariant_id": "uniqueness_nonce_per_user",
       "category": "uniqueness",
-      "description": "The nonce included in the deposit call must be unique per user to prevent replay attacks.",
-      "predicate": "usedNonces[user][nonce] == false",
+      "description": "A user cannot reuse the same nonce for multiple deposits.",
+      "predicate": "usedNonces[msg.sender][nonce] == false",
       "solidity_assertion": "require(!usedNonces[msg.sender][nonce], \"Nonce already used\"); usedNonces[msg.sender][nonce] = true;",
       "related_edges": [
         "e1"
@@ -664,14 +704,13 @@
       }
     },
     {
-      "invariant_id": "authorization_relayer_signature",
+      "invariant_id": "authorization_only_relayer_can_publish",
       "category": "authorization",
-      "description": "The relayer on the destination chain must provide a valid Wormhole VAA signature confirming the source lock.",
-      "predicate": "verifyVAA(vaa, trustedSigners)",
-      "solidity_assertion": "require(verifyVAA(vaa, trustedSigners), \"Invalid VAA signature\");",
+      "description": "Only an authorized relayer address may invoke WormholeCore.publishMessage on behalf of the bridge.",
+      "predicate": "msg.sender == authorizedRelayer && edge == e2",
+      "solidity_assertion": "require(msg.sender == authorizedRelayer, \"Caller not authorized relayer\");",
       "related_edges": [
-        "e2",
-        "e3"
+        "e2"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
@@ -680,9 +719,9 @@
     {
       "invariant_id": "asset_conservation_no_double_mint",
       "category": "asset_conservation",
-      "description": "The destination token contract must not mint more tokens than the amount locked in the corresponding source deposit.",
-      "predicate": "mintedAmount <= lockedAmount[e1]",
-      "solidity_assertion": "require(mintedAmount <= lockedAmount, \"Mint exceeds locked amount\");",
+      "description": "The bridge must not mint OfficialToken if the corresponding FEG tokens are still locked.",
+      "predicate": "lockedAmount[e1] == 0 || releasedAmount[e3] == 0",
+      "solidity_assertion": "require(lockedAmount == 0 || releasedAmount == 0, \"Double mint detected\");",
       "related_edges": [
         "e1",
         "e3"
@@ -692,37 +731,24 @@
       }
     },
     {
-      "invariant_id": "uniqueness_release_idempotent",
+      "invariant_id": "uniqueness_message_id_monotonic",
       "category": "uniqueness",
-      "description": "Calling release for the same message ID multiple times must have no effect after the first successful execution.",
-      "predicate": "released[messageId] == true => noStateChange",
-      "solidity_assertion": "if (released[messageId]) { return; }",
+      "description": "Message IDs emitted by WormholeCore must be strictly increasing.",
+      "predicate": "messageId > lastMessageId",
+      "solidity_assertion": "require(messageId > lastMessageId, \"Message ID not monotonic\"); lastMessageId = messageId;",
       "related_edges": [
-        "e3"
+        "e2"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
       }
     },
     {
-      "invariant_id": "authorization_only_trusted_relayer",
+      "invariant_id": "authorization_deposit_amount_positive",
       "category": "authorization",
-      "description": "Only the designated relayer address may invoke the release function on the destination bridge.",
-      "predicate": "msg.sender == relayer",
-      "solidity_assertion": "require(msg.sender == relayer, \"Caller is not authorized relayer\");",
-      "related_edges": [
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_conservation_refund_restores_balance",
-      "category": "asset_conservation",
-      "description": "When a refund is claimed after timeout, the user's balance on the source token must increase by the originally locked amount.",
-      "predicate": "userBalanceAfterRefund == userBalanceBeforeLock + lockedAmount[e1]",
-      "solidity_assertion": "assert(userBalance == previousBalance + lockedAmount && \"Refund did not restore balance\");",
+      "description": "Deposit amount must be greater than zero.",
+      "predicate": "amount > 0 && edge == e1",
+      "solidity_assertion": "require(amount > 0, \"Deposit amount must be > 0\");",
       "related_edges": [
         "e1"
       ],
@@ -731,38 +757,52 @@
       }
     },
     {
-      "invariant_id": "uniqueness_message_id_format",
+      "invariant_id": "uniqueness_one_release_per_lock",
       "category": "uniqueness",
-      "description": "Message IDs emitted by WormholeCore must follow the expected 32‑byte format to avoid collisions.",
-      "predicate": "bytes32(messageId) == messageId",
-      "solidity_assertion": "require(messageId.length == 32, \"Invalid message ID length\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_source_token_locked",
-      "category": "authorization",
-      "description": "The source token contract must transfer the tokens to the bridge contract before emitting the Wormhole message.",
-      "predicate": "sourceToken.balanceOf(bridge) >= lockedAmount[e1]",
-      "solidity_assertion": "require(sourceToken.balanceOf(address(this)) >= amount, \"Insufficient locked balance\");",
+      "description": "Each lock event (e1) can trigger at most one release event (e3).",
+      "predicate": "releaseCount[lockId] <= 1",
+      "solidity_assertion": "require(releaseCount[lockId] < 1, \"Lock already released\"); releaseCount[lockId] += 1;",
       "related_edges": [
         "e1",
-        "e2"
+        "e3"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
       }
     },
     {
-      "invariant_id": "uniqueness_nonce_per_chain",
-      "category": "uniqueness",
-      "description": "Nonces are unique per chain to prevent cross‑chain replay of the same transfer.",
-      "predicate": "usedNonces[chainId][nonce] == false",
-      "solidity_assertion": "require(!usedNonces[chainId][nonce], \"Nonce already used on this chain\"); usedNonces[chainId][nonce] = true;",
+      "invariant_id": "authorization_release_to_intended_recipient",
+      "category": "authorization",
+      "description": "The recipient address extracted from the payload must match the address authorized in the lock transaction.",
+      "predicate": "payload.recipient == lockInfo[lockId].sender",
+      "solidity_assertion": "require(payload.recipient == lockInfo[lockId].sender, \"Recipient mismatch\");",
+      "related_edges": [
+        "e1",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_locked_not_exceed_balance",
+      "category": "asset_conservation",
+      "description": "The sum of all locked amounts must never exceed the total FEG token balance held by the bridge contract.",
+      "predicate": "totalLocked <= fegToken.balanceOf(address(FEGBridgeSrc))",
+      "solidity_assertion": "assert(totalLocked <= fegToken.balanceOf(address(this)));",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_bridge_can_burn_on_refund",
+      "category": "authorization",
+      "description": "Only the bridge contract may burn/release locked tokens back to the user during a refund.",
+      "predicate": "msg.sender == address(FEGBridgeSrc) && refundRequested",
+      "solidity_assertion": "require(msg.sender == address(this), \"Only bridge can process refund\");",
       "related_edges": [
         "e1"
       ],

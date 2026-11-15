@@ -4,23 +4,30 @@
   "nodes": [
     {
       "node_id": "AxelarGateway",
-      "node_type": "gateway",
-      "chain": "unknown",
-      "address": "deployed_address",
+      "node_type": "router",
+      "chain": "source",
+      "address": "",
       "functions": []
     },
     {
-      "node_id": "token",
+      "node_id": "PortalSrc",
+      "node_type": "router",
+      "chain": "source",
+      "address": "unknown",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
       "node_type": "token",
       "chain": "source",
-      "address": "token (set in constructor)",
+      "address": "token",
       "functions": []
     },
     {
-      "node_id": "gateway",
-      "node_type": "gateway",
+      "node_id": "AxelarGateway",
+      "node_type": "relay",
       "chain": "source",
-      "address": "gateway (set in constructor)",
+      "address": "gateway",
       "functions": []
     },
     {
@@ -34,113 +41,43 @@
       "node_id": "OfficialToken",
       "node_type": "token",
       "chain": "source",
-      "address": "",
+      "address": "token",
       "functions": []
     },
     {
-      "node_id": "ReceiverAxelar",
+      "node_id": "gateway",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "immutable",
+      "functions": []
+    },
+    {
+      "node_id": "portal",
       "node_type": "contract",
       "chain": "destination",
-      "address": "",
-      "functions": []
-    },
-    {
-      "node_id": "AxelarGateway",
-      "node_type": "external_contract",
-      "chain": "any",
-      "address": "",
-      "functions": []
-    },
-    {
-      "node_id": "PortalV2",
-      "node_type": "external_contract",
-      "chain": "destination",
-      "address": "",
+      "address": "immutable",
       "functions": []
     },
     {
       "node_id": "trustedSource",
       "node_type": "address",
       "chain": "source",
-      "address": "",
+      "address": "immutable",
       "functions": []
     }
   ],
   "edges": [
     {
       "edge_id": "e1",
-      "src": "msg.sender (source contract)",
-      "dst": "relayer (via event)",
-      "label": "message",
-      "token": null,
+      "src": "caller",
+      "dst": "gateway (event)",
+      "label": "emit ContractCall",
+      "token": "UNKNOWN",
       "conditions": [
         "n",
         "o",
         "n",
-        "e",
-        " ",
-        "(",
-        "e",
-        "v",
-        "e",
-        "n",
-        "t",
-        " ",
-        "e",
-        "m",
-        "i",
-        "t",
-        "t",
-        "e",
-        "d",
-        ",",
-        " ",
-        "c",
-        "o",
-        "m",
-        "m",
-        "a",
-        "n",
-        "d",
-        "I",
-        "d",
-        " ",
-        "d",
-        "e",
-        "r",
-        "i",
-        "v",
-        "e",
-        "d",
-        " ",
-        "f",
-        "r",
-        "o",
-        "m",
-        " ",
-        "s",
-        "e",
-        "n",
-        "d",
-        "e",
-        "r",
-        ",",
-        " ",
-        "n",
-        "o",
-        "n",
-        "c",
-        "e",
-        ",",
-        " ",
-        "p",
-        "a",
-        "y",
-        "l",
-        "o",
-        "a",
-        "d",
-        ")"
+        "e"
       ],
       "condition_objects": [
         {
@@ -166,61 +103,40 @@
           "params": {
             "expression": "e"
           }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "("
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "v"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "n"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "t"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
+        }
+      ],
+      "function_signature": "callContract(string,string,bytes)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "relayer",
+      "dst": "gateway",
+      "label": "approve command",
+      "token": "UNKNOWN",
+      "conditions": [
+        "m",
+        "s",
+        "g",
+        ".",
+        "s",
+        "e",
+        "n",
+        "d",
+        "e",
+        "r",
+        " ",
+        "=",
+        "=",
+        " ",
+        "r",
+        "e",
+        "l",
+        "a",
+        "y",
+        "e",
+        "r"
+      ],
+      "condition_objects": [
         {
           "type": "generic",
           "params": {
@@ -230,181 +146,19 @@
         {
           "type": "generic",
           "params": {
-            "expression": "i"
+            "expression": "s"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "t"
+            "expression": "g"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "t"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "d"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": ","
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "c"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "o"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "m"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "m"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "a"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "n"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "d"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "I"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "d"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "d"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "r"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "i"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "v"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "d"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "f"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "r"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "o"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "m"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
+            "expression": "."
           }
         },
         {
@@ -446,7 +200,19 @@
         {
           "type": "generic",
           "params": {
-            "expression": ","
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "="
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "="
           }
         },
         {
@@ -458,25 +224,7 @@
         {
           "type": "generic",
           "params": {
-            "expression": "n"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "o"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "n"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "c"
+            "expression": "r"
           }
         },
         {
@@ -488,19 +236,7 @@
         {
           "type": "generic",
           "params": {
-            "expression": ","
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "p"
+            "expression": "l"
           }
         },
         {
@@ -518,42 +254,24 @@
         {
           "type": "generic",
           "params": {
-            "expression": "l"
+            "expression": "e"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "o"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "a"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "d"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": ")"
+            "expression": "r"
           }
         }
       ],
-      "function_signature": "callContract(string,string,bytes)"
+      "function_signature": "approveContractCall(bytes32,address)"
     },
     {
-      "edge_id": "e2",
-      "src": "relayer (approved command)",
-      "dst": "expected destination contract (caller of validateContractCall)",
-      "label": "message",
-      "token": null,
+      "edge_id": "e3",
+      "src": "gateway",
+      "dst": "caller",
+      "label": "validate and consume command",
+      "token": "UNKNOWN",
       "conditions": [
         "a",
         "p",
@@ -574,14 +292,6 @@
         "I",
         "d",
         "]",
-        " ",
-        "=",
-        "=",
-        " ",
-        "t",
-        "r",
-        "u",
-        "e",
         " ",
         "&",
         "&",
@@ -743,54 +453,6 @@
           "type": "generic",
           "params": {
             "expression": "]"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "="
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "="
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "t"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "r"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "u"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
           }
         },
         {
@@ -1079,11 +741,11 @@
       "function_signature": "validateContractCall(bytes32,address)"
     },
     {
-      "edge_id": "e3",
+      "edge_id": "e4",
       "src": "msg.sender",
-      "dst": "PortalSrc (this contract)",
+      "dst": "PortalSrc",
       "label": "lock",
-      "token": "token",
+      "token": "OfficialToken",
       "conditions": [
         "a",
         "m",
@@ -1161,75 +823,22 @@
       "function_signature": "deposit(address,uint256)"
     },
     {
-      "edge_id": "e4",
-      "src": "PortalSrc (this contract)",
+      "edge_id": "e5",
+      "src": "PortalSrc",
       "dst": "AxelarGateway",
-      "label": "message",
-      "token": null,
+      "label": "relayMessage",
+      "token": "OfficialToken",
       "conditions": [
-        "p",
-        "a",
-        "y",
-        "l",
-        "o",
-        "a",
-        "d",
-        " ",
-        "=",
-        " ",
-        "a",
-        "b",
-        "i",
-        ".",
-        "e",
         "n",
-        "c",
         "o",
-        "d",
-        "e",
-        "(",
-        "r",
-        "e",
-        "c",
-        "i",
-        "p",
-        "i",
-        "e",
         "n",
-        "t",
-        ",",
-        " ",
-        "a",
-        "m",
-        "o",
-        "u",
-        "n",
-        "t",
-        ")"
+        "e"
       ],
       "condition_objects": [
         {
           "type": "generic",
           "params": {
-            "expression": "p"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "a"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "y"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "l"
+            "expression": "n"
           }
         },
         {
@@ -1241,215 +850,23 @@
         {
           "type": "generic",
           "params": {
-            "expression": "a"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "d"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "="
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "a"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "b"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "i"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "."
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
             "expression": "n"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "c"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "o"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "d"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
             "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "("
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "r"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "c"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "i"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "p"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "i"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "n"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "t"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": ","
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "a"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "m"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "o"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "u"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "n"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "t"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": ")"
           }
         }
       ],
       "function_signature": "deposit(address,uint256)"
     },
     {
-      "edge_id": "e5",
-      "src": "OfficialToken",
-      "dst": "to (parameter of release)",
-      "label": "withdraw",
+      "edge_id": "e6",
+      "src": "PortalV2",
+      "dst": "to",
+      "label": "transfer",
       "token": "OfficialToken",
       "conditions": [
         "m",
@@ -1612,60 +1029,958 @@
       "function_signature": "release(address,uint256)"
     },
     {
-      "edge_id": "e6",
-      "src": "PortalV2",
-      "dst": "recipient (decoded from payload)",
-      "label": "release/withdraw",
-      "token": "unknown (ERC20 managed by PortalV2)",
-      "conditions": [
-        "sourceAddress == trustedSource"
-      ],
-      "condition_objects": [
-        {
-          "type": "generic",
-          "params": {
-            "expression": "sourceAddress == trustedSource"
-          }
-        }
-      ],
-      "function_signature": "function _execute(bytes memory payload) internal"
-    },
-    {
       "edge_id": "e7",
-      "src": "PortalV2",
-      "dst": "recipient (decoded from payload)",
-      "label": "release/withdraw",
-      "token": "unknown (ERC20 managed by PortalV2)",
+      "src": "gateway",
+      "dst": "portal",
+      "label": "release",
+      "token": "any ERC20 handled by PortalV2",
       "conditions": [
-        "sourceAddress == trustedSource",
-        "gateway.validateContractCall(commandId, sourceAddress) == true"
+        "p",
+        "a",
+        "y",
+        "l",
+        "o",
+        "a",
+        "d",
+        " ",
+        "m",
+        "u",
+        "s",
+        "t",
+        " ",
+        "d",
+        "e",
+        "c",
+        "o",
+        "d",
+        "e",
+        " ",
+        "t",
+        "o",
+        " ",
+        "(",
+        "a",
+        "d",
+        "d",
+        "r",
+        "e",
+        "s",
+        "s",
+        " ",
+        "r",
+        "e",
+        "c",
+        "i",
+        "p",
+        "i",
+        "e",
+        "n",
+        "t",
+        ",",
+        " ",
+        "u",
+        "i",
+        "n",
+        "t",
+        "2",
+        "5",
+        "6",
+        " ",
+        "a",
+        "m",
+        "o",
+        "u",
+        "n",
+        "t",
+        ")",
+        ";",
+        " ",
+        "c",
+        "a",
+        "l",
+        "l",
+        "e",
+        "d",
+        " ",
+        "a",
+        "f",
+        "t",
+        "e",
+        "r",
+        " ",
+        "s",
+        "o",
+        "u",
+        "r",
+        "c",
+        "e",
+        "A",
+        "d",
+        "d",
+        "r",
+        "e",
+        "s",
+        "s",
+        " ",
+        "c",
+        "h",
+        "e",
+        "c",
+        "k",
+        ";",
+        " ",
+        "i",
+        "n",
+        " ",
+        "e",
+        "x",
+        "p",
+        "r",
+        "e",
+        "s",
+        "s",
+        "E",
+        "x",
+        "e",
+        "c",
+        "u",
+        "t",
+        "e",
+        " ",
+        "n",
+        "o",
+        " ",
+        "g",
+        "a",
+        "t",
+        "e",
+        "w",
+        "a",
+        "y",
+        " ",
+        "v",
+        "a",
+        "l",
+        "i",
+        "d",
+        "a",
+        "t",
+        "i",
+        "o",
+        "n"
       ],
       "condition_objects": [
         {
           "type": "generic",
           "params": {
-            "expression": "sourceAddress == trustedSource"
+            "expression": "p"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "gateway.validateContractCall(commandId, sourceAddress) == true"
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "y"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "("
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "p"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ","
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "2"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "5"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "6"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ")"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ";"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "f"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "A"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "h"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "k"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ";"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "x"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "p"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "E"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "x"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "g"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "w"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "y"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "v"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
           }
         }
       ],
-      "function_signature": "function _execute(bytes memory payload) internal"
+      "function_signature": "_execute(bytes)"
     }
   ],
   "invariants": [
     {
-      "invariant_id": "asset_conservation_total_locked_equals_minted",
+      "invariant_id": "asset_conservation_lock_mint",
       "category": "asset_conservation",
-      "description": "The total amount of tokens locked on the source chain must equal the total amount minted on the destination chain for all processed messages.",
-      "predicate": "sum_locked == sum_minted",
-      "solidity_assertion": "assert(totalLocked == totalMinted);",
+      "description": "The total amount of tokens locked on the source chain must equal the amount minted on the destination chain for each successful transfer.",
+      "predicate": "lockedAmount[source] == mintedAmount[destination] && lockedAmount[source] > 0",
+      "solidity_assertion": "require(lockedAmount == mintedAmount, \"Asset conservation violation: locked != minted\");",
       "related_edges": [
-        "e2",
+        "e1",
         "e3"
       ],
       "metadata": {
@@ -1673,39 +1988,11 @@
       }
     },
     {
-      "invariant_id": "asset_conservation_no_double_mint",
+      "invariant_id": "asset_conservation_refund_balance",
       "category": "asset_conservation",
-      "description": "A destination contract may not mint more tokens than the amount that was locked for the same message identifier.",
-      "predicate": "mintedAmount[msgId] <= lockedAmount[msgId]",
-      "solidity_assertion": "require(mintedAmount[msgId] <= lockedAmount[msgId], \"Mint exceeds locked amount\");",
-      "related_edges": [
-        "e2",
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_conservation_refund_restores_balance",
-      "category": "asset_conservation",
-      "description": "If a timeout occurs and a refund is processed, the source user's balance after the refund must equal the balance before the lock.",
+      "description": "If a transfer times out and is refunded, the source token balance of the user must be restored to its pre‑lock value.",
       "predicate": "balanceAfterRefund[user] == balanceBeforeLock[user]",
-      "solidity_assertion": "assert(userBalances[user] == preLockBalance[user]);",
-      "related_edges": [
-        "e2",
-        "e4"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_conservation_locked_nonzero",
-      "category": "asset_conservation",
-      "description": "Lock operation must always lock a positive, non‑zero amount of tokens.",
-      "predicate": "lockedAmount[msgId] > 0",
-      "solidity_assertion": "require(lockedAmount[msgId] > 0, \"Lock amount must be > 0\");",
+      "solidity_assertion": "assert(userBalance == preLockBalance && \"Refund did not restore balance\");",
       "related_edges": [
         "e2"
       ],
@@ -1714,77 +2001,11 @@
       }
     },
     {
-      "invariant_id": "asset_conservation_mint_nonzero",
-      "category": "asset_conservation",
-      "description": "Mint operation must always mint a positive, non‑zero amount of tokens.",
-      "predicate": "mintedAmount[msgId] > 0",
-      "solidity_assertion": "require(mintedAmount[msgId] > 0, \"Mint amount must be > 0\");",
-      "related_edges": [
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_message_signed_by_trusted_source",
+      "invariant_id": "authorization_gateway_caller",
       "category": "authorization",
-      "description": "A message that triggers minting must be signed by the trusted source address.",
-      "predicate": "ecrecover(messageHash, v, r, s) == trustedSource",
-      "solidity_assertion": "require(ecrecover(messageHash, v, s, r) == trustedSource, \"Invalid source signature\");",
-      "related_edges": [
-        "e1",
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_lock_called_by_owner",
-      "category": "authorization",
-      "description": "Only the token holder (or an approved operator) can invoke the lock function on the source token contract.",
-      "predicate": "msg.sender == tokenOwner || isApprovedForAll[tokenOwner][msg.sender]",
-      "solidity_assertion": "require(msg.sender == tokenOwner || isApprovedForAll[tokenOwner][msg.sender], \"Caller not authorized to lock\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_mint_called_by_gateway",
-      "category": "authorization",
-      "description": "Minting on the destination chain can only be performed by the AxelarGateway contract.",
-      "predicate": "msg.sender == address(AxelarGateway)",
-      "solidity_assertion": "require(msg.sender == address(axelarGateway), \"Only gateway can mint\");",
-      "related_edges": [
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_refund_called_by_gateway",
-      "category": "authorization",
-      "description": "Refund execution must be initiated by the AxelarGateway contract after a timeout.",
-      "predicate": "msg.sender == address(AxelarGateway) && block.timestamp >= timeout[msgId]",
-      "solidity_assertion": "require(msg.sender == address(axelarGateway) && block.timestamp >= timeout[msgId], \"Refund not authorized or premature\");",
-      "related_edges": [
-        "e4"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_message_nonce_monotonic",
-      "category": "authorization",
-      "description": "Nonces emitted in messages must increase monotonically for each sender to prevent replay.",
-      "predicate": "nonce[msg.sender] == lastNonce[msg.sender] + 1",
-      "solidity_assertion": "require(nonce == lastNonce[msg.sender] + 1, \"Nonce not sequential\");",
+      "description": "Only the designated gateway contract may emit the ContractCall event that initiates a cross‑chain transfer.",
+      "predicate": "msg.sender == gatewayAddress",
+      "solidity_assertion": "require(msg.sender == gateway, \"Only gateway can emit ContractCall\");",
       "related_edges": [
         "e1"
       ],
@@ -1793,11 +2014,89 @@
       }
     },
     {
-      "invariant_id": "uniqueness_message_processed_once",
+      "invariant_id": "authorization_relayer_approval",
+      "category": "authorization",
+      "description": "A relayer can approve a command only if the command identifier matches a pending request stored by the gateway.",
+      "predicate": "pendingCommands[commandId] == true && approvedBy[relayer] == false",
+      "solidity_assertion": "require(pendingCommands[commandId] && !approvedBy[msg.sender], \"Invalid or already approved command\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_mint_by_portal",
+      "category": "authorization",
+      "description": "The destination portal contract may mint tokens only after verifying the signed approval from the trusted source address.",
+      "predicate": "verifySignature(approvalSignature, trustedSource) && approvedCommandId == commandId",
+      "solidity_assertion": "require(verifySignature(sig, trustedSource) && approvedCommandId == cmdId, \"Unauthorized mint\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_command_consumption",
       "category": "uniqueness",
-      "description": "A message identified by its hash can be processed (minted) at most once.",
-      "predicate": "processed[messageHash] == false",
-      "solidity_assertion": "require(!processed[messageHash], \"Message already processed\");",
+      "description": "Each command identifier can be consumed by the gateway at most once.",
+      "predicate": "consumedCommands[commandId] == false",
+      "solidity_assertion": "require(!consumedCommands[commandId], \"Command already consumed\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_mint_once",
+      "category": "uniqueness",
+      "description": "The portal contract must not mint more than the amount specified in the approved command.",
+      "predicate": "mintedAmount[commandId] <= approvedAmount[commandId]",
+      "solidity_assertion": "assert(mintedAmount[cmdId] <= approvedAmount[cmdId] && \"Mint exceeds approved amount\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_relayer_single_approval",
+      "category": "uniqueness",
+      "description": "A relayer may approve a given command only once.",
+      "predicate": "relayerApproved[commandId][relayer] == false",
+      "solidity_assertion": "require(!relayerApproved[cmdId][msg.sender], \"Relayer already approved this command\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_trusted_source",
+      "category": "authorization",
+      "description": "Only the immutable trustedSource address may be used as the source of approval signatures for minting.",
+      "predicate": "approvalSigner == trustedSource",
+      "solidity_assertion": "require(approvalSigner == trustedSource, \"Signer not trusted\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply",
+      "category": "asset_conservation",
+      "description": "The sum of totalSupply on source and destination chains remains constant across the bridge.",
+      "predicate": "totalSupplySource + totalSupplyDestination == constantInitialSupply",
+      "solidity_assertion": "assert(totalSupplySrc + totalSupplyDst == INITIAL_SUPPLY && \"Total supply mismatch\");",
       "related_edges": [
         "e1",
         "e3"
@@ -1807,37 +2106,11 @@
       }
     },
     {
-      "invariant_id": "uniqueness_lock_id_unique",
+      "invariant_id": "uniqueness_nonce_monotonic",
       "category": "uniqueness",
-      "description": "Each lock operation must generate a unique lock identifier that has not been used before.",
-      "predicate": "lockIds[lockId] == false",
-      "solidity_assertion": "require(!lockIds[lockId], \"Duplicate lock ID\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_refund_processed_once",
-      "category": "uniqueness",
-      "description": "A refund for a given message can be executed only once.",
-      "predicate": "refunded[msgId] == false",
-      "solidity_assertion": "require(!refunded[msgId], \"Refund already executed\");",
-      "related_edges": [
-        "e4"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_nonce_never_reused",
-      "category": "uniqueness",
-      "description": "The combination of sender address and nonce must never repeat.",
-      "predicate": "usedNonces[msg.sender][nonce] == false",
-      "solidity_assertion": "require(!usedNonces[msg.sender][nonce], \"Nonce already used\");",
+      "description": "Nonces used in command identifiers must increase monotonically for each caller.",
+      "predicate": "nonce[caller] == lastNonce[caller] + 1",
+      "solidity_assertion": "require(nonce == lastNonce[caller] + 1, \"Nonce not monotonic\");",
       "related_edges": [
         "e1"
       ],
@@ -1846,14 +2119,52 @@
       }
     },
     {
-      "invariant_id": "uniqueness_payload_hash_immutable",
-      "category": "uniqueness",
-      "description": "The payload hash emitted in the message event must match the hash of the locked amount and destination address.",
-      "predicate": "payloadHash == keccak256(abi.encodePacked(lockedAmount[msgId], destination))",
-      "solidity_assertion": "require(payloadHash == keccak256(abi.encodePacked(lockedAmount[msgId], destination)), \"Payload hash mismatch\");",
+      "invariant_id": "authorization_event_emission",
+      "category": "authorization",
+      "description": "The gateway must emit an ApprovedContractCall event only after successful verification of the command and source address.",
+      "predicate": "eventEmitted == true => commandValidated && sourceVerified",
+      "solidity_assertion": "assert(eventEmitted && commandValidated && sourceVerified && \"Invalid approval event\");",
       "related_edges": [
-        "e1",
         "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_double_lock",
+      "category": "asset_conservation",
+      "description": "A user cannot lock more tokens than their current balance.",
+      "predicate": "lockAmount <= balance[user]",
+      "solidity_assertion": "require(lockAmount <= balances[msg.sender], \"Insufficient balance to lock\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_refund_once",
+      "category": "uniqueness",
+      "description": "A timed‑out transfer can be refunded only once.",
+      "predicate": "refunded[commandId] == false && transferStatus[commandId] == Status.TIMED_OUT",
+      "solidity_assertion": "require(!refunded[cmdId] && transferStatus[cmdId] == Status.TIMED_OUT, \"Already refunded or not timed out\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_caller_is_eoa",
+      "category": "authorization",
+      "description": "The initial caller that triggers the bridge must be an externally owned account, not a contract.",
+      "predicate": "msg.sender == tx.origin",
+      "solidity_assertion": "require(msg.sender == tx.origin, \"Caller must be EOA\");",
+      "related_edges": [
+        "e1"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"

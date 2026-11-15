@@ -34,21 +34,7 @@
       "node_id": "OfficialToken",
       "node_type": "token",
       "chain": "destination",
-      "address": "unknown",
-      "functions": []
-    },
-    {
-      "node_id": "admin",
-      "node_type": "address",
-      "chain": "destination",
-      "address": "unknown",
-      "functions": []
-    },
-    {
-      "node_id": "relayer",
-      "node_type": "relay",
-      "chain": "destination",
-      "address": "unknown",
+      "address": "feg",
       "functions": []
     },
     {
@@ -348,8 +334,8 @@
     {
       "edge_id": "e2",
       "src": "FEGBridgeSrc",
-      "dst": "WormholeCore (cross‑chain)",
-      "label": "publishReleaseMessage",
+      "dst": "WormholeCore (cross‑chain message)",
+      "label": "publishRelease",
       "token": "fe g",
       "conditions": [
         "a",
@@ -511,14 +497,26 @@
       "label": "release",
       "token": "feg",
       "conditions": [
-        "r",
-        "e",
-        "q",
-        "u",
-        "i",
-        "r",
-        "e",
-        "(",
+        "o",
+        "p",
+        " ",
+        "=",
+        "=",
+        " ",
+        "O",
+        "P",
+        "_",
+        "R",
+        "E",
+        "L",
+        "E",
+        "A",
+        "S",
+        "E",
+        " ",
+        "&",
+        "&",
+        " ",
         "t",
         "r",
         "u",
@@ -546,56 +544,127 @@
         "e",
         "s",
         "s",
-        "]",
-        ")"
+        "]"
       ],
       "condition_objects": [
         {
           "type": "generic",
           "params": {
-            "expression": "r"
+            "expression": "o"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "e"
+            "expression": "p"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "q"
+            "expression": " "
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "u"
+            "expression": "="
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "i"
+            "expression": "="
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "r"
+            "expression": " "
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "e"
+            "expression": "O"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "("
+            "expression": "P"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "_"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "R"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "E"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "L"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "E"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "A"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "S"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "E"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "&"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "&"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
           }
         },
         {
@@ -765,12 +834,6 @@
           "params": {
             "expression": "]"
           }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": ")"
-          }
         }
       ],
       "function_signature": "receiveMessage(address,bytes)"
@@ -778,11 +841,11 @@
   ],
   "invariants": [
     {
-      "invariant_id": "asset_conservation_lock_mint",
+      "invariant_id": "asset_conservation_total_locked_equals_minted",
       "category": "asset_conservation",
-      "description": "The total amount of FEG tokens locked on the source chain must equal the amount minted on the destination chain for each successful transfer.",
-      "predicate": "lockedAmount_src == mintedAmount_dst",
-      "solidity_assertion": "require(totalLocked[msg.sender] == totalMinted[destChain][msg.sender], \"Asset conservation violation: locked != minted\");",
+      "description": "The total amount of FEG tokens locked on the source chain must equal the total amount minted on the destination chain at any point.",
+      "predicate": "totalLockedSource == totalMintedDestination",
+      "solidity_assertion": "assert(totalLockedSource == totalMintedDestination);",
       "related_edges": [
         "e1",
         "e2"
@@ -792,89 +855,11 @@
       }
     },
     {
-      "invariant_id": "asset_conservation_refund_balance",
+      "invariant_id": "asset_conservation_no_double_mint",
       "category": "asset_conservation",
-      "description": "If a transfer times out and is refunded, the user's source balance after refund must equal the balance before the original lock.",
-      "predicate": "balanceAfterRefund == balanceBeforeLock",
-      "solidity_assertion": "assert(userBalances[msg.sender] == preLockBalance[msg.sender]);",
-      "related_edges": [
-        "e1"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_release_message_signature",
-      "category": "authorization",
-      "description": "A release (mint) on the destination chain is only executed when the WormholeCore message carries a valid signature from the registered core relayer.",
-      "predicate": "verifySignature(message, coreSigner) == true",
-      "solidity_assertion": "require(WormholeCore.verify(message, signature, coreSigner), \"Invalid core signature\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_only_relayers_can_publish",
-      "category": "authorization",
-      "description": "Only the authorized relayer address may call publishReleaseMessage on the WormholeCore contract.",
-      "predicate": "msg.sender == authorizedRelayer",
-      "solidity_assertion": "require(msg.sender == authorizedRelayer, \"Caller not authorized relayer\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_message_nonce",
-      "category": "uniqueness",
-      "description": "Each transfer message identified by its nonce can be processed at most once on the destination chain.",
-      "predicate": "processedNonces[nonce] == false",
-      "solidity_assertion": "require(!processedNonces[message.nonce], \"Nonce already processed\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_lock_once_per_nonce",
-      "category": "uniqueness",
-      "description": "A source lock transaction with a given nonce cannot be submitted twice.",
-      "predicate": "lockedNonces[nonce] == false",
-      "solidity_assertion": "require(!lockedNonces[nonce], \"Lock nonce already used\");",
-      "related_edges": [
-        "e1"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_mint_amount_matches_lock",
-      "category": "authorization",
-      "description": "The amount minted on the destination chain must exactly match the amount locked on the source chain as recorded in the signed message.",
-      "predicate": "message.amount == lockedAmount[message.nonce]",
-      "solidity_assertion": "require(message.amount == lockedAmounts[message.nonce], \"Mint amount mismatch\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_conservation_total_supply_consistency",
-      "category": "asset_conservation",
-      "description": "The sum of total supply on source and destination chains remains constant across all processed transfers.",
-      "predicate": "totalSupply_src + totalSupply_dst == constantInitialSupply",
-      "solidity_assertion": "assert(totalSupplySource + totalSupplyDest == INITIAL_SUPPLY);",
+      "description": "A deposit event cannot cause more tokens to be minted than the amount locked for that specific nonce.",
+      "predicate": "mintedAmount[nonce] <= lockedAmount[nonce]",
+      "solidity_assertion": "require(mintedAmount[nonce] <= lockedAmount[nonce], \"Mint exceeds locked amount\");",
       "related_edges": [
         "e1",
         "e2"
@@ -884,22 +869,11 @@
       }
     },
     {
-      "invariant_id": "authorization_only_admin_can_update_relayer",
+      "invariant_id": "authorization_release_requires_valid_signature",
       "category": "authorization",
-      "description": "Only the admin address on the destination chain can change the authorized relayer.",
-      "predicate": "msg.sender == admin",
-      "solidity_assertion": "require(msg.sender == admin, \"Only admin can update relayer\");",
-      "related_edges": [],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_one_release_per_message",
-      "category": "uniqueness",
-      "description": "Each WormholeCore release message can trigger at most one mint operation.",
-      "predicate": "messageProcessed[message.id] == false",
-      "solidity_assertion": "require(!messageProcessed[message.id], \"Message already processed\");",
+      "description": "The release (mint) on the destination chain must be authorized by a signature from the core relay that matches the stored message hash.",
+      "predicate": "ecrecover(messageHash, v, r, s) == coreRelayAddress",
+      "solidity_assertion": "require(ecrecover(messageHash, v, r, s) == coreRelayAddress, \"Invalid relay signature\");",
       "related_edges": [
         "e2"
       ],
@@ -908,13 +882,66 @@
       }
     },
     {
-      "invariant_id": "authorization_message_origin_chain",
+      "invariant_id": "authorization_lock_caller_is_token_holder",
       "category": "authorization",
-      "description": "The origin chain identifier in the Wormhole message must match the source chain of the bridge.",
-      "predicate": "message.originChain == SOURCE_CHAIN_ID",
-      "solidity_assertion": "require(message.originChain == SOURCE_CHAIN_ID, \"Invalid origin chain\");",
+      "description": "Only the token holder (msg.sender) can lock tokens in the source bridge contract.",
+      "predicate": "msg.sender == tokenOwner",
+      "solidity_assertion": "require(msg.sender == tokenOwner, \"Caller not token owner\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_nonce_used_once",
+      "category": "uniqueness",
+      "description": "Each transfer nonce can be processed for minting at most once.",
+      "predicate": "processedNonce[nonce] == false",
+      "solidity_assertion": "require(!processedNonce[nonce], \"Nonce already processed\");",
       "related_edges": [
         "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_id_consumed_once",
+      "category": "uniqueness",
+      "description": "A cross‑chain message ID emitted by the source bridge must be consumed by the destination bridge only once.",
+      "predicate": "messageConsumed[msgId] == false",
+      "solidity_assertion": "require(!messageConsumed[msgId], \"Message already consumed\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_release_requires_correct_nonce",
+      "category": "authorization",
+      "description": "The nonce included in the release message must match a previously recorded lock nonce.",
+      "predicate": "existsLock[nonce] == true",
+      "solidity_assertion": "require(existsLock[nonce], \"Unknown lock nonce\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_refund_restores_balance",
+      "category": "asset_conservation",
+      "description": "When a refund is claimed after timeout, the user's balance must increase by the originally locked amount.",
+      "predicate": "balanceAfterRefund == balanceBeforeLock + lockedAmount[nonce]",
+      "solidity_assertion": "assert(userBalance == previousBalance + lockedAmount[nonce]);",
+      "related_edges": [
+        "e1"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
@@ -923,7 +950,7 @@
     {
       "invariant_id": "uniqueness_refund_once_per_nonce",
       "category": "uniqueness",
-      "description": "A refund can be claimed only once for a given lock nonce.",
+      "description": "A refund for a given nonce can be executed only once.",
       "predicate": "refunded[nonce] == false",
       "solidity_assertion": "require(!refunded[nonce], \"Refund already claimed\");",
       "related_edges": [
@@ -934,11 +961,38 @@
       }
     },
     {
-      "invariant_id": "asset_conservation_no_double_mint",
+      "invariant_id": "authorization_publishRelease_requires_successful_lock",
+      "category": "authorization",
+      "description": "The bridge may publish a release message only after a successful lock operation.",
+      "predicate": "lockSuccessful[nonce] == true",
+      "solidity_assertion": "require(lockSuccessful[nonce], \"Lock not successful\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_amount_nonnegative",
       "category": "asset_conservation",
-      "description": "The destination contract must not increase total minted amount for a nonce that has already been minted.",
-      "predicate": "minted[nonce] == false before mint",
-      "solidity_assertion": "require(!minted[nonce], \"Double mint detected\");",
+      "description": "The stored locked amount for any nonce must never be negative.",
+      "predicate": "lockedAmount[nonce] >= 0",
+      "solidity_assertion": "assert(lockedAmount[nonce] >= 0);",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_id_unique_per_nonce",
+      "category": "uniqueness",
+      "description": "The message ID emitted for a given nonce must be unique across all transfers.",
+      "predicate": "messageId[nonce] != messageId[otherNonce] for all otherNonce != nonce",
+      "solidity_assertion": "require(messageId[nonce] != messageId[otherNonce], \"Duplicate message ID\");",
       "related_edges": [
         "e2"
       ],
@@ -947,12 +1001,26 @@
       }
     },
     {
-      "invariant_id": "authorization_signature_chain_id",
+      "invariant_id": "authorization_mint_requires_correct_destination_token",
       "category": "authorization",
-      "description": "The signature on the Wormhole message must include the destination chain id to prevent replay across chains.",
-      "predicate": "signatureIncludesChainId(signature, DEST_CHAIN_ID)",
-      "solidity_assertion": "require(WormholeCore.verifyChainId(signature, DEST_CHAIN_ID), \"Signature missing dest chain id\");",
+      "description": "Minting must target the OfficialToken contract on the destination chain.",
+      "predicate": "mintTarget == address(OfficialToken)",
+      "solidity_assertion": "require(mintTarget == address(OfficialToken), \"Invalid mint target\");",
       "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply_unchanged_across_chains",
+      "category": "asset_conservation",
+      "description": "The sum of totalSupply on source token and totalSupply on destination token must remain constant (ignoring fees).",
+      "predicate": "sourceToken.totalSupply() + destinationToken.totalSupply() == initialCombinedSupply",
+      "solidity_assertion": "assert(sourceToken.totalSupply() + destinationToken.totalSupply() == initialCombinedSupply);",
+      "related_edges": [
+        "e1",
         "e2"
       ],
       "metadata": {

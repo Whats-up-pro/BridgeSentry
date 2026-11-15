@@ -508,7 +508,7 @@
     {
       "invariant_id": "mint_amount_nonzero",
       "category": "asset_conservation",
-      "description": "The transfer edge must move a non‑zero amount of tokens to the recipient.",
+      "description": "The transfer edge must emit a non‑zero amount to the recipient.",
       "predicate": "transferAmount > 0",
       "solidity_assertion": "require(transferAmount > 0, \"transfer amount must be > 0\");",
       "related_edges": [
@@ -521,9 +521,9 @@
     {
       "invariant_id": "authorization_deposit_caller",
       "category": "authorization",
-      "description": "Only the token holder (msg.sender) can initiate a lock of his own OfficialToken.",
-      "predicate": "msg.sender == tokenOwner",
-      "solidity_assertion": "require(msg.sender == tokenOwner, \"only token owner can deposit\");",
+      "description": "Only the token holder (msg.sender) can invoke the lock function on RoninDeposit.",
+      "predicate": "msg.sender == tokenHolder",
+      "solidity_assertion": "require(msg.sender == tokenHolder, \"only token holder can deposit\");",
       "related_edges": [
         "e1"
       ],
@@ -534,9 +534,9 @@
     {
       "invariant_id": "authorization_transfer_signature",
       "category": "authorization",
-      "description": "The transfer on Ethereum must be authorized by a valid signature from the RoninGatewayV3 relayer.",
-      "predicate": "isValidSignature(relayerSignature, messageHash)",
-      "solidity_assertion": "require(isValidSignature(relayerSignature, messageHash), \"invalid relayer signature\");",
+      "description": "The transfer on RoninGatewayV3 must be authorized by a validator signature whose weight meets the minimum required voting weight.",
+      "predicate": "validatorWeightSum >= minimumVoteWeight",
+      "solidity_assertion": "require(validatorWeightSum >= minimumVoteWeight, \"insufficient validator weight\");",
       "related_edges": [
         "e2"
       ],
@@ -545,11 +545,11 @@
       }
     },
     {
-      "invariant_id": "authorization_minimum_weight",
+      "invariant_id": "authorization_transfer_relayer",
       "category": "authorization",
-      "description": "The relayer’s voting weight must meet or exceed the minimum required weight for the transfer to be executed.",
-      "predicate": "relayerWeight >= minimumWeight",
-      "solidity_assertion": "require(relayerWeight >= minimumWeight, \"insufficient relayer weight\");",
+      "description": "The caller of the transfer function must be the authorized RoninGatewayV3 contract.",
+      "predicate": "msg.sender == address(RoninGatewayV3)",
+      "solidity_assertion": "require(msg.sender == address(RoninGatewayV3), \"unauthorized caller\");",
       "related_edges": [
         "e2"
       ],
@@ -560,7 +560,7 @@
     {
       "invariant_id": "uniqueness_message_nonce",
       "category": "uniqueness",
-      "description": "Each deposit message identified by its nonce can be processed at most once on the destination chain.",
+      "description": "Each deposit nonce can be processed at most once on the destination chain.",
       "predicate": "processedNonces[nonce] == false",
       "solidity_assertion": "require(!processedNonces[nonce], \"nonce already processed\");",
       "related_edges": [
@@ -574,7 +574,7 @@
     {
       "invariant_id": "uniqueness_transfer_id",
       "category": "uniqueness",
-      "description": "A transfer ID derived from (srcChain, dstChain, amount, nonce) must be unique and cannot be reused.",
+      "description": "A transfer ID derived from the source transaction hash must not be reused.",
       "predicate": "usedTransferIds[transferId] == false",
       "solidity_assertion": "require(!usedTransferIds[transferId], \"transfer already executed\");",
       "related_edges": [
@@ -587,22 +587,22 @@
     {
       "invariant_id": "uniqueness_one_time_unlock",
       "category": "uniqueness",
-      "description": "An unlock operation on Ronin can only be performed once per successful transfer.",
-      "predicate": "unlockExecuted[nonce] == false",
-      "solidity_assertion": "require(!unlockExecuted[nonce], \"unlock already performed\");",
+      "description": "An unlock (or refund) for a given deposit can occur only once.",
+      "predicate": "refundExecuted[depositId] == false",
+      "solidity_assertion": "require(!refundExecuted[depositId], \"refund already executed\");",
       "related_edges": [
-        "e2"
+        "e1"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
       }
     },
     {
-      "invariant_id": "authorization_relayer_whitelist",
+      "invariant_id": "authorization_validator_set_consistency",
       "category": "authorization",
-      "description": "Only addresses present in the relayer whitelist may submit transfer proofs to RoninGatewayV3.",
-      "predicate": "whitelistedRelayers[msg.sender] == true",
-      "solidity_assertion": "require(whitelistedRelayers[msg.sender], \"relayer not authorized\");",
+      "description": "The set of validator addresses used for signature verification must match the on‑chain registered validator set.",
+      "predicate": "hash(providedValidatorSet) == hash(registeredValidatorSet)",
+      "solidity_assertion": "require(keccak256(abi.encodePacked(providedValidatorSet)) == keccak256(abi.encodePacked(registeredValidatorSet)), \"validator set mismatch\");",
       "related_edges": [
         "e2"
       ],
@@ -625,11 +625,11 @@
       }
     },
     {
-      "invariant_id": "uniqueness_relay_proof_once",
+      "invariant_id": "uniqueness_validator_signature_replay",
       "category": "uniqueness",
-      "description": "A relay proof (hash of deposit) can be consumed only once to trigger minting.",
-      "predicate": "usedProofs[depositHash] == false",
-      "solidity_assertion": "require(!usedProofs[depositHash], \"proof already used\");",
+      "description": "A validator signature tuple (msgHash, validator, nonce) cannot be reused for another transfer.",
+      "predicate": "usedSignatures[msgHash][validator][nonce] == false",
+      "solidity_assertion": "require(!usedSignatures[msgHash][validator][nonce], \"signature replay detected\");",
       "related_edges": [
         "e2"
       ],
@@ -638,11 +638,11 @@
       }
     },
     {
-      "invariant_id": "authorization_mint_caller",
+      "invariant_id": "authorization_minimum_vote_weight",
       "category": "authorization",
-      "description": "Minting on Ethereum must be performed by the RoninGatewayV3 contract, not by arbitrary callers.",
-      "predicate": "msg.sender == address(RoninGatewayV3)",
-      "solidity_assertion": "require(msg.sender == address(RoninGatewayV3), \"only gateway can mint\");",
+      "description": "The aggregated voting weight of the signers attached to a transfer must be at least the protocol‑defined minimum.",
+      "predicate": "aggregatedWeight >= MIN_VOTE_WEIGHT",
+      "solidity_assertion": "require(aggregatedWeight >= MIN_VOTE_WEIGHT, \"not enough voting weight\");",
       "related_edges": [
         "e2"
       ],
@@ -651,13 +651,13 @@
       }
     },
     {
-      "invariant_id": "uniqueness_refund_once",
-      "category": "uniqueness",
-      "description": "A refund for a given deposit can be executed at most once.",
-      "predicate": "refunded[depositId] == false",
-      "solidity_assertion": "require(!refunded[depositId], \"already refunded\");",
+      "invariant_id": "asset_conservation_no_double_mint",
+      "category": "asset_conservation",
+      "description": "A deposit amount must not be minted more than once on Ethereum.",
+      "predicate": "mintedAmountForDeposit[depositId] == 0",
+      "solidity_assertion": "require(mintedAmountForDeposit[depositId] == 0, \"deposit already minted\");",
       "related_edges": [
-        "e1"
+        "e2"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"

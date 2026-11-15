@@ -20,14 +20,14 @@
       "node_id": "OfficialToken",
       "node_type": "token",
       "chain": "source",
-      "address": "immutable token address set in constructor",
+      "address": "token",
       "functions": []
     },
     {
       "node_id": "AxelarGateway",
       "node_type": "relay",
       "chain": "source",
-      "address": "immutable gateway address set in constructor",
+      "address": "gateway",
       "functions": []
     },
     {
@@ -45,13 +45,6 @@
       "functions": []
     },
     {
-      "node_id": "ReceiverAxelar",
-      "node_type": "router",
-      "chain": "source",
-      "address": "",
-      "functions": []
-    },
-    {
       "node_id": "gateway",
       "node_type": "contract",
       "chain": "source",
@@ -60,8 +53,8 @@
     },
     {
       "node_id": "portal",
-      "node_type": "token_bridge",
-      "chain": "source",
+      "node_type": "contract",
+      "chain": "destination",
       "address": "immutable",
       "functions": []
     },
@@ -78,7 +71,7 @@
       "edge_id": "e1",
       "src": "caller",
       "dst": "gateway",
-      "label": "emit command",
+      "label": "emit ContractCall",
       "token": "none",
       "conditions": [
         "n",
@@ -276,8 +269,8 @@
     {
       "edge_id": "e3",
       "src": "gateway",
-      "dst": "caller",
-      "label": "validate command",
+      "dst": "receiver contract",
+      "label": "validated command",
       "token": "none",
       "conditions": [
         "a",
@@ -763,7 +756,38 @@
         " ",
         ">",
         " ",
-        "0"
+        "0",
+        " ",
+        "&",
+        "&",
+        " ",
+        "t",
+        "o",
+        "k",
+        "e",
+        "n",
+        ".",
+        "t",
+        "r",
+        "a",
+        "n",
+        "s",
+        "f",
+        "e",
+        "r",
+        "F",
+        "r",
+        "o",
+        "m",
+        " ",
+        "s",
+        "u",
+        "c",
+        "c",
+        "e",
+        "e",
+        "d",
+        "s"
       ],
       "condition_objects": [
         {
@@ -825,6 +849,192 @@
           "params": {
             "expression": "0"
           }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "&"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "&"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "k"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "."
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "f"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "F"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
         }
       ],
       "function_signature": "deposit(address,uint256)"
@@ -832,20 +1042,426 @@
     {
       "edge_id": "e5",
       "src": "PortalSrc",
-      "dst": "AxelarGateway (target chain: arbitrum, contract: receiver)",
-      "label": "cross‑chain message",
+      "dst": "AxelarGateway",
+      "label": "relay",
       "token": "OfficialToken",
       "conditions": [
+        "p",
+        "a",
+        "y",
+        "l",
+        "o",
+        "a",
+        "d",
+        " ",
+        "=",
+        " ",
+        "a",
+        "b",
+        "i",
+        ".",
+        "e",
         "n",
+        "c",
+        "o",
+        "d",
+        "e",
+        "(",
+        "r",
+        "e",
+        "c",
+        "i",
+        "p",
+        "i",
+        "e",
+        "n",
+        "t",
+        ",",
+        " ",
+        "a",
+        "m",
+        "o",
+        "u",
+        "n",
+        "t",
+        ")",
+        ";",
+        " ",
+        "g",
+        "a",
+        "t",
+        "e",
+        "w",
+        "a",
+        "y",
+        ".",
+        "c",
+        "a",
+        "l",
+        "l",
+        "C",
         "o",
         "n",
-        "e"
+        "t",
+        "r",
+        "a",
+        "c",
+        "t",
+        "(",
+        "'",
+        "a",
+        "r",
+        "b",
+        "i",
+        "t",
+        "r",
+        "u",
+        "m",
+        "'",
+        ",",
+        "'",
+        "r",
+        "e",
+        "c",
+        "e",
+        "i",
+        "v",
+        "e",
+        "r",
+        "'",
+        ",",
+        "p",
+        "a",
+        "y",
+        "l",
+        "o",
+        "a",
+        "d",
+        ")"
       ],
       "condition_objects": [
         {
           "type": "generic",
           "params": {
+            "expression": "p"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "y"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "="
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "b"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "."
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
             "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "("
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "p"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ","
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ")"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ";"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "g"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "w"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "y"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "."
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "C"
           }
         },
         {
@@ -863,7 +1479,217 @@
         {
           "type": "generic",
           "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "("
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "'"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "b"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "'"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ","
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "'"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
             "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "v"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "'"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ","
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "p"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "y"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ")"
           }
         }
       ],
@@ -873,7 +1699,7 @@
       "edge_id": "e6",
       "src": "PortalV2",
       "dst": "to",
-      "label": "transfer",
+      "label": "release",
       "token": "OfficialToken",
       "conditions": [
         "m",
@@ -1037,10 +1863,10 @@
     },
     {
       "edge_id": "e7",
-      "src": "trustedSource (source chain)",
-      "dst": "portal (destination chain)",
+      "src": "gateway",
+      "dst": "portal",
       "label": "release",
-      "token": "unspecified ERC20",
+      "token": "unknown (ERC20 handled by PortalV2)",
       "conditions": [
         "s",
         "o",
@@ -1056,16 +1882,8 @@
         "s",
         "s",
         " ",
-        "m",
-        "u",
-        "s",
-        "t",
-        " ",
-        "e",
-        "q",
-        "u",
-        "a",
-        "l",
+        "=",
+        "=",
         " ",
         "t",
         "r",
@@ -1080,25 +1898,11 @@
         "r",
         "c",
         "e",
-        ";",
         " ",
-        "f",
-        "o",
-        "r",
+        "&",
+        "&",
         " ",
-        "e",
-        "x",
-        "e",
-        "c",
-        "u",
-        "t",
-        "e",
-        " ",
-        "a",
-        "l",
-        "s",
-        "o",
-        " ",
+        "(",
         "g",
         "a",
         "t",
@@ -1154,22 +1958,23 @@
         "s",
         ")",
         " ",
-        "m",
-        "u",
-        "s",
-        "t",
-        " ",
+        "f",
+        "o",
         "r",
+        " ",
         "e",
-        "t",
+        "x",
+        "e",
+        "c",
         "u",
-        "r",
-        "n",
+        "t",
+        "e",
         " ",
-        "t",
-        "r",
-        "u",
-        "e"
+        "o",
+        "n",
+        "l",
+        "y",
+        ")"
       ],
       "condition_objects": [
         {
@@ -1259,61 +2064,13 @@
         {
           "type": "generic",
           "params": {
-            "expression": "m"
+            "expression": "="
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "u"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "s"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "t"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "q"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "u"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "a"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "l"
+            "expression": "="
           }
         },
         {
@@ -1403,7 +2160,19 @@
         {
           "type": "generic",
           "params": {
-            "expression": ";"
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "&"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "&"
           }
         },
         {
@@ -1415,103 +2184,7 @@
         {
           "type": "generic",
           "params": {
-            "expression": "f"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "o"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "r"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "x"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "c"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "u"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "t"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "a"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "l"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "s"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "o"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": " "
+            "expression": "("
           }
         },
         {
@@ -1847,25 +2520,19 @@
         {
           "type": "generic",
           "params": {
-            "expression": "m"
+            "expression": "f"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "u"
+            "expression": "o"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "s"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "t"
+            "expression": "r"
           }
         },
         {
@@ -1877,7 +2544,13 @@
         {
           "type": "generic",
           "params": {
-            "expression": "r"
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "x"
           }
         },
         {
@@ -1889,7 +2562,7 @@
         {
           "type": "generic",
           "params": {
-            "expression": "t"
+            "expression": "c"
           }
         },
         {
@@ -1901,7 +2574,25 @@
         {
           "type": "generic",
           "params": {
-            "expression": "r"
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
           }
         },
         {
@@ -1913,44 +2604,32 @@
         {
           "type": "generic",
           "params": {
-            "expression": " "
+            "expression": "l"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "t"
+            "expression": "y"
           }
         },
         {
           "type": "generic",
           "params": {
-            "expression": "r"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "u"
-          }
-        },
-        {
-          "type": "generic",
-          "params": {
-            "expression": "e"
+            "expression": ")"
           }
         }
       ],
-      "function_signature": "execute(bytes32,address,bytes) or expressExecute(bytes32,address,bytes)"
+      "function_signature": "_execute(bytes)"
     }
   ],
   "invariants": [
     {
-      "invariant_id": "asset_conservation_total_locked_equals_minted",
+      "invariant_id": "asset_conservation_lock_mint",
       "category": "asset_conservation",
-      "description": "The total amount of source tokens locked by the bridge must equal the total amount of destination tokens minted.",
-      "predicate": "totalLocked == totalMinted",
-      "solidity_assertion": "require(totalLocked == totalMinted, \"Asset conservation violated: locked != minted\");",
+      "description": "The total amount of tokens locked on the source chain must equal the total amount minted on the destination chain for each transfer id.",
+      "predicate": "lockedAmount[transferId] == mintedAmount[transferId]",
+      "solidity_assertion": "require(lockedAmount[transferId] == mintedAmount[transferId], \"Asset conservation violated: locked != minted\");",
       "related_edges": [
         "e1",
         "e3"
@@ -1960,37 +2639,11 @@
       }
     },
     {
-      "invariant_id": "asset_conservation_user_balance_decrease_matches_lock",
+      "invariant_id": "asset_conservation_total_supply",
       "category": "asset_conservation",
-      "description": "When a user initiates a transfer, their source token balance must decrease by exactly the locked amount.",
-      "predicate": "balanceBefore[msg.sender] - balanceAfter[msg.sender] == lockAmount[msg.sender]",
-      "solidity_assertion": "require(balanceBefore[msg.sender] - balanceAfter[msg.sender] == lockAmount[msg.sender], \"User balance mismatch after lock\");",
-      "related_edges": [
-        "e1"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_conservation_destination_balance_increase_matches_mint",
-      "category": "asset_conservation",
-      "description": "When the bridge mints on the destination chain, the recipient's balance must increase by exactly the minted amount.",
-      "predicate": "destBalanceAfter[dest] - destBalanceBefore[dest] == mintAmount[dest]",
-      "solidity_assertion": "require(destBalanceAfter[dest] - destBalanceBefore[dest] == mintAmount[dest], \"Destination balance mismatch after mint\");",
-      "related_edges": [
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_conservation_no_token_creation",
-      "category": "asset_conservation",
-      "description": "The bridge must never create more tokens than were locked; the sum of minted tokens cannot exceed the sum of locked tokens.",
-      "predicate": "totalMinted <= totalLocked",
-      "solidity_assertion": "require(totalMinted <= totalLocked, \"Minted exceeds locked amount\");",
+      "description": "The sum of all locked tokens plus the sum of all minted tokens must never exceed the original total supply of the source token.",
+      "predicate": "totalLocked + totalMinted <= originalSupply",
+      "solidity_assertion": "assert(totalLocked + totalMinted <= originalSupply);",
       "related_edges": [
         "e1",
         "e3"
@@ -2000,79 +2653,12 @@
       }
     },
     {
-      "invariant_id": "asset_conservation_no_token_burn_unless_refund",
-      "category": "asset_conservation",
-      "description": "Tokens may only be burned on the source chain if a corresponding refund is recorded; otherwise total supply remains constant.",
-      "predicate": "burnedAmount == refundedAmount",
-      "solidity_assertion": "require(burnedAmount == refundedAmount, \"Burn without refund detected\");",
-      "related_edges": [
-        "e1",
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_conservation_locked_amount_non_negative",
-      "category": "asset_conservation",
-      "description": "The amount recorded as locked for any transfer must never be negative.",
-      "predicate": "lockAmount[transferId] >= 0",
-      "solidity_assertion": "require(lockAmount[transferId] >= 0, \"Negative lock amount\");",
-      "related_edges": [
-        "e1"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_only_trusted_source_can_approve",
+      "invariant_id": "authorization_relay_signature",
       "category": "authorization",
-      "description": "Only the pre‑registered trustedSource address may call the approveContractCall function.",
-      "predicate": "msg.sender == trustedSource",
-      "solidity_assertion": "require(msg.sender == trustedSource, \"Caller not trusted source\");",
+      "description": "A mint on the destination contract can only be executed if the relay signature from the trusted source address matches the commandId.",
+      "predicate": "verifySignature(msgHash, signature, trustedSource) && commandId == expectedId",
+      "solidity_assertion": "require(verifySignature(msgHash, signature, trustedSource), \"Invalid relay signature\"); require(commandId == expectedId, \"CommandId mismatch\");",
       "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_approve_requires_valid_nonce",
-      "category": "authorization",
-      "description": "The approveContractCall call must include a nonce that has not been used before for the same commandId.",
-      "predicate": "!usedNonce[commandId][nonce]",
-      "solidity_assertion": "require(!usedNonce[commandId][nonce], \"Replay nonce detected\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_gateway_validates_signature",
-      "category": "authorization",
-      "description": "The gateway must verify that the relayer’s signature on the command matches the expected signer.",
-      "predicate": "recoverSigner(hash, signature) == relayer",
-      "solidity_assertion": "require(recoverSigner(hash, signature) == relayer, \"Invalid relayer signature\");",
-      "related_edges": [
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "authorization_command_id_must_match_approved",
-      "category": "authorization",
-      "description": "The commandId emitted in e1 must be identical to the commandId approved in e2 and validated in e3.",
-      "predicate": "commandId_e1 == commandId_e2 && commandId_e2 == commandId_e3",
-      "solidity_assertion": "require(commandId == approvedCommandId && approvedCommandId == validatedCommandId, \"CommandId mismatch across steps\");",
-      "related_edges": [
-        "e1",
         "e2",
         "e3"
       ],
@@ -2081,36 +2667,24 @@
       }
     },
     {
-      "invariant_id": "authorization_source_chain_id_consistency",
+      "invariant_id": "authorization_caller_approved",
       "category": "authorization",
-      "description": "The source chain identifier embedded in the command must match the chain where the gateway contract resides.",
-      "predicate": "command.sourceChainId == block.chainid",
-      "solidity_assertion": "require(command.sourceChainId == block.chainid, \"Source chain ID mismatch\");",
+      "description": "Only a caller that has previously emitted a ContractCall event (edge e1) may be approved by the relayer (edge e2).",
+      "predicate": "hasEmittedCall[caller] == true && approvedByRelayer[caller] == true",
+      "solidity_assertion": "require(hasEmittedCall[msg.sender], \"Caller did not emit ContractCall\"); require(approvedByRelayer[msg.sender], \"Caller not approved by relayer\");",
       "related_edges": [
-        "e3"
+        "e1",
+        "e2"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
       }
     },
     {
-      "invariant_id": "authorization_destination_chain_id_valid",
-      "category": "authorization",
-      "description": "The destination chain identifier in the command must be a supported chain listed in the bridge registry.",
-      "predicate": "supportedChains[command.destChainId] == true",
-      "solidity_assertion": "require(supportedChains[command.destChainId], \"Unsupported destination chain\");",
-      "related_edges": [
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_command_processed_once",
+      "invariant_id": "uniqueness_command_consumed_once",
       "category": "uniqueness",
-      "description": "A given commandId can be processed by the gateway at most once.",
-      "predicate": "!processed[commandId]",
+      "description": "Each commandId emitted by the source gateway can be processed at most once on the destination portal.",
+      "predicate": "processed[commandId] == false",
       "solidity_assertion": "require(!processed[commandId], \"Command already processed\");",
       "related_edges": [
         "e3"
@@ -2120,11 +2694,11 @@
       }
     },
     {
-      "invariant_id": "uniqueness_lock_event_emitted_once",
+      "invariant_id": "uniqueness_nonce_monotonic",
       "category": "uniqueness",
-      "description": "The lock event for a transferId must be emitted only a single time.",
-      "predicate": "!lockEmitted[transferId]",
-      "solidity_assertion": "require(!lockEmitted[transferId], \"Lock event already emitted\");",
+      "description": "Nonces used in ContractCall events must increase monotonically for each sender to prevent replay.",
+      "predicate": "nonce[msg.sender] > lastNonce[msg.sender]",
+      "solidity_assertion": "require(nonce > lastNonce[msg.sender], \"Nonce not monotonic\");",
       "related_edges": [
         "e1"
       ],
@@ -2133,52 +2707,11 @@
       }
     },
     {
-      "invariant_id": "uniqueness_mint_event_emitted_once",
+      "invariant_id": "uniqueness_relay_approval_once",
       "category": "uniqueness",
-      "description": "The mint event for a given commandId must be emitted only once on the destination chain.",
-      "predicate": "!mintEmitted[commandId]",
-      "solidity_assertion": "require(!mintEmitted[commandId], \"Mint event already emitted\");",
-      "related_edges": [
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_nonce_never_reused_per_sender",
-      "category": "uniqueness",
-      "description": "For each sender, a nonce value must be unique across all commands they have issued.",
-      "predicate": "!nonceUsed[msg.sender][nonce]",
-      "solidity_assertion": "require(!nonceUsed[msg.sender][nonce], \"Nonce already used by sender\");",
-      "related_edges": [
-        "e1",
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_refund_processed_at_most_once",
-      "category": "uniqueness",
-      "description": "If a refund is triggered, the refund transfer must be executed only once.",
-      "predicate": "!refundProcessed[transferId]",
-      "solidity_assertion": "require(!refundProcessed[transferId], \"Refund already processed\");",
-      "related_edges": [
-        "e1",
-        "e3"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniqueness_approval_signature_unique_per_command",
-      "category": "uniqueness",
-      "description": "The signature approving a command must be unique for that commandId; duplicate signatures are rejected.",
-      "predicate": "!signatureSeen[commandId][signatureHash]",
-      "solidity_assertion": "require(!signatureSeen[commandId][signatureHash], \"Duplicate approval signature\");",
+      "description": "A relayer approval (edge e2) for a given commandId can be recorded only once.",
+      "predicate": "approvalCount[commandId] == 0",
+      "solidity_assertion": "require(approvalCount[commandId] == 0, \"Approval already recorded\");",
       "related_edges": [
         "e2"
       ],
@@ -2187,11 +2720,92 @@
       }
     },
     {
-      "invariant_id": "uniqueness_no_double_release",
+      "invariant_id": "authorization_trusted_source_address",
+      "category": "authorization",
+      "description": "Only the immutable trustedSource address may be used as the source of approval for commands.",
+      "predicate": "msg.sender == trustedSource",
+      "solidity_assertion": "require(msg.sender == trustedSource, \"Only trusted source can approve\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_refund_amount",
+      "category": "asset_conservation",
+      "description": "When a refund is triggered, the amount returned to the caller equals the originally locked amount.",
+      "predicate": "refundAmount[transferId] == lockedAmount[transferId]",
+      "solidity_assertion": "require(refundAmount[transferId] == lockedAmount[transferId], \"Refund amount mismatch\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_refund_once",
       "category": "uniqueness",
-      "description": "A locked token cannot be released (unlocked) more than once for the same transferId.",
-      "predicate": "!released[transferId]",
-      "solidity_assertion": "require(!released[transferId], \"Token already released\");",
+      "description": "A refund for a given transferId can be executed at most once.",
+      "predicate": "refunded[transferId] == false",
+      "solidity_assertion": "require(!refunded[transferId], \"Refund already processed\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_command_source_match",
+      "category": "authorization",
+      "description": "The source address embedded in the command must match the address that originally locked the tokens.",
+      "predicate": "command.source == lockerAddress[transferId]",
+      "solidity_assertion": "require(command.source == lockerAddress[transferId], \"Source address mismatch\");",
+      "related_edges": [
+        "e1",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_mint_requires_valid_proof",
+      "category": "authorization",
+      "description": "The destination portal's mint function must verify that the proof (e.g., Merkle root) corresponds to an approved command from the source gateway.",
+      "predicate": "verifyProof(proof, commandId) && approved[commandId]",
+      "solidity_assertion": "require(verifyProof(proof, commandId), \"Invalid proof\"); require(approved[commandId], \"Command not approved\");",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_double_mint",
+      "category": "asset_conservation",
+      "description": "The destination contract must not mint more tokens than the amount locked for the same transferId.",
+      "predicate": "mintedAmount[transferId] <= lockedAmount[transferId]",
+      "solidity_assertion": "require(mintedAmount[transferId] <= lockedAmount[transferId], \"Mint exceeds locked amount\");",
+      "related_edges": [
+        "e1",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_commandId_uniqueness",
+      "category": "uniqueness",
+      "description": "Command identifiers generated by the source gateway must be globally unique across all transfers.",
+      "predicate": "commandIdExists[commandId] == false",
+      "solidity_assertion": "require(!commandIdExists[commandId], \"Duplicate commandId\");",
       "related_edges": [
         "e1"
       ],

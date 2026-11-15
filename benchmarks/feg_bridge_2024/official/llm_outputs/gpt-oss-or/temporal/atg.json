@@ -4,42 +4,49 @@
   "nodes": [
     {
       "node_id": "FEGBridgeSrc",
-      "node_type": "bridge",
+      "node_type": "router",
       "chain": "source",
-      "address": "",
+      "address": "unknown",
       "functions": []
     },
     {
       "node_id": "feg",
       "node_type": "token",
       "chain": "source",
-      "address": "",
+      "address": "immutable",
       "functions": []
     },
     {
       "node_id": "core",
       "node_type": "relay",
       "chain": "source",
-      "address": "",
+      "address": "immutable",
       "functions": []
     },
     {
       "node_id": "FEGSmartBridge",
-      "node_type": "bridge",
-      "chain": "source",
-      "address": "",
+      "node_type": "router",
+      "chain": "destination",
+      "address": "unknown",
       "functions": []
     },
     {
-      "node_id": "feg",
+      "node_id": "OfficialToken",
       "node_type": "token",
-      "chain": "source",
-      "address": "feg_ (immutable address set in constructor)",
+      "chain": "destination",
+      "address": "feg",
+      "functions": []
+    },
+    {
+      "node_id": "relayer",
+      "node_type": "relay",
+      "chain": "destination",
+      "address": "relayer",
       "functions": []
     },
     {
       "node_id": "WormholeCore",
-      "node_type": "contract",
+      "node_type": "router",
       "chain": "source",
       "address": "",
       "functions": []
@@ -130,10 +137,92 @@
     },
     {
       "edge_id": "e2",
-      "src": "FEGSmartBridge",
-      "dst": "account (decoded from payload)",
-      "label": "release",
+      "src": "FEGBridgeSrc",
+      "dst": "WormholeCore",
+      "label": "publishMessage",
       "token": "feg",
+      "conditions": [
+        "a",
+        "f",
+        "t",
+        "e",
+        "r",
+        " ",
+        "l",
+        "o",
+        "c",
+        "k"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "f"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "k"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "FEGSmartBridge",
+      "dst": "account (from payload)",
+      "label": "release",
+      "token": "OfficialToken",
       "conditions": [
         "o",
         "p",
@@ -535,53 +624,80 @@
   ],
   "invariants": [
     {
-      "invariant_id": "asset_deposit_amount_positive",
+      "invariant_id": "asset_conservation_deposit_to_release",
       "category": "asset_conservation",
-      "description": "A deposit must lock a strictly positive amount of FEG tokens.",
-      "predicate": "depositAmount > 0",
-      "solidity_assertion": "require(depositAmount > 0, \"Deposit amount must be > 0\");",
-      "related_edges": [
-        "e1"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_locked_balance_matches_deposits",
-      "category": "asset_conservation",
-      "description": "The contract's internal accounting of locked FEG must equal the sum of all successful deposits minus the sum of all released amounts.",
-      "predicate": "totalLocked == totalDeposited - totalReleased",
-      "solidity_assertion": "assert(totalLocked == totalDeposited - totalReleased);",
+      "description": "The total amount of source token locked via edge e1 must equal the total amount of destination token minted via edge e3 for each unique transfer identifier.",
+      "predicate": "sumLocked[e1][transferId] == sumMinted[e3][transferId]",
+      "solidity_assertion": "require(lockedAmounts[transferId] == mintedAmounts[transferId], \"Asset conservation violation: locked != minted\");",
       "related_edges": [
         "e1",
-        "e2"
+        "e3"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
       }
     },
     {
-      "invariant_id": "asset_release_decreases_locked_balance",
+      "invariant_id": "asset_conservation_total_supply",
       "category": "asset_conservation",
-      "description": "When a release is executed, the contract's locked balance is reduced exactly by the released amount.",
-      "predicate": "totalLockedAfter == totalLockedBefore - releaseAmount",
-      "solidity_assertion": "assert(totalLockedAfter == totalLockedBefore - releaseAmount);",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_cumulative_release_not_exceed_deposit",
-      "category": "asset_conservation",
-      "description": "The cumulative amount released for a given deposit nonce can never exceed the amount originally locked for that nonce.",
-      "predicate": "releasedAmount[nonce] <= depositedAmount[nonce]",
-      "solidity_assertion": "require(releasedAmount[nonce] <= depositedAmount[nonce], \"Release exceeds deposited amount\");",
+      "description": "The sum of all locked source tokens plus the sum of all minted destination tokens must never exceed the original total supply of the source token.",
+      "predicate": "totalLocked + totalMinted <= sourceToken.totalSupply()",
+      "solidity_assertion": "assert(totalLocked + totalMinted <= sourceToken.totalSupply());",
       "related_edges": [
         "e1",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_message_origin",
+      "category": "authorization",
+      "description": "A release on edge e3 is only allowed if the corresponding publishMessage on edge e2 was signed by the trusted WormholeCore contract.",
+      "predicate": "e3.allowed => e2.signedBy == address(WormholeCore)",
+      "solidity_assertion": "require(messageSigner == address(WormholeCore), \"Unauthorized release: invalid signer\");",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_owner_can_lock",
+      "category": "authorization",
+      "description": "Only the token holder (msg.sender) can invoke the lock function on edge e1.",
+      "predicate": "e1.caller == tokenOwner",
+      "solidity_assertion": "require(msg.sender == tokenOwner, \"Lock can only be called by token owner\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_transfer_id_once",
+      "category": "uniqueness",
+      "description": "Each transfer identifier can be processed by edge e3 at most once.",
+      "predicate": "processed[transferId] == false before e3 execution",
+      "solidity_assertion": "require(!processed[transferId], \"Transfer already processed\"); processed[transferId] = true;",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_nonce",
+      "category": "uniqueness",
+      "description": "The nonce included in the Wormhole message must be unique across all messages published via edge e2.",
+      "predicate": "nonceUsed[nonce] == false before e2 execution",
+      "solidity_assertion": "require(!nonceUsed[nonce], \"Duplicate nonce\"); nonceUsed[nonce] = true;",
+      "related_edges": [
         "e2"
       ],
       "metadata": {
@@ -589,51 +705,77 @@
       }
     },
     {
-      "invariant_id": "asset_no_mint_on_source_chain",
+      "invariant_id": "authorization_relayer_signature",
+      "category": "authorization",
+      "description": "The relayer on the destination chain must provide a valid Wormhole signature when invoking the release function.",
+      "predicate": "e3.signatureValid == true",
+      "solidity_assertion": "require(isValidSignature(msgHash, signature), \"Invalid relayer signature\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_refund_equals_locked",
       "category": "asset_conservation",
-      "description": "The bridge never creates (mints) new FEG tokens on the source chain; it only locks and releases existing tokens.",
-      "predicate": "totalSupply == initialSupply",
-      "solidity_assertion": "assert(fegToken.totalSupply() == initialSupply);",
+      "description": "When a refund is triggered, the amount returned to the sender equals the amount originally locked.",
+      "predicate": "refundAmount == lockedAmounts[transferId]",
+      "solidity_assertion": "assert(refundAmount == lockedAmounts[transferId]);",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_trusted_relayer",
+      "category": "authorization",
+      "description": "Only the designated relayer address may call the release function on the destination bridge.",
+      "predicate": "e3.caller == address(relayer)",
+      "solidity_assertion": "require(msg.sender == address(relayer), \"Caller is not authorized relayer\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_one_lock_per_transfer",
+      "category": "uniqueness",
+      "description": "A given transfer identifier can be locked only once on the source bridge.",
+      "predicate": "locked[transferId] == false before e1 execution",
+      "solidity_assertion": "require(!locked[transferId], \"Transfer already locked\"); locked[transferId] = true;",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_mint_amount_matches_lock",
+      "category": "authorization",
+      "description": "The amount minted on the destination chain must exactly match the amount locked on the source chain for the same transfer.",
+      "predicate": "mintedAmount == lockedAmounts[transferId]",
+      "solidity_assertion": "require(mintedAmount == lockedAmounts[transferId], \"Mint amount mismatch\");",
       "related_edges": [
         "e1",
-        "e2"
+        "e3"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
       }
     },
     {
-      "invariant_id": "auth_release_called_by_relay",
-      "category": "authorization",
-      "description": "Only the authorized relay contract may invoke the release function.",
-      "predicate": "msg.sender == RELAY",
-      "solidity_assertion": "require(msg.sender == RELAY, \"Only relay can call release\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "auth_release_emitter_verified",
-      "category": "authorization",
-      "description": "The emitter address embedded in the VAA must match the known Wormhole core contract address.",
-      "predicate": "vaa.emitterAddress == WORMHOLE_CORE",
-      "solidity_assertion": "require(vaa.emitterAddress == WORMHOLE_CORE, \"Invalid emitter address\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "auth_deposit_caller_not_zero",
-      "category": "authorization",
-      "description": "A deposit must be initiated by a non‑zero address (i.e., an EOA or contract).",
-      "predicate": "msg.sender != address(0)",
-      "solidity_assertion": "require(msg.sender != address(0), \"Caller cannot be zero address\");",
+      "invariant_id": "uniqueness_no_double_refund",
+      "category": "uniqueness",
+      "description": "A transfer can be refunded at most once.",
+      "predicate": "refunded[transferId] == false before refund",
+      "solidity_assertion": "require(!refunded[transferId], \"Already refunded\"); refunded[transferId] = true;",
       "related_edges": [
         "e1"
       ],
@@ -642,169 +784,28 @@
       }
     },
     {
-      "invariant_id": "auth_vaa_signature_valid",
-      "category": "authorization",
-      "description": "The VAA (cross‑chain message) presented to release must have a valid Wormhole signature.",
-      "predicate": "verifyVAA(vaa) == true",
-      "solidity_assertion": "require(verifyVAA(vaa), \"Invalid VAA signature\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "auth_nonce_unused_before_release",
-      "category": "authorization",
-      "description": "A release can only be processed if its nonce has not been used previously.",
-      "predicate": "processedNonces[nonce] == false",
-      "solidity_assertion": "require(!processedNonces[nonce], \"Nonce already processed\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniq_deposit_nonce_unique",
-      "category": "uniqueness",
-      "description": "Each deposit generates a unique nonce that must not collide with any existing nonce.",
-      "predicate": "!nonceExists[depositNonce]",
-      "solidity_assertion": "require(!nonceExists[depositNonce], \"Deposit nonce collision\");",
-      "related_edges": [
-        "e1"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniq_release_processed_once",
-      "category": "uniqueness",
-      "description": "A VAA identified by its hash can be processed for release at most once.",
-      "predicate": "processedVAAs[vaaHash] == false",
-      "solidity_assertion": "require(!processedVAAs[vaaHash], \"VAA already processed\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniq_mark_nonce_after_release",
-      "category": "uniqueness",
-      "description": "After a successful release, the corresponding nonce is marked as processed to prevent replay.",
-      "predicate": "processedNonces[nonce] == true",
-      "solidity_assertion": "processedNonces[nonce] = true;",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniq_one_release_per_deposit",
-      "category": "uniqueness",
-      "description": "For any given deposit nonce, at most one release transaction may succeed.",
-      "predicate": "releaseCount[nonce] <= 1",
-      "solidity_assertion": "require(releaseCount[nonce] < 1, \"Deposit already released\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniq_vaa_hash_consistency",
-      "category": "uniqueness",
-      "description": "The hash of the VAA used for release must be deterministic and match the stored hash for that nonce.",
-      "predicate": "keccak256(abi.encodePacked(vaa)) == storedVaaHash[nonce]",
-      "solidity_assertion": "assert(keccak256(abi.encodePacked(vaa)) == storedVaaHash[nonce]);",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniq_no_double_lock_same_nonce",
-      "category": "uniqueness",
-      "description": "A deposit call with a nonce that has already been used must revert.",
-      "predicate": "nonceExists[depositNonce] == false",
-      "solidity_assertion": "require(!nonceExists[depositNonce], \"Nonce already used for lock\");",
-      "related_edges": [
-        "e1"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "auth_release_amount_matches_payload",
-      "category": "authorization",
-      "description": "The amount released must equal the amount encoded in the verified VAA payload.",
-      "predicate": "releaseAmount == vaa.payload.amount",
-      "solidity_assertion": "require(releaseAmount == vaa.payload.amount, \"Release amount mismatch\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "auth_release_recipient_matches_payload",
-      "category": "authorization",
-      "description": "The address receiving the released tokens must be exactly the recipient specified in the VAA payload.",
-      "predicate": "msg.sender == vaa.payload.recipient",
-      "solidity_assertion": "require(msg.sender == vaa.payload.recipient, \"Recipient mismatch\");",
-      "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "asset_total_supply_unchanged_post_release",
+      "invariant_id": "asset_conservation_total_balance_consistency",
       "category": "asset_conservation",
-      "description": "The total supply of FEG on the source chain remains unchanged after a release (tokens are only moved, not minted or burned).",
-      "predicate": "fegToken.totalSupply() == initialSupply",
-      "solidity_assertion": "assert(fegToken.totalSupply() == initialSupply);",
+      "description": "The sum of balances of the source token across all users plus the sum of minted destination tokens equals the initial total supply.",
+      "predicate": "sumBalances(sourceToken) + totalMinted == sourceToken.totalSupply()",
+      "solidity_assertion": "assert(sumBalances(sourceToken) + totalMinted == sourceToken.totalSupply());",
       "related_edges": [
-        "e2"
+        "e1",
+        "e3"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"
       }
     },
     {
-      "invariant_id": "auth_release_called_by_bridge_contract",
+      "invariant_id": "authorization_message_integrity",
       "category": "authorization",
-      "description": "The release function can only be invoked through the FEGSmartBridge contract instance.",
-      "predicate": "msg.sender == address(FEGSmartBridge)",
-      "solidity_assertion": "require(msg.sender == address(FEGSmartBridge), \"Only bridge contract can call release\");",
+      "description": "The payload of the Wormhole message must contain the correct source token address, amount, and recipient, and these must be verified before minting.",
+      "predicate": "payload.token == address(feg) && payload.amount == lockedAmounts[transferId] && payload.recipient == intendedRecipient",
+      "solidity_assertion": "require(payload.token == address(feg) && payload.amount == lockedAmounts[transferId] && payload.recipient == intendedRecipient, \"Invalid payload\");",
       "related_edges": [
-        "e2"
-      ],
-      "metadata": {
-        "lifecycle_stage": "schema_valid"
-      }
-    },
-    {
-      "invariant_id": "uniq_release_event_emitted_once",
-      "category": "uniqueness",
-      "description": "A Release event must be emitted exactly once per successful release.",
-      "predicate": "releaseEventCount[nonce] == 1",
-      "solidity_assertion": "assert(releaseEventCount[nonce] == 1);",
-      "related_edges": [
-        "e2"
+        "e2",
+        "e3"
       ],
       "metadata": {
         "lifecycle_stage": "schema_valid"

@@ -3,63 +3,68 @@
   "scenarios": [
     {
       "scenario_id": "crosscurve_asset_conservation_break_001",
-      "target_invariant": "asset_conservation_total_locked_equals_minted",
-      "vulnerability_class": "relay_tampering_double_mint",
-      "confidence": 0.87,
+      "target_invariant": "asset_conservation_lock_mint",
+      "vulnerability_class": "relay_tampering_missing_validation",
+      "confidence": 0.92,
       "actions": [
         {
           "chain": "source",
           "contract": "PortalSrc",
-          "function": "lockTokens(uint256 amount)",
+          "function": "lock(address token, uint256 amount, bytes32 transferId)",
           "params": {
-            "amount": "1000000e18"
+            "token": "OfficialToken",
+            "amount": "1000000e18",
+            "transferId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
           },
-          "description": "User locks 1,000,000 source tokens; sourceRouter.totalLocked() increases.",
+          "description": "User locks 1,000,000 tokens, emitting e1 (ContractCall) with transferId.",
           "step": 1
         },
         {
           "chain": "source",
           "contract": "AxelarGateway",
-          "function": "approveContractCall(bytes32 commandId, address contractAddress)",
+          "function": "callContract(string destinationChain, string destinationContract, bytes payload)",
           "params": {
-            "commandId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001",
-            "contractAddress": "0xPortalV2_address"
+            "destinationChain": "destination",
+            "destinationContract": "portal",
+            "payload": "0x... (encoded mint call with transferId and amount 1000000e18)"
           },
-          "relay_mode": "faithful",
-          "description": "Gateway records approval; e3 predicate `gateway.validateC` passes.",
+          "description": "Gateway emits ContractCall event (e1) that relayers will forward.",
           "step": 2
         },
         {
-          "chain": "relay",
-          "contract": "AxelarGateway",
-          "function": "execute(bytes calldata payload)",
+          "chain": "source",
+          "contract": "relayer",
+          "function": "approveContractCall(bytes32 commandId, address sourceAddress)",
           "params": {
-            "payload": "0x...mintPayload..."
+            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "sourceAddress": "trustedSource"
           },
           "relay_mode": "tampered",
-          "description": "Relayer replays the same payload twice before the bridge's replay protection updates, causing PortalV2.mint to be called twice.",
+          "description": "Malicious relayer approves the command but modifies the payload to set amount = 0 while keeping same transferId.",
           "step": 3
         },
         {
           "chain": "destination",
-          "contract": "PortalV2",
-          "function": "mint(address to, uint256 amount)",
+          "contract": "portal",
+          "function": "mint(address to, uint256 amount, bytes32 transferId)",
           "params": {
-            "to": "0xAttackerAddress",
-            "amount": "1000000e18"
+            "to": "attacker",
+            "amount": "0",
+            "transferId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
           },
-          "description": "First mint: destinationRouter.totalMinted() = 1,000,000.",
+          "description": "Portal validates command (e3) using tampered payload, mints 0 tokens to attacker, satisfying internal checks.",
           "step": 4
         },
         {
-          "chain": "destination",
-          "contract": "PortalV2",
-          "function": "mint(address to, uint256 amount)",
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "withdraw(address to, uint256 amount, bytes32 transferId)",
           "params": {
-            "to": "0xAttackerAddress",
-            "amount": "1000000e18"
+            "to": "attacker",
+            "amount": "1000000e18",
+            "transferId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
           },
-          "description": "Second mint (due to tampered relay) inflates totalMinted to 2,000,000 while totalLocked remains 1,000,000, violating `totalLocked == totalMinted`.",
+          "description": "Attacker calls withdraw before destination mint finalizes, retrieving locked tokens; invariant broken: lockedAmount=1M, mintedAmount=0.",
           "step": 5
         }
       ],
@@ -69,85 +74,279 @@
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "User locks 1,000,000 source tokens; sourceRouter.totalLocked() increases."
+          "description": "User locks 1,000,000 tokens, emitting e1 (ContractCall) with transferId."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Gateway records approval; e3 predicate `gateway.validateC` passes."
+          "description": "Gateway emits ContractCall event (e1) that relayers will forward."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
-          "predicate": "relay.message_count > 0",
-          "description": "Relayer replays the same payload twice before the bridge's replay protection updates, causing PortalV2.mint to be called twice."
+          "predicate": "step_3_executed",
+          "description": "Malicious relayer approves the command but modifies the payload to set amount = 0 while keeping same transferId."
         },
         {
           "waypoint_id": "w4",
           "after_step": 4,
           "predicate": "step_4_executed",
-          "description": "First mint: destinationRouter.totalMinted() = 1,000,000."
+          "description": "Portal validates command (e3) using tampered payload, mints 0 tokens to attacker, satisfying internal checks."
         },
         {
           "waypoint_id": "w5",
           "after_step": 5,
           "predicate": "step_5_executed",
-          "description": "Second mint (due to tampered relay) inflates totalMinted to 2,000,000 while totalLocked remains 1,000,000, violating `totalLocked == totalMinted`."
+          "description": "Attacker calls withdraw before destination mint finalizes, retrieving locked tokens; invariant broken: lockedAmount=1M, mintedAmount=0."
         }
       ]
     },
     {
       "scenario_id": "crosscurve_asset_conservation_break_001",
-      "target_invariant": "asset_conservation_user_balance_decrease_matches_lock",
-      "vulnerability_class": "reentrancy+relay_tampering",
+      "target_invariant": "asset_conservation_total_supply",
+      "vulnerability_class": "mint‑inflation via relay replay & delayed approval",
       "confidence": 0.87,
       "actions": [
         {
           "chain": "source",
-          "contract": "OfficialToken",
-          "function": "approve",
+          "contract": "PortalSrc",
+          "function": "lock(address,uint256)",
           "params": {
-            "spender": "PortalSrc",
-            "amount": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+            "token": "OfficialToken",
+            "amount": "500000 * 10**18"
           },
-          "description": "Attacker approves the bridge router to spend unlimited tokens.",
+          "description": "User locks a large amount of OfficialToken; PortalSrc updates totalLocked.",
           "step": 1
         },
         {
           "chain": "source",
-          "contract": "PortalSrc",
-          "function": "initiateTransfer",
+          "contract": "AxelarGateway",
+          "function": "callContract(string,string,bytes)",
           "params": {
-            "token": "OfficialToken",
-            "amount": "1000e18",
-            "destChain": "destination",
-            "destAddress": "0xAttackerControlled"
+            "destinationChain": "destination",
+            "destinationContract": "portal",
+            "payload": "0xabcdef",
+            "commandId": "0xdeadbeef1"
           },
-          "description": "Calls the bridge entry point which locks tokens and emits command e1.",
+          "description": "Gateway emits ContractCall event (edge e1) for mint on destination.",
           "step": 2
         },
         {
           "chain": "source",
           "contract": "AxelarGateway",
-          "function": "approveContractCall",
+          "function": "approveContractCall(bytes32,address)",
           "params": {
-            "commandId": "0xdeadbeef... (id from e1)",
-            "sourceContract": "PortalSrc"
+            "commandId": "0xdeadbeef1",
+            "sourceAddress": "PortalSrc"
           },
-          "relay_mode": "tampered",
-          "description": "Malicious relayer intercepts the approval and replays it with a modified commandId pointing to a previously approved but unexecuted transfer, causing double‑spend of lock.",
+          "relay_mode": "delayed",
+          "description": "Attacker, controlling a relayer, withholds approval for a period, then re‑submits the same commandId after the original mint has already been processed on destination, causing a replay.",
           "step": 3
         },
         {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "mint(address,uint256)",
+          "params": {
+            "to": "attacker",
+            "amount": "500000 * 10**18"
+          },
+          "description": "Portal on destination mints tokens based on the locked amount; totalMinted increments.",
+          "step": 4
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "validateContractCall(bytes32,address)",
+          "params": {
+            "commandId": "0xdeadbeef1",
+            "sourceAddress": "PortalSrc"
+          },
+          "relay_mode": "replay",
+          "description": "Delayed relayer re‑submits the same commandId; gateway validates again because it only checks signature, not replay protection, causing a second mint on destination.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks a large amount of OfficialToken; PortalSrc updates totalLocked."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Gateway emits ContractCall event (edge e1) for mint on destination."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker, controlling a relayer, withholds approval for a period, then re‑submits the same commandId after the original mint has already been processed on destination, causing a replay."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Portal on destination mints tokens based on the locked amount; totalMinted increments."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Delayed relayer re‑submits the same commandId; gateway validates again because it only checks signature, not replay protection, causing a second mint on destination."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosscurve_auth_sig_bypass_001",
+      "target_invariant": "authorization_relay_signature",
+      "vulnerability_class": "relay_signature_spoof",
+      "confidence": 0.87,
+      "actions": [
+        {
           "chain": "source",
           "contract": "PortalSrc",
-          "function": "executeTransfer",
+          "function": "lock(address,uint256)",
           "params": {
-            "commandId": "0xdeadbeef...",
-            "payload": "0x..."
+            "token": "OfficialToken",
+            "amount": "1000000e18"
           },
-          "description": "Bridge router processes the tampered approval, releasing the locked tokens again to attacker without a new lock, violating balance predicate.",
+          "description": "User locks a large amount of OfficialToken, triggering callContract on AxelarGateway.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "callContract(string destinationChain,string destinationContract,bytes payload)",
+          "params": {
+            "destinationChain": "destination",
+            "destinationContract": "portal",
+            "payload": "0x... (encode mint(address,uint256) for attacker)"
+          },
+          "description": "Gateway emits ContractCall event with payload for mint on destination.",
+          "step": 2
+        },
+        {
+          "chain": "source",
+          "contract": "relayer",
+          "function": "approveContractCall(bytes32 commandId,address signature)",
+          "params": {
+            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "signature": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "relay_mode": "tampered",
+          "description": "Malicious relayer submits a forged approval with a zero‑signature, exploiting missing signature length check.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "validateContractCall(bytes32 commandId,address source)",
+          "params": {
+            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "source": "trustedSource"
+          },
+          "description": "Gateway on destination calls validateContractCall; due to tampered relay mode the contract incorrectly treats zero‑signature as valid and proceeds.",
+          "step": 4
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "mint(address to,uint256 amount)",
+          "params": {
+            "to": "0xAttackerAddress0000000000000000000000000000",
+            "amount": "1000000e18"
+          },
+          "description": "Mint executes, crediting attacker with tokens despite invalid signature.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks a large amount of OfficialToken, triggering callContract on AxelarGateway."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Gateway emits ContractCall event with payload for mint on destination."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Malicious relayer submits a forged approval with a zero‑signature, exploiting missing signature length check."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Gateway on destination calls validateContractCall; due to tampered relay mode the contract incorrectly treats zero‑signature as valid and proceeds."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Mint executes, crediting attacker with tokens despite invalid signature."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosscurve_auth_bypass_001",
+      "target_invariant": "authorization_caller_approved",
+      "vulnerability_class": "authorization_bypass_via_relayer_replay",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "lock(uint256 amount)",
+          "params": {
+            "amount": "1000e18"
+          },
+          "description": "Attacker locks tokens, causing PortalSrc to emit ContractCall (edge e1) with a unique commandId.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "approveContractCall(bytes32 commandId, address relayer)",
+          "params": {
+            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "relayer": "0xAttackerRelayer"
+          },
+          "relay_mode": "tampered",
+          "description": "Attacker, acting as a malicious relayer, submits an approveContractCall for a commandId that never appeared in a ContractCall event, exploiting missing check that relayer must be the same entity that emitted e1.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "validateContractCall(bytes32 commandId, address caller)",
+          "params": {
+            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "caller": "0xAttacker"
+          },
+          "description": "Gateway forwards the tampered approval; portal validates because approvedByRelayer[caller] is now true despite hasEmittedCall[caller] being false.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "execute(bytes calldata payload)",
+          "params": {
+            "payload": "0x<malicious calldata to drain funds>"
+          },
+          "description": "Attacker executes arbitrary payload, e.g., calling transfer on a token contract to move funds to attacker address.",
           "step": 4
         }
       ],
@@ -157,32 +356,115 @@
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "Attacker approves the bridge router to spend unlimited tokens."
+          "description": "Attacker locks tokens, causing PortalSrc to emit ContractCall (edge e1) with a unique commandId."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Calls the bridge entry point which locks tokens and emits command e1."
+          "description": "Attacker, acting as a malicious relayer, submits an approveContractCall for a commandId that never appeared in a ContractCall event, exploiting missing check that relayer must be the same entity that emitted e1."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "Malicious relayer intercepts the approval and replays it with a modified commandId pointing to a previously approved but unexecuted transfer, causing double‑spend of lock."
+          "description": "Gateway forwards the tampered approval; portal validates because approvedByRelayer[caller] is now true despite hasEmittedCall[caller] being false."
         },
         {
           "waypoint_id": "w4",
           "after_step": 4,
           "predicate": "step_4_executed",
-          "description": "Bridge router processes the tampered approval, releasing the locked tokens again to attacker without a new lock, violating balance predicate."
+          "description": "Attacker executes arbitrary payload, e.g., calling transfer on a token contract to move funds to attacker address."
         }
       ]
     },
     {
-      "scenario_id": "crosscurve_invariant_break_001",
-      "target_invariant": "asset_conservation_destination_balance_increase_matches_mint",
-      "vulnerability_class": "mint_overflow_via_relay_tampering",
+      "scenario_id": "crosscurve-uniqueness-replay-001",
+      "target_invariant": "uniqueness_command_consumed_once",
+      "vulnerability_class": "replay_attack_missing_nonce",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "lock(address,uint256,bytes)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": "1000000000000000000",
+            "payload": "0xabcdef"
+          },
+          "description": "User initiates a cross‑chain transfer; PortalSrc emits CommandId C1 via AxelarGateway.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "approveContractCall(bytes32,address)",
+          "params": {
+            "commandId": "C1",
+            "sourceContract": "PortalSrc"
+          },
+          "relay_mode": "faithful",
+          "description": "Legitimate relayer approves C1; processed[C1] set to false on destination.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "validateContractCall(bytes32,address)",
+          "params": {
+            "commandId": "C1",
+            "sourceContract": "PortalSrc"
+          },
+          "relay_mode": "tampered",
+          "description": "Attacker intercepts the relay message, re‑broadcasts the same commandId C1 with altered payload before the original is processed, causing validateContractCall to be called twice.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "execute(bytes32,bytes)",
+          "params": {
+            "commandId": "C1",
+            "payload": "0xdeadbeef"
+          },
+          "relay_mode": "delayed",
+          "description": "First execution consumes C1 and releases tokens to attacker. Second execution (replay) passes because processed[C1] flag was never set due to missing state update in validateContractCall.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User initiates a cross‑chain transfer; PortalSrc emits CommandId C1 via AxelarGateway."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Legitimate relayer approves C1; processed[C1] set to false on destination."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker intercepts the relay message, re‑broadcasts the same commandId C1 with altered payload before the original is processed, causing validateContractCall to be called twice."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "First execution consumes C1 and releases tokens to attacker. Second execution (replay) passes because processed[C1] flag was never set due to missing state update in validateContractCall."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosscurve_nonce_replay_001",
+      "target_invariant": "uniqueness_nonce_monotonic",
+      "vulnerability_class": "nonce_replay",
       "confidence": 0.87,
       "actions": [
         {
@@ -190,13 +472,12 @@
           "contract": "PortalSrc",
           "function": "callContract",
           "params": {
-            "command": "deposit",
+            "destinationChain": "destination",
+            "destinationContract": "portal",
             "payload": "0xdeadbeef",
-            "targetChain": "dest",
-            "receiver": "0xAttackerDestAddress",
-            "amount": "1000e18"
+            "nonce": 5
           },
-          "description": "User initiates a cross‑chain deposit; PortalSrc emits a command that will be picked up by the AxelarGateway relay.",
+          "description": "Emit ContractCall with nonce=5 (current on‑chain nonce for attacker is 4).",
           "step": 1
         },
         {
@@ -204,34 +485,32 @@
           "contract": "AxelarGateway",
           "function": "approveContractCall",
           "params": {
-            "commandId": "0xcmd1234",
-            "sourceAddress": "PortalSrc"
+            "commandId": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "sourceAddress": "attacker"
           },
           "relay_mode": "tampered",
-          "description": "Malicious relayer intercepts the approval message and rewrites the `commandId` to a value that the attacker controls, while also inflating the `amount` field in the internal calldata to 10,000e18.",
+          "description": "Relayer submits approval for the same commandId but with a stale nonce (re‑use of commandId).",
           "step": 2
         },
         {
-          "chain": "dest",
-          "contract": "ReceiverAxelar",
-          "function": "execute",
+          "chain": "destination",
+          "contract": "portal",
+          "function": "validateContractCall",
           "params": {
-            "commandId": "0xcmd1234",
-            "payload": "0x... (decoded to mint 10,000e18 to attacker)",
-            "receiver": "0xAttackerDestAddress"
+            "commandId": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "sourceAddress": "attacker"
           },
-          "description": "ReceiverAxelar validates the command (edge e3) using the tampered commandId; validation passes because the gateway reports the altered amount as approved. Mint is executed with 10,000e18.",
+          "description": "Gateway validates the tampered command; due to missing monotonic check, the call succeeds.",
           "step": 3
         },
         {
-          "chain": "dest",
-          "contract": "OfficialToken",
-          "function": "balanceOf",
+          "chain": "destination",
+          "contract": "portal",
+          "function": "execute",
           "params": {
-            "account": "0xAttackerDestAddress"
+            "payload": "0xdeadbeef"
           },
-          "state_predicate": "destBalanceAfter[0xAttackerDestAddress] - destBalanceBefore[0xAttackerDestAddress] == 10000e18",
-          "description": "Attacker checks that the minted amount exceeds the original deposit, violating the invariant.",
+          "description": "Execute the payload, resulting in unauthorized token mint/transfer on destination chain.",
           "step": 4
         }
       ],
@@ -241,32 +520,459 @@
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "User initiates a cross‑chain deposit; PortalSrc emits a command that will be picked up by the AxelarGateway relay."
+          "description": "Emit ContractCall with nonce=5 (current on‑chain nonce for attacker is 4)."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Malicious relayer intercepts the approval message and rewrites the `commandId` to a value that the attacker controls, while also inflating the `amount` field in the internal calldata to 10,000e18."
+          "description": "Relayer submits approval for the same commandId but with a stale nonce (re‑use of commandId)."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "ReceiverAxelar validates the command (edge e3) using the tampered commandId; validation passes because the gateway reports the altered amount as approved. Mint is executed with 10,000e18."
+          "description": "Gateway validates the tampered command; due to missing monotonic check, the call succeeds."
         },
         {
           "waypoint_id": "w4",
           "after_step": 4,
           "predicate": "step_4_executed",
-          "description": "Attacker checks that the minted amount exceeds the original deposit, violating the invariant."
+          "description": "Execute the payload, resulting in unauthorized token mint/transfer on destination chain."
         }
       ]
     },
     {
-      "scenario_id": "crosscurve_asset_conservation_exploit_001",
-      "target_invariant": "asset_conservation_no_token_creation",
-      "vulnerability_class": "relay_tampering_mint_overflow",
+      "scenario_id": "crosscurve_e2_duplicate_approval_001",
+      "target_invariant": "uniqueness_relay_approval_once",
+      "vulnerability_class": "duplicate_relay_approval",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "callContract",
+          "params": {
+            "destinationChain": "destination",
+            "destinationContractAddress": "0xPortalV2",
+            "payload": "0xdeadbeef"
+          },
+          "description": "User initiates cross‑chain transfer, emitting ContractCall event with new commandId (cmdId).",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "relayer",
+          "function": "approveContractCall",
+          "params": {
+            "commandId": "0xCMDID_PLACEHOLDER",
+            "relayerAddress": "0xRELAYER_A"
+          },
+          "mode": "faithful",
+          "description": "Legitimate relayer A records first approval for cmdId (approvalCount[cmdId] becomes 1).",
+          "step": 2
+        },
+        {
+          "chain": "source",
+          "contract": "relayer",
+          "function": "approveContractCall",
+          "params": {
+            "commandId": "0xCMDID_PLACEHOLDER",
+            "relayerAddress": "0xRELAYER_B"
+          },
+          "mode": "tampered",
+          "description": "Malicious relayer B re‑submits approval for same cmdId after manipulating its internal nonce, causing approvalCount[cmdId] to increment to 2 despite invariant check.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "validateContractCall",
+          "params": {
+            "commandId": "0xCMDID_PLACEHOLDER",
+            "sourceAddress": "0xtrustedSource"
+          },
+          "description": "Gateway processes command; due to duplicated approvals the contract believes required quorum met and releases tokens twice.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User initiates cross‑chain transfer, emitting ContractCall event with new commandId (cmdId)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Legitimate relayer A records first approval for cmdId (approvalCount[cmdId] becomes 1)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Malicious relayer B re‑submits approval for same cmdId after manipulating its internal nonce, causing approvalCount[cmdId] to increment to 2 despite invariant check."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Gateway processes command; due to duplicated approvals the contract believes required quorum met and releases tokens twice."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosscurve_auth_trustedSource_bypass_001",
+      "target_invariant": "authorization_trusted_source_address",
+      "vulnerability_class": "authorization bypass via relayer replay and front‑running",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "callContract",
+          "params": {
+            "destinationChain": "destination",
+            "destinationContractAddress": "portal",
+            "payload": "0xdeadbeef"
+          },
+          "description": "User initiates a legitimate cross‑chain transfer, causing AxelarGateway to emit a ContractCall event (edge e1).",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "relayer",
+          "function": "approveContractCall",
+          "params": {
+            "commandId": "0x<captured_from_event>",
+            "sourceAddress": "0x1234567890abcdef1234567890abcdef12345678"
+          },
+          "relay_mode": "tampered",
+          "description": "Malicious relayer intercepts the pending approval and replaces msg.sender with an attacker‑controlled address while keeping the commandId unchanged, violating the invariant that only trustedSource may approve.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "execute",
+          "params": {
+            "commandId": "0x<captured_from_event>",
+            "payload": "0xdeadbeef"
+          },
+          "description": "PortalV2 validates the command (edge e3) using the forged approval; the check `approvedSource[commandId] == expectedSource` passes because the attacker injected a matching source address, allowing execution of arbitrary payload.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "OfficialToken",
+          "function": "transfer",
+          "params": {
+            "to": "0xattacker",
+            "amount": "1000000e18"
+          },
+          "description": "Payload instructs the token contract to transfer a large amount to the attacker, completing the theft.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User initiates a legitimate cross‑chain transfer, causing AxelarGateway to emit a ContractCall event (edge e1)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Malicious relayer intercepts the pending approval and replaces msg.sender with an attacker‑controlled address while keeping the commandId unchanged, violating the invariant that only trustedSource may approve."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "PortalV2 validates the command (edge e3) using the forged approval; the check `approvedSource[commandId] == expectedSource` passes because the attacker injected a matching source address, allowing execution of arbitrary payload."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Payload instructs the token contract to transfer a large amount to the attacker, completing the theft."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosscurve_refund_mismatch_001",
+      "target_invariant": "asset_conservation_refund_amount",
+      "vulnerability_class": "refund_amount_mismatch",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "lock(address,uint256)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": "1000e18"
+          },
+          "waypoint": "PortalSrc.totalLocked() >= 1000e18",
+          "step": 1,
+          "description": "Step 1"
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "callContract(string destinationChain,string destinationContract,bytes payload)",
+          "params": {
+            "destinationChain": "destination",
+            "destinationContract": "portal",
+            "payload": "0xabcdef",
+            "transferId": "0xdeadbeef"
+          },
+          "waypoint": "gateway.pendingCalls(0xdeadbeef) == true",
+          "step": 2,
+          "description": "Step 2"
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "approveContractCall(bytes32 commandId,address relayer)",
+          "params": {
+            "commandId": "0xdeadbeef",
+            "relayer": "maliciousRelayer"
+          },
+          "relay_mode": "tampered",
+          "waypoint": "gateway.approved[0xdeadbeef] == true && relayer == maliciousRelayer",
+          "step": 3,
+          "description": "Step 3"
+        },
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "refund(bytes32 transferId)",
+          "params": {
+            "transferId": "0xdeadbeef",
+            "refundAmount": "900e18"
+          },
+          "waypoint": "PortalSrc.refundAmount[0xdeadbeef] == 900e18 && PortalSrc.lockedAmount[0xdeadbeef] == 1000e18",
+          "step": 4,
+          "description": "Step 4"
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Step 4"
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosscurve_refund_replay_001",
+      "target_invariant": "uniqueness_refund_once",
+      "vulnerability_class": "replayable_refund",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "lock(address,uint256,bytes)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": "1000e18",
+            "payload": "0xdeadbeef"
+          },
+          "description": "User initiates cross‑chain transfer; PortalSrc emits ContractCall with a new transferId (tid1).",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "approveContractCall(bytes32,address)",
+          "params": {
+            "commandId": "tid1",
+            "sourceAddress": "PortalSrc"
+          },
+          "relay_mode": "faithful",
+          "description": "Relayer (honest) approves the command, marking transferId as pending refund‑eligible on failure.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "execute(bytes)",
+          "params": {
+            "data": "0xdeadbeef"
+          },
+          "description": "Destination contract reverts (e.g., out‑of‑gas), triggering refund path on source.",
+          "step": 3
+        },
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "refund(bytes32)",
+          "params": {
+            "transferId": "tid1"
+          },
+          "description": "PortalSrc processes refund, sets refunded[tid1] = true and returns tokens to sender.",
+          "step": 4
+        },
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "refund(bytes32)",
+          "params": {
+            "transferId": "tid1"
+          },
+          "relay_mode": "replay",
+          "description": "Attacker re‑broadcasts the same refund transaction (replay) before state finality, causing second execution while refunded[tid1] still false due to race condition.",
+          "step": 5
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User initiates cross‑chain transfer; PortalSrc emits ContractCall with a new transferId (tid1)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relayer (honest) approves the command, marking transferId as pending refund‑eligible on failure."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Destination contract reverts (e.g., out‑of‑gas), triggering refund path on source."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "PortalSrc processes refund, sets refunded[tid1] = true and returns tokens to sender."
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Attacker re‑broadcasts the same refund transaction (replay) before state finality, causing second execution while refunded[tid1] still false due to race condition."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosscurve_auth_source_mismatch_001",
+      "target_invariant": "authorization_command_source_match",
+      "vulnerability_class": "authorization",
+      "confidence": 0.87,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "lockTokens(uint256 amount, bytes calldata payload)",
+          "params": {
+            "amount": "1000e18",
+            "payload": "0xabcdef",
+            "msgSender": "0xAttacker"
+          },
+          "description": "Attacker calls lockTokens, creating transferId T and recording lockerAddress[T] = 0xAttacker.",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "callContract(string destinationChain, string destinationContract, bytes calldata payload)",
+          "params": {
+            "destinationChain": "destination",
+            "destinationContract": "portal",
+            "payload": "0x<maliciousCommand>"
+          },
+          "relay_mode": "tampered",
+          "description": "Compromised relayer intercepts the emitted ContractCall event and rewrites the command payload, setting command.source = 0xVictim (an address that holds no locked tokens).",
+          "step": 2
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "approveContractCall(bytes32 commandId, address relayer)",
+          "params": {
+            "commandId": "0x<id_of_T>",
+            "relayer": "0xCompromisedRelayer"
+          },
+          "relay_mode": "faithful",
+          "description": "Relayer approves the tampered command; gateway records approval but does not re‑verify source address against lockerAddress mapping.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "execute(bytes calldata command)",
+          "params": {
+            "command": "0x<maliciousCommand>"
+          },
+          "description": "Portal validates commandId and approval, then releases tokens to command.source (0xVictim) despite lockerAddress[T] being 0xAttacker, violating the invariant.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker calls lockTokens, creating transferId T and recording lockerAddress[T] = 0xAttacker."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Compromised relayer intercepts the emitted ContractCall event and rewrites the command payload, setting command.source = 0xVictim (an address that holds no locked tokens)."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Relayer approves the tampered command; gateway records approval but does not re‑verify source address against lockerAddress mapping."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Portal validates commandId and approval, then releases tokens to command.source (0xVictim) despite lockerAddress[T] being 0xAttacker, violating the invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosscurve_auth_mint_proof_spoof_001",
+      "target_invariant": "authorization_mint_requires_valid_proof",
+      "vulnerability_class": "authorization_bypass",
       "confidence": 0.87,
       "actions": [
         {
@@ -275,11 +981,10 @@
           "function": "lockTokens",
           "params": {
             "token": "OfficialToken",
-            "amount": 1000,
-            "destChain": "destination",
-            "destRecipient": "0xAttackerAddr"
+            "amount": "1000000e18",
+            "recipient": "0xAttacker"
           },
-          "description": "User locks 1,000 OfficialToken on source chain, emitting a command event (edge e1).",
+          "description": "Attacker locks a large amount of OfficialToken, triggering a ContractCall event (edge e1).",
           "step": 1
         },
         {
@@ -287,789 +992,25 @@
           "contract": "AxelarGateway",
           "function": "approveContractCall",
           "params": {
-            "commandId": "0xdeadbeef1234",
-            "sourceAddress": "PortalSrc"
+            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+            "relayer": "0xMaliciousRelayer"
           },
           "relay_mode": "tampered",
-          "description": "Malicious relayer intercepts the approval step (edge e2) and rewrites the commandId to a value that the attacker controls.",
+          "description": "Malicious relayer intercepts the approval flow and injects a fake commandId while marking it approved (edge e2).",
           "step": 2
         },
         {
           "chain": "destination",
-          "contract": "PortalV2",
-          "function": "executeMint",
-          "params": {
-            "commandId": "0xdeadbeef1234",
-            "recipient": "0xAttackerAddr",
-            "amount": 2000
-          },
-          "description": "Gateway validates the tampered command (edge e3) and calls executeMint, minting 2,000 tokens instead of 1,000.",
-          "step": 3
-        },
-        {
-          "chain": "destination",
-          "contract": "PortalV2",
-          "function": "totalMinted",
-          "params": {},
-          "state_predicate": "totalMinted == 2000",
-          "step": 4,
-          "description": "Step 4"
-        },
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "totalLocked",
-          "params": {},
-          "state_predicate": "totalLocked == 1000",
-          "step": 5,
-          "description": "Step 5"
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User locks 1,000 OfficialToken on source chain, emitting a command event (edge e1)."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Malicious relayer intercepts the approval step (edge e2) and rewrites the commandId to a value that the attacker controls."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Gateway validates the tampered command (edge e3) and calls executeMint, minting 2,000 tokens instead of 1,000."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Step 4"
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "step_5_executed",
-          "description": "Step 5"
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_burn_without_refund_001",
-      "target_invariant": "asset_conservation_no_token_burn_unless_refund",
-      "vulnerability_class": "missing_refund_verification",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "initiateBridgeTransfer",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 1000000,
-            "destinationChain": "dest",
-            "destinationAddress": "0xAttackerDest"
-          },
-          "description": "User locks tokens in PortalSrc; PortalSrc emits a command event (edge e1).",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeef",
-            "sourceAddress": "PortalSrc"
-          },
-          "relay_mode": "tampered",
-          "description": "Malicious relayer intercepts the approval transaction and modifies the internal mapping so that the gateway believes the command is approved but does NOT record the corresponding refund nonce.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "execute",
-          "params": {
-            "commandId": "0xdeadbeef",
-            "payload": "0x... (encoded mint on dest)"
-          },
-          "description": "Gateway validates the command (edge e3) – the tampered state passes validation because the approval flag is true, but the refund record is missing.",
-          "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "OfficialToken",
-          "function": "burn",
-          "params": {
-            "from": "PortalSrc",
-            "amount": 1000000
-          },
-          "description": "PortalSrc calls burn on the source token after successful gateway execution, reducing totalSupply without a matching refund entry.",
-          "step": 4
-        },
-        {
-          "chain": "dest",
-          "contract": "ReceiverAxelar",
+          "contract": "portal",
           "function": "mint",
           "params": {
-            "to": "0xAttackerDest",
-            "amount": 1000000
-          },
-          "description": "Attacker receives minted tokens on destination chain, while source tokens are burned without a recorded refund, violating burnedAmount == refundedAmount.",
-          "step": 5
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User locks tokens in PortalSrc; PortalSrc emits a command event (edge e1)."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Malicious relayer intercepts the approval transaction and modifies the internal mapping so that the gateway believes the command is approved but does NOT record the corresponding refund nonce."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Gateway validates the command (edge e3) – the tampered state passes validation because the approval flag is true, but the refund record is missing."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "PortalSrc calls burn on the source token after successful gateway execution, reducing totalSupply without a matching refund entry."
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "step_5_executed",
-          "description": "Attacker receives minted tokens on destination chain, while source tokens are burned without a recorded refund, violating burnedAmount == refundedAmount."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_negative_lock_001",
-      "target_invariant": "asset_conservation_locked_amount_non_negative",
-      "vulnerability_class": "state_underflow_via_relay_manipulation",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "initiateTransfer",
-          "params": {
-            "token": "OfficialToken",
-            "amount": 1000,
-            "destChain": "dest",
-            "destReceiver": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "transferId": "0xabc123"
-          },
-          "description": "User locks 1000 tokens; PortalSrc records lockAmount[0xabc123] = 1000.",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xabc123",
-            "sourceContract": "PortalSrc"
-          },
-          "relay_mode": "tampered",
-          "description": "Malicious relayer intercepts the approval message and flips the signed amount field to a very large uint256 value that overflows when subtracted later.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "finalizeTransfer",
-          "params": {
-            "commandId": "0xabc123",
-            "amount": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-          },
-          "description": "PortalSrc subtracts the tampered amount from lockAmount, causing underflow: lockAmount[0xabc123] becomes 0 - MAX_UINT256 => wraps to a huge positive number, but internal accounting treats it as signed int256 resulting in negative value, violating the invariant.",
-          "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "releaseTokens",
-          "params": {
-            "receiver": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "amount": 1000
-          },
-          "description": "Attacker withdraws the originally locked tokens while lockAmount state is corrupted, enabling double‑spend.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User locks 1000 tokens; PortalSrc records lockAmount[0xabc123] = 1000."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Malicious relayer intercepts the approval message and flips the signed amount field to a very large uint256 value that overflows when subtracted later."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "PortalSrc subtracts the tampered amount from lockAmount, causing underflow: lockAmount[0xabc123] becomes 0 - MAX_UINT256 => wraps to a huge positive number, but internal accounting treats it as signed int256 resulting in negative value, violating the invariant."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Attacker withdraws the originally locked tokens while lockAmount state is corrupted, enabling double‑spend."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_auth_bypass_001",
-      "target_invariant": "authorization_only_trusted_source_can_approve",
-      "vulnerability_class": "authorization bypass via relayer impersonation",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "callContract",
-          "params": {
-            "destinationChain": "dest",
-            "destinationContract": "PortalV2",
-            "payload": "0xdeadbeef"
-          },
-          "description": "User emits a cross‑chain command that will be stored in the gateway with a new commandId.",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "relayer",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0x<commandId_from_step1>",
-            "sourceAddress": "0x1111111111111111111111111111111111111111"
-          },
-          "relay_mode": "tampered",
-          "description": "Malicious relayer submits approveContractCall with a forged sourceAddress that is not the registered trustedSource. The gateway lacks a strict check that msg.sender == trustedSource, only compares stored sourceAddress.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "validateC",
-          "params": {
-            "commandId": "0x<commandId_from_step1>"
-          },
-          "description": "Gateway validates the command, sees approved flag true and accepts the forged source, allowing execution.",
-          "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "PortalV2",
-          "function": "execute",
-          "params": {
-            "payload": "0xdeadbeef"
-          },
-          "description": "PortalV2 executes the payload, which includes a call to transfer tokens from OfficialToken to attacker.",
-          "step": 4
-        },
-        {
-          "chain": "source",
-          "contract": "OfficialToken",
-          "function": "transfer",
-          "params": {
-            "to": "0xAttackerAddress",
-            "amount": "1000000e18"
-          },
-          "description": "Attacker drains tokens.",
-          "step": 5
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User emits a cross‑chain command that will be stored in the gateway with a new commandId."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Malicious relayer submits approveContractCall with a forged sourceAddress that is not the registered trustedSource. The gateway lacks a strict check that msg.sender == trustedSource, only compares stored sourceAddress."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Gateway validates the command, sees approved flag true and accepts the forged source, allowing execution."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "PortalV2 executes the payload, which includes a call to transfer tokens from OfficialToken to attacker."
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "step_5_executed",
-          "description": "Attacker drains tokens."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_nonce_replay_001",
-      "target_invariant": "authorization_approve_requires_valid_nonce",
-      "vulnerability_class": "nonce_replay",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "callContract",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "destinationChain": "dest",
-            "payload": "0xabcdef"
-          },
-          "description": "User emits a legitimate cross‑chain command; gateway records usedNonce[0xdeadbeef001][1] = true.",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "relayer",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "nonce": 1
-          },
-          "relay_mode": "faithful",
-          "description": "Honest relayer approves the command with nonce 1 – marks usedNonce[0xdeadbeef001][1] as true.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "relayer",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "nonce": 1
-          },
-          "relay_mode": "tampered",
-          "description": "Attacker, controlling a malicious relayer, re‑submits approveContractCall with the same nonce before the gateway clears the mapping, exploiting missing nonce reset.",
-          "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "execute",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "payload": "0xabcdef"
-          },
-          "description": "Gateway processes the second approval, bypassing the !usedNonce check due to race condition, resulting in double execution of the payload on destination.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User emits a legitimate cross‑chain command; gateway records usedNonce[0xdeadbeef001][1] = true."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Honest relayer approves the command with nonce 1 – marks usedNonce[0xdeadbeef001][1] as true."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Attacker, controlling a malicious relayer, re‑submits approveContractCall with the same nonce before the gateway clears the mapping, exploiting missing nonce reset."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Gateway processes the second approval, bypassing the !usedNonce check due to race condition, resulting in double execution of the payload on destination."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_sig_bypass_replay_001",
-      "target_invariant": "authorization_gateway_validates_signature",
-      "vulnerability_class": "authorization bypass via relayer approval overwrite",
-      "confidence": 0.93,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "callContract",
-          "params": {
-            "command": "transfer",
-            "destChain": "dest",
-            "payload": "0xdeadbeef... (encoded token transfer to attacker)"
-          },
-          "description": "Caller initiates a cross‑chain transfer; gateway emits a command and records a new commandId (cmdId).",
-          "state_predicate": "gateway.commandEmitted(cmdId) == true",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "cmdId",
-            "relayer": "0xAttackerRelayer"
-          },
-          "mode": "tampered",
-          "description": "Attacker front‑runs the legitimate relayer and calls approveContractCall with their own address, overwriting the approved relayer for cmdId.",
-          "state_predicate": "gateway.approvedRelayer[cmdId] == 0xAttackerRelayer",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "execute",
-          "params": {
-            "commandId": "cmdId",
-            "payload": "0xdeadbeef... (same payload as step 1)",
-            "signature": "0xAttackerSignature"
-          },
-          "mode": "faithful",
-          "description": "Attacker (acting as relayer) forwards the command to the destination chain, providing a signature that recovers to the attacker address.",
-          "state_predicate": "recoverSigner(hash(commandId, payload), 0xAttackerSignature) == 0xAttackerRelayer",
-          "step": 3
-        },
-        {
-          "chain": "dest",
-          "contract": "ReceiverAxelar",
-          "function": "receiveTokens",
-          "params": {
-            "token": "OfficialToken",
-            "amount": "1000e18",
-            "to": "0xAttacker"
-          },
-          "description": "Destination router releases the locked tokens to the attacker, completing the unauthorized transfer.",
-          "state_predicate": "OfficialToken.balanceOf(0xAttacker) >= 1000e18",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "Caller initiates a cross‑chain transfer; gateway emits a command and records a new commandId (cmdId)."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Attacker front‑runs the legitimate relayer and calls approveContractCall with their own address, overwriting the approved relayer for cmdId."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Attacker (acting as relayer) forwards the command to the destination chain, providing a signature that recovers to the attacker address."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Destination router releases the locked tokens to the attacker, completing the unauthorized transfer."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_auth_cmdid_mismatch_001",
-      "target_invariant": "authorization_command_id_must_match_approved",
-      "vulnerability_class": "Authorization Bypass / CommandId Replay",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "callContract",
-          "params": {
-            "destinationChain": "dest",
-            "contractAddress": "0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef",
-            "payload": "0xabcdef"
-          },
-          "description": "e1 – Attacker calls gateway.callContract, causing it to emit commandId = 0xAAA...",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xAAA...",
-            "relayer": "0xBadRelayer"
-          },
-          "relay_mode": "tampered",
-          "description": "e2 – Malicious relayer (controlled by attacker) submits approveContractCall with a forged commandId (0xBBB) while still forwarding the original 0xAAA to the gateway, causing the gateway to store approvedCommandId = 0xBBB.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "validateC",
-          "params": {
-            "commandId": "0xAAA...",
-            "source": "0xAttacker",
-            "expectedSource": "0xAttacker"
-          },
-          "description": "e3 – Gateway validates the original commandId 0xAAA against its internal mapping, which still contains the original emitted id, thus passes validation despite approvedCommandId being 0xBBB. The mismatch is never checked, allowing execution of the payload on the destination chain with attacker‑controlled data.",
-          "step": 3
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "e1 – Attacker calls gateway.callContract, causing it to emit commandId = 0xAAA..."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "e2 – Malicious relayer (controlled by attacker) submits approveContractCall with a forged commandId (0xBBB) while still forwarding the original 0xAAA to the gateway, causing the gateway to store approvedCommandId = 0xBBB."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "e3 – Gateway validates the original commandId 0xAAA against its internal mapping, which still contains the original emitted id, thus passes validation despite approvedCommandId being 0xBBB. The mismatch is never checked, allowing execution of the payload on the destination chain with attacker‑controlled data."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_auth_source_chain_mismatch_001",
-      "target_invariant": "authorization_source_chain_id_consistency",
-      "vulnerability_class": "authorization",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "callContract",
-          "params": {
-            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "sourceChainId": 9999,
-            "payload": "0xabcdef"
-          },
-          "description": "Attacker (caller) emits a command with a forged sourceChainId that does not match the actual source chain (block.chainid).",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "relayer",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "relayer": "0xRelayerAddress"
-          },
-          "relay_mode": "faithful",
-          "description": "Honest relayer observes the command and, lacking a source‑chain check, approves it.",
-          "step": 2
-        },
-        {
-          "chain": "destination",
-          "contract": "PortalV2",
-          "function": "execute",
-          "params": {
-            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-            "payload": "0xabcdef"
-          },
-          "description": "PortalV2 on the destination chain executes the payload, releasing tokens to the attacker.",
-          "step": 3
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "Attacker (caller) emits a command with a forged sourceChainId that does not match the actual source chain (block.chainid)."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Honest relayer observes the command and, lacking a source‑chain check, approves it."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "PortalV2 on the destination chain executes the payload, releasing tokens to the attacker."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_auth_dest_chain_001",
-      "target_invariant": "authorization_destination_chain_id_valid",
-      "vulnerability_class": "registry manipulation / unauthorized destChainId injection",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "callContract",
-          "params": {
-            "destinationChain": "0xdeadbeef",
-            "payload": "0x... (encoded executeTransfer)",
-            "commandId": "0x1111111111111111111111111111111111111111111111111111111111111111"
-          },
-          "description": "Caller emits a bridge command with a fabricated destChainId that is not in supportedChains but will later be accepted due to stale registry cache.",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0x1111111111111111111111111111111111111111111111111111111111111111",
-            "relayer": "0xRELAYER_ADDRESS"
-          },
-          "relay_mode": "delayed",
-          "description": "Malicious relayer delays the approval transaction, allowing attacker to front‑run a registry update that temporarily adds the fake chainId.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "updateSupportedChains",
-          "params": {
-            "chainId": "0xdeadbeef",
-            "supported": true
-          },
-          "relay_mode": "faithful",
-          "description": "Attacker triggers an authorized governance function (e.g., via compromised multisig) to insert the fake chainId into supportedChains just before the gateway validates the command.",
-          "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "validateC",
-          "params": {
-            "commandId": "0x1111111111111111111111111111111111111111111111111111111111111111"
-          },
-          "description": "Gateway validates the command; predicate supportedChains[destChainId] now returns true because of the injected entry.",
-          "step": 4
-        },
-        {
-          "chain": "destination",
-          "contract": "PortalV2",
-          "function": "executeTransfer",
-          "params": {
-            "token": "OfficialToken",
+            "to": "0xAttacker",
             "amount": "1000000e18",
-            "recipient": "0xATTACKER_WALLET"
+            "proof": "0x0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de0badc0de",
+            "commandId": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
           },
-          "description": "Bridge completes the transfer on the fake destination chain (controlled by attacker), allowing theft of locked tokens.",
-          "step": 5
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "Caller emits a bridge command with a fabricated destChainId that is not in supportedChains but will later be accepted due to stale registry cache."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Malicious relayer delays the approval transaction, allowing attacker to front‑run a registry update that temporarily adds the fake chainId."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Attacker triggers an authorized governance function (e.g., via compromised multisig) to insert the fake chainId into supportedChains just before the gateway validates the command."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Gateway validates the command; predicate supportedChains[destChainId] now returns true because of the injected entry."
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "step_5_executed",
-          "description": "Bridge completes the transfer on the fake destination chain (controlled by attacker), allowing theft of locked tokens."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve-uniqueness-replay-001",
-      "target_invariant": "uniqueness_command_processed_once",
-      "vulnerability_class": "replay_attack_missing_nonce",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "validateC",
-          "params": {
-            "commandId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001"
-          },
-          "description": "Initial legitimate transfer – caller emits commandId via e1, relayer approves via e2, gateway validates and marks processed[commandId]=true.",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "validateC",
-          "params": {
-            "commandId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001"
-          },
-          "description": "Replay step – attacker re‑calls validateC with the same commandId before the processed flag is cleared, exploiting that gateway only checks `approvedSource[commandId]` but not `processed[commandId]` due to a missing `&& !processed[commandId]` in the branch used by the relay.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "executeCommand",
-          "params": {
-            "commandId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001",
-            "payload": "0x..."
-          },
-          "description": "Gateway executes the command a second time, causing double mint/burn of OfficialToken on the destination chain.",
+          "relay_mode": "faithful",
+          "description": "Destination portal processes the tampered command, using the injected proof which fails verification but passes because the contract only checks approved[commandId] flag.",
           "step": 3
         }
       ],
@@ -1079,50 +1020,134 @@
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "Initial legitimate transfer – caller emits commandId via e1, relayer approves via e2, gateway validates and marks processed[commandId]=true."
+          "description": "Attacker locks a large amount of OfficialToken, triggering a ContractCall event (edge e1)."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Replay step – attacker re‑calls validateC with the same commandId before the processed flag is cleared, exploiting that gateway only checks `approvedSource[commandId]` but not `processed[commandId]` due to a missing `&& !processed[commandId]` in the branch used by the relay."
+          "description": "Malicious relayer intercepts the approval flow and injects a fake commandId while marking it approved (edge e2)."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Gateway executes the command a second time, causing double mint/burn of OfficialToken on the destination chain."
+          "predicate": "destRouter.totalMinted() >= 1000000000000000000",
+          "description": "Destination portal processes the tampered command, using the injected proof which fails verification but passes because the contract only checks approved[commandId] flag."
         }
       ]
     },
     {
-      "scenario_id": "crosscurve_lock_event_replay_001",
-      "target_invariant": "uniqueness_lock_event_emitted_once",
-      "vulnerability_class": "event-replay/duplicate-lock",
+      "scenario_id": "crosscurve_double_mint_01",
+      "target_invariant": "asset_conservation_no_double_mint",
+      "vulnerability_class": "double_mint_via_replay_and_relay_tampering",
       "confidence": 0.87,
       "actions": [
         {
           "chain": "source",
           "contract": "PortalSrc",
-          "function": "lock(address,uint256,bytes32)",
+          "function": "lock(address token, uint256 amount, bytes calldata payload)",
           "params": {
             "token": "OfficialToken",
             "amount": "1000e18",
-            "transferId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001"
+            "payload": "0xabcdef",
+            "transferId": "0xdeadbeef01"
           },
-          "description": "User initiates a lock; PortalSrc emits Lock event and sets lockEmitted[transferId] = true.",
+          "description": "User locks 1000 OfficialToken, emitting ContractCall event (edge e1) with transferId 0xdeadbeef01.",
           "step": 1
         },
         {
           "chain": "source",
           "contract": "AxelarGateway",
-          "function": "approveContractCall(bytes32,address)",
+          "function": "approveContractCall(bytes32 commandId, address sourceContract)",
           "params": {
-            "commandId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001",
+            "commandId": "0xdeadbeef01",
             "sourceContract": "PortalSrc"
           },
           "relay_mode": "faithful",
-          "description": "Relayer approves the command; gateway records approval but does not clear lockEmitted.",
+          "description": "Relayer approves the command, satisfying edge e2.",
+          "step": 2
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "execute(bytes calldata payload)",
+          "params": {
+            "payload": "0xabcdef",
+            "transferId": "0xdeadbeef01"
+          },
+          "relay_mode": "tampered",
+          "description": "Malicious relay replays the same payload but modifies internal amount field to 2000e18 before delivering to destination contract.",
+          "step": 3
+        },
+        {
+          "chain": "destination",
+          "contract": "portal",
+          "function": "mint(address to, uint256 amount, bytes32 transferId)",
+          "params": {
+            "to": "attacker_address",
+            "amount": "2000e18",
+            "transferId": "0xdeadbeef01"
+          },
+          "description": "Destination contract mints 2000 tokens for attacker, violating mintedAmount > lockedAmount.",
+          "step": 4
+        }
+      ],
+      "retrieved_exploits": [],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "User locks 1000 OfficialToken, emitting ContractCall event (edge e1) with transferId 0xdeadbeef01."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Relayer approves the command, satisfying edge e2."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Malicious relay replays the same payload but modifies internal amount field to 2000e18 before delivering to destination contract."
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Destination contract mints 2000 tokens for attacker, violating mintedAmount > lockedAmount."
+        }
+      ]
+    },
+    {
+      "scenario_id": "scn-001-duplicate-cmdid",
+      "target_invariant": "uniqueness_commandId_uniqueness",
+      "vulnerability_class": "duplicate_command_id",
+      "confidence": 0.92,
+      "actions": [
+        {
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "lock(address,uint256,bytes)",
+          "params": {
+            "token": "OfficialToken",
+            "amount": "1000e18",
+            "payload": "0xdeadbeef"
+          },
+          "description": "User A initiates a cross‑chain transfer; PortalSrc emits ContractCall with commandId = hash(sender,nonce,chainId).",
+          "step": 1
+        },
+        {
+          "chain": "source",
+          "contract": "AxelarGateway",
+          "function": "callContract(string,string,bytes)",
+          "params": {
+            "destinationChain": "destination",
+            "destinationContract": "portal",
+            "payload": "0xdeadbeef"
+          },
+          "description": "Gateway generates commandId = keccak256(prevNonce, sender, destinationChain, destinationContract, payload). Attacker observes the emitted commandId.",
           "step": 2
         },
         {
@@ -1131,120 +1156,33 @@
           "function": "callContract(string,string,bytes)",
           "params": {
             "destinationChain": "destination",
-            "destinationContract": "PortalV2",
-            "payload": "0x...encoded unlock with same transferId..."
+            "destinationContract": "portal",
+            "payload": "0xdeadbeef"
           },
-          "relay_mode": "delayed",
-          "description": "Relayer forwards the command to destination after a short delay, giving attacker time to act.",
+          "mode": "replay",
+          "description": "Attacker replays the exact same callContract transaction before the original nonce is incremented (e.g., via front‑running with higher gas price). This produces an identical commandId because the nonce used is still the same.",
           "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "lock(address,uint256,bytes32)",
-          "params": {
-            "token": "OfficialToken",
-            "amount": "1000e18",
-            "transferId": "0xdeadbeefcafebabe000000000000000000000000000000000000000000000001"
-          },
-          "relay_mode": "tampered",
-          "description": "Attacker re‑enters the lock function via a re‑entrancy vector (e.g., malicious ERC20 callback) before lockEmitted is cleared, causing a second Lock event with the same transferId.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates a lock; PortalSrc emits Lock event and sets lockEmitted[transferId] = true."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Relayer approves the command; gateway records approval but does not clear lockEmitted."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Relayer forwards the command to destination after a short delay, giving attacker time to act."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Attacker re‑enters the lock function via a re‑entrancy vector (e.g., malicious ERC20 callback) before lockEmitted is cleared, causing a second Lock event with the same transferId."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_mint_event_replay_001",
-      "target_invariant": "uniqueness_mint_event_emitted_once",
-      "vulnerability_class": "replay_mint_event",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "callContract",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "targetChain": "destination",
-            "payload": "0xabcdef",
-            "tokenAmount": "1000e18"
-          },
-          "description": "User initiates a cross‑chain transfer; PortalSrc emits commandId 0xdeadbeef001.",
-          "step": 1
         },
         {
           "chain": "source",
           "contract": "AxelarGateway",
-          "function": "approveContractCall",
+          "function": "approveContractCall(bytes32,address)",
           "params": {
-            "commandId": "0xdeadbeef001",
-            "relayer": "0xmaliciousRelayer"
+            "commandId": "<replayed_commandId>",
+            "relayer": "maliciousRelayer"
           },
-          "relay_mode": "faithful",
-          "description": "Honest relayer approves the command; gateway records approvedSource[commandId] = true.",
-          "step": 2
-        },
-        {
-          "chain": "destination",
-          "contract": "ReceiverAxelar",
-          "function": "execute",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "payload": "0xabcdef"
-          },
-          "relay_mode": "tampered",
-          "description": "Malicious relayer re‑broadcasts the same commandId with a tampered proof, causing ReceiverAxelar to skip the source‑validation check and mint again.",
-          "step": 3
-        },
-        {
-          "chain": "destination",
-          "contract": "ReceiverAxelar",
-          "function": "mint",
-          "params": {
-            "to": "0xattacker",
-            "amount": "1000e18",
-            "commandId": "0xdeadbeef001"
-          },
-          "description": "Mint function emits Mint event; mintEmitted[commandId] is set to true the first time, but due to missing guard it can be called again.",
+          "mode": "tampered",
+          "description": "Malicious relayer approves the duplicated commandId, bypassing any uniqueness check that only looks at commandIdExists mapping after first approval.",
           "step": 4
         },
         {
           "chain": "destination",
-          "contract": "ReceiverAxelar",
-          "function": "mint",
+          "contract": "portal",
+          "function": "execute(bytes)",
           "params": {
-            "to": "0xattacker",
-            "amount": "1000e18",
-            "commandId": "0xdeadbeef001"
+            "payload": "0xdeadbeef"
           },
-          "description": "Second mint call re‑emits Mint event for the same commandId, violating the uniqueness invariant.",
+          "description": "Destination portal validates commandId (already marked as approved) and releases tokens twice, resulting in double‑mint/transfer.",
           "step": 5
         }
       ],
@@ -1254,404 +1192,31 @@
           "waypoint_id": "w1",
           "after_step": 1,
           "predicate": "step_1_executed",
-          "description": "User initiates a cross‑chain transfer; PortalSrc emits commandId 0xdeadbeef001."
+          "description": "User A initiates a cross‑chain transfer; PortalSrc emits ContractCall with commandId = hash(sender,nonce,chainId)."
         },
         {
           "waypoint_id": "w2",
           "after_step": 2,
           "predicate": "step_2_executed",
-          "description": "Honest relayer approves the command; gateway records approvedSource[commandId] = true."
+          "description": "Gateway generates commandId = keccak256(prevNonce, sender, destinationChain, destinationContract, payload). Attacker observes the emitted commandId."
         },
         {
           "waypoint_id": "w3",
           "after_step": 3,
           "predicate": "step_3_executed",
-          "description": "Malicious relayer re‑broadcasts the same commandId with a tampered proof, causing ReceiverAxelar to skip the source‑validation check and mint again."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "destRouter.totalMinted() >= 1000000000000000000",
-          "description": "Mint function emits Mint event; mintEmitted[commandId] is set to true the first time, but due to missing guard it can be called again."
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "destRouter.totalMinted() >= 1000000000000000000",
-          "description": "Second mint call re‑emits Mint event for the same commandId, violating the uniqueness invariant."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_nonce_reuse_001",
-      "target_invariant": "uniqueness_nonce_never_reused_per_sender",
-      "vulnerability_class": "nonce_reuse_via_relay_replay",
-      "confidence": 0.92,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "callContract",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "destinationChain": "dest",
-            "payload": "0xabcdef"
-          },
-          "description": "User emits a command with nonce N (encoded inside commandId).",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "sourceAddress": "0xUserAddress"
-          },
-          "relay_mode": "faithful",
-          "description": "Relayer approves the command; nonce N is marked used.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "sourceAddress": "0xUserAddress"
-          },
-          "relay_mode": "tampered",
-          "description": "Attacker replays the same approve call after corrupting the relay’s internal state to reset nonceUsed mapping.",
-          "step": 3
-        },
-        {
-          "chain": "dest",
-          "contract": "ReceiverAxelar",
-          "function": "execute",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "payload": "0xabcdef"
-          },
-          "description": "Destination router processes the duplicated command, allowing double mint/burn of tokens.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User emits a command with nonce N (encoded inside commandId)."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Relayer approves the command; nonce N is marked used."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Attacker replays the same approve call after corrupting the relay’s internal state to reset nonceUsed mapping."
+          "description": "Attacker replays the exact same callContract transaction before the original nonce is incremented (e.g., via front‑running with higher gas price). This produces an identical commandId because the nonce used is still the same."
         },
         {
           "waypoint_id": "w4",
           "after_step": 4,
           "predicate": "step_4_executed",
-          "description": "Destination router processes the duplicated command, allowing double mint/burn of tokens."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_refund_replay_001",
-      "target_invariant": "uniqueness_refund_processed_at_most_once",
-      "vulnerability_class": "replayable refund execution via unprotected gateway callback",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "callContract",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "targetContract": "PortalSrc",
-            "payload": "0x4e487b71",
-            "description": "User initiates a cross‑chain transfer; gateway emits CommandSent event with commandId 0xdeadbeef001."
-          },
-          "step": 1,
-          "description": "Step 1"
-        },
-        {
-          "chain": "source",
-          "contract": "relayer",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "sourceAddress": "0xAttackerControlled",
-            "mode": "faithful",
-            "description": "Honest relayer approves the command, allowing gateway to forward to destination."
-          },
-          "step": 2,
-          "description": "Step 2"
-        },
-        {
-          "chain": "destination",
-          "contract": "PortalV2",
-          "function": "execute",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "payload": "0x4e487b71",
-            "description": "PortalV2 processes the transfer but encounters an out‑of‑gas error, triggering a refund path inside gateway."
-          },
-          "step": 3,
-          "description": "Step 3"
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "refund",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "recipient": "0xAttackerControlled",
-            "amount": "1000e18",
-            "description": "Gateway marks refundProcessed[0xdeadbeef001] = false (bug) and emits RefundInitiated."
-          },
-          "relay_mode": "delayed",
-          "step": 4,
-          "description": "Step 4"
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "refund",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "recipient": "0xAttackerControlled",
-            "amount": "1000e18",
-            "description": "Attacker re‑broadcasts the same RefundInitiated event via a malicious relayer (mode: replay). Gateway again processes refund because refundProcessed flag was never set."
-          },
-          "relay_mode": "replay",
-          "step": 5,
-          "description": "Step 5"
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "Step 1"
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Step 2"
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Step 3"
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "destRouter.totalMinted() > 0 && sourceRouter.refunded > 0",
-          "description": "Step 4"
-        },
-        {
-          "waypoint_id": "w5",
-          "after_step": 5,
-          "predicate": "destRouter.totalMinted() > 0 && sourceRouter.refunded > 0",
-          "description": "Step 5"
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_sig_replay_001",
-      "target_invariant": "uniqueness_approval_signature_unique_per_command",
-      "vulnerability_class": "signature replay / duplicate approval",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "callContract",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "target": "OfficialToken",
-            "payload": "0xa9059cbb0000000000000000000000000xAttacker...000000000000000000000000000000000000000000000000000000000000f4240"
-          },
-          "description": "User initiates a token transfer command; PortalSrc emits commandId 0xdeadbeef001.",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "signature": "0xSIG_A"
-          },
-          "relay_mode": "faithful",
-          "description": "Honest relayer signs the command with signature SIG_A; gateway records signatureSeen[0xdeadbeef001][hash(SIG_A)] = true.",
-          "step": 2
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xdeadbeef001",
-            "signature": "0xSIG_A"
-          },
-          "relay_mode": "tampered",
-          "description": "Attacker re‑submits the same signature SIG_A for the same commandId before the contract clears the mapping, exploiting missing nonce reset.",
-          "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "gateway",
-          "function": "executeCommand",
-          "params": {
-            "commandId": "0xdeadbeef001"
-          },
-          "description": "Gateway validates commandId, sees signatureSeen true for duplicate, but due to bug it only checks existence, not uniqueness, and proceeds to transfer tokens to attacker address.",
-          "step": 4
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates a token transfer command; PortalSrc emits commandId 0xdeadbeef001."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Honest relayer signs the command with signature SIG_A; gateway records signatureSeen[0xdeadbeef001][hash(SIG_A)] = true."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "Attacker re‑submits the same signature SIG_A for the same commandId before the contract clears the mapping, exploiting missing nonce reset."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Gateway validates commandId, sees signatureSeen true for duplicate, but due to bug it only checks existence, not uniqueness, and proceeds to transfer tokens to attacker address."
-        }
-      ]
-    },
-    {
-      "scenario_id": "crosscurve_double_release_001",
-      "target_invariant": "uniqueness_no_double_release",
-      "vulnerability_class": "replayable relay approval",
-      "confidence": 0.87,
-      "actions": [
-        {
-          "chain": "source",
-          "contract": "PortalSrc",
-          "function": "lockAndSend",
-          "params": {
-            "token": "OfficialToken",
-            "amount": "1000e18",
-            "destChain": "destination",
-            "destReceiver": "0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef",
-            "transferId": "0xabc123"
-          },
-          "description": "User initiates a cross‑chain transfer; PortalSrc locks tokens and emits a command to AxelarGateway containing transferId 0xabc123.",
-          "step": 1
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xabc123",
-            "sourceAddress": "PortalSrc"
-          },
-          "relay_mode": "faithful",
-          "description": "Legitimate relayer calls approveContractCall, marking the command as approved. This writes approvedSource[0xabc123] = true.",
-          "step": 2
-        },
-        {
-          "chain": "destination",
-          "contract": "PortalV2",
-          "function": "execute",
-          "params": {
-            "commandId": "0xabc123",
-            "payload": "decode(lockedAmount, receiver)",
-            "transferId": "0xabc123"
-          },
-          "description": "PortalV2 on destination validates the approved command and releases (mints) 1000 tokens to the receiver, setting released[0xabc123] = true.",
-          "step": 3
-        },
-        {
-          "chain": "source",
-          "contract": "AxelarGateway",
-          "function": "approveContractCall",
-          "params": {
-            "commandId": "0xabc123",
-            "sourceAddress": "PortalSrc"
-          },
-          "relay_mode": "replay",
-          "description": "Attacker re‑broadcasts the same approveContractCall transaction (replay mode) after a short delay. The gateway lacks a nonce check, so approvedSource[0xabc123] is overwritten but not reset, allowing a second execution.",
-          "step": 4
-        },
-        {
-          "chain": "destination",
-          "contract": "PortalV2",
-          "function": "execute",
-          "params": {
-            "commandId": "0xabc123",
-            "payload": "decode(lockedAmount, receiver)",
-            "transferId": "0xabc123"
-          },
-          "description": "PortalV2 processes the replayed command again, releasing another 1000 tokens to the same receiver. The invariant !released[transferId] is violated.",
-          "step": 5
-        }
-      ],
-      "retrieved_exploits": [],
-      "waypoints": [
-        {
-          "waypoint_id": "w1",
-          "after_step": 1,
-          "predicate": "step_1_executed",
-          "description": "User initiates a cross‑chain transfer; PortalSrc locks tokens and emits a command to AxelarGateway containing transferId 0xabc123."
-        },
-        {
-          "waypoint_id": "w2",
-          "after_step": 2,
-          "predicate": "step_2_executed",
-          "description": "Legitimate relayer calls approveContractCall, marking the command as approved. This writes approvedSource[0xabc123] = true."
-        },
-        {
-          "waypoint_id": "w3",
-          "after_step": 3,
-          "predicate": "step_3_executed",
-          "description": "PortalV2 on destination validates the approved command and releases (mints) 1000 tokens to the receiver, setting released[0xabc123] = true."
-        },
-        {
-          "waypoint_id": "w4",
-          "after_step": 4,
-          "predicate": "step_4_executed",
-          "description": "Attacker re‑broadcasts the same approveContractCall transaction (replay mode) after a short delay. The gateway lacks a nonce check, so approvedSource[0xabc123] is overwritten but not reset, allowing a second execution."
+          "description": "Malicious relayer approves the duplicated commandId, bypassing any uniqueness check that only looks at commandIdExists mapping after first approval."
         },
         {
           "waypoint_id": "w5",
           "after_step": 5,
           "predicate": "step_5_executed",
-          "description": "PortalV2 processes the replayed command again, releasing another 1000 tokens to the same receiver. The invariant !released[transferId] is violated."
+          "description": "Destination portal validates commandId (already marked as approved) and releases tokens twice, resulting in double‑mint/transfer."
         }
       ]
     }
