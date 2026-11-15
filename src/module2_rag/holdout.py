@@ -23,6 +23,13 @@ The incident registry is keyed by fixture name. ``aliases`` lists every KB
 (e.g. the 2022 Ronin validator key-compromise vs. the 2024 Ronin skipped
 initializer) is deliberately NOT an alias; the seed generator writes the exact
 set of dropped ids into provenance, so this choice is always auditable.
+
+Audit exclusions
+----------------
+``KB_AUDIT_EXCLUDED`` lists KB records that ``docs/kb_audit.md`` found wrong.
+``audited_kb`` removes them *before* ``regime_pool``, so every regime
+(including ``known``) sees the same audited KB and ``dropped_ids`` stay
+regime-only. The JSON files stay in ``src/module2_rag/data/`` for the record.
 """
 from __future__ import annotations
 
@@ -80,6 +87,27 @@ def incident_for(fixture: str) -> dict[str, Any]:
 
 def _eid(rec: dict) -> str:
     return str(rec.get("exploit_id") or rec.get("id") or "")
+
+
+# Records removed from retrieval after the KB audit (docs/kb_audit.md).
+KB_AUDIT_EXCLUDED: dict[str, str] = {
+    "gempad_20240419": (
+        "kb_audit #8: GemPad is a token-locker platform, not a bridge; the real "
+        "incident is a Locker V2 reentrancy on 2024-12-17, so date, root cause, "
+        "vulnerability class and attack stage are all wrong"
+    ),
+    "fegtoken_20240220": (
+        "kb_audit #7: no source confirms an FEG key compromise on 2024-02-20; "
+        "the cited tweet returns 404"
+    ),
+}
+
+
+def audited_kb(records: list[dict]) -> tuple[list[dict], list[str]]:
+    """Drop audit-excluded records; return ``(kept, excluded_ids)``."""
+    kept = [r for r in records if _eid(r) not in KB_AUDIT_EXCLUDED]
+    excluded = sorted({_eid(r) for r in records if _eid(r) in KB_AUDIT_EXCLUDED})
+    return kept, excluded
 
 
 def regime_pool(

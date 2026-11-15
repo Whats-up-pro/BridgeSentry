@@ -208,7 +208,7 @@ def main() -> int:
         knowledge_base_snapshot_sha256,
         canonical_sha256,
     )
-    from src.module2_rag.holdout import regime_pool
+    from src.module2_rag.holdout import KB_AUDIT_EXCLUDED, audited_kb, regime_pool
 
     usage, restore_meter = _install_usage_meter()
     try:
@@ -238,7 +238,10 @@ def main() -> int:
         kb.load()
         full_kb = list(kb.exploits)
         kb_full_sha = knowledge_base_snapshot_sha256(full_kb)
-        pool, dropped_ids = regime_pool(full_kb, args.regime, args.bench)
+        # audit exclusions first (same for every regime), then the regime filter
+        audited, audit_excluded_ids = audited_kb(full_kb)
+        kb_audited_sha = knowledge_base_snapshot_sha256(audited)
+        pool, dropped_ids = regime_pool(audited, args.regime, args.bench)
         pool_ids = sorted(str(r.get("exploit_id") or r.get("id") or "") for r in pool)
 
         # ---------------- Module 2 (LLM backend + injected regime KB) -------
@@ -330,6 +333,9 @@ def main() -> int:
         "top_k": args.top_k,
         "regime": args.regime,
         "kb_snapshot_sha256_full": kb_full_sha,
+        "kb_size_full": len(full_kb),
+        "kb_audit_excluded": {i: KB_AUDIT_EXCLUDED[i] for i in audit_excluded_ids},
+        "kb_snapshot_sha256_audited": kb_audited_sha,
         "kb_pool_sha256": canonical_sha256(sorted(pool_ids)),
         "kb_pool_size": len(pool),
         "kb_pool_ids": pool_ids,

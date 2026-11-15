@@ -79,3 +79,36 @@ def test_registry_entries_well_formed():
 
 def test_regimes_constant_matches_docs():
     assert set(REGIMES) == {"known", "no_rag", "exact", "family", "temporal"}
+
+
+def test_audited_kb_drops_only_excluded_ids():
+    from src.module2_rag.holdout import KB_AUDIT_EXCLUDED, audited_kb
+    kb = KB + [
+        {"exploit_id": "gempad_20240419", "date": "2024-04-19", "vulnerability_class": "fake_deposit"},
+        {"exploit_id": "fegtoken_20240220", "date": "2024-02-20", "vulnerability_class": "key_compromise"},
+    ]
+    kept, excluded = audited_kb(kb)
+    assert excluded == ["fegtoken_20240220", "gempad_20240419"]
+    assert _ids(kept) == _ids(KB)
+    assert set(KB_AUDIT_EXCLUDED) == {"gempad_20240419", "fegtoken_20240220"}
+    assert all(KB_AUDIT_EXCLUDED.values())
+
+
+def test_audit_excluded_never_reach_any_regime_pool():
+    from src.module2_rag.holdout import KB_AUDIT_EXCLUDED, audited_kb
+    # dated early on purpose: temporal would otherwise keep them
+    kb = KB + [{"exploit_id": i, "date": "2019-01-01", "vulnerability_class": "logic_bug"}
+               for i in KB_AUDIT_EXCLUDED]
+    kept, _ = audited_kb(kb)
+    for regime in REGIMES:
+        pool, _ = regime_pool(kept, regime, "nomad")
+        assert not (_ids(pool) & set(KB_AUDIT_EXCLUDED)), regime
+
+
+def test_audit_exclusions_match_shipped_kb_ids():
+    from src.module2_rag.holdout import KB_AUDIT_EXCLUDED, audited_kb
+    from src.module2_rag.knowledge_base import ExploitKnowledgeBase
+    kb = ExploitKnowledgeBase()
+    kb.load()
+    _, excluded = audited_kb(kb.exploits)
+    assert set(excluded) == set(KB_AUDIT_EXCLUDED), "exclusion ids must exist in the shipped KB"
