@@ -171,16 +171,21 @@ class ATGBuilder:
 
         edge_idx = 1
         for flow in flows:
-            label = flow.get("label", "verify")
-            src = flow.get("src", "user")
-            dst = flow.get("dst", "bridge")
+            # Same ``or default`` rule as for nodes: the LLM may emit explicit
+            # ``null`` for these fields, and the Rust ``AtgEdge`` (like
+            # schemas/atg.schema.json) requires strings.
+            label = flow.get("label") or "verify"
+            src = flow.get("src") or "user"
+            dst = flow.get("dst") or "bridge"
             edge = ATGEdge(
                 edge_id=f"e{edge_idx}",
                 src=src,
                 dst=dst,
                 label=label,
-                token=flow.get("token", "UNKNOWN"),
-                function_signature=flow.get("function_signature", self._guess_signature(label, functions)),
+                token=flow.get("token") or "UNKNOWN",
+                function_signature=(
+                    flow.get("function_signature") or self._guess_signature(label, functions) or ""
+                ),
             )
             edge.set_conditions(flow.get("conditions", []))
             atg.edges.append(edge)
@@ -258,9 +263,9 @@ class ATGBuilder:
                 edge_id=edge.get("edge_id", ""),
                 src=edge.get("src", ""),
                 dst=edge.get("dst", ""),
-                label=edge.get("label", "verify"),
-                token=edge.get("token", "UNKNOWN"),
-                function_signature=edge.get("function_signature", ""),
+                label=edge.get("label") or "verify",
+                token=edge.get("token") or "UNKNOWN",
+                function_signature=edge.get("function_signature") or "",
             )
             # Prefer typed condition_objects when present, else parse strings.
             typed = edge.get("condition_objects")

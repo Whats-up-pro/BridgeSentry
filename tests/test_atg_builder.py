@@ -30,3 +30,29 @@ def test_atg_structure():
     atg.edges.append(ATGEdge("user_A", "lock_pool", "lock"))
     assert len(atg.nodes) == 1
     assert len(atg.edges) == 1
+
+
+def test_build_coerces_null_edge_fields_to_strings():
+    # The LLM may emit explicit nulls; the Rust AtgEdge requires strings.
+    from src.module1_semantic.atg_builder import ATGBuilder
+
+    ab = ATGBuilder()
+    atg = ab.build({
+        "entities": [], "functions": [], "guards": [],
+        "asset_flows": [{"src": None, "dst": "bridge", "label": "lock",
+                         "token": None, "function_signature": None, "conditions": []}],
+    })
+    edge = ab.to_json(atg)["edges"][0]
+    for key in ("edge_id", "src", "dst", "label", "token", "function_signature"):
+        assert isinstance(edge[key], str), key
+    assert edge["token"] == "UNKNOWN"
+
+
+def test_from_json_coerces_null_edge_fields():
+    from src.module1_semantic.atg_builder import ATGBuilder
+
+    atg = ATGBuilder().from_json({"nodes": [], "edges": [{
+        "edge_id": "e1", "src": "a", "dst": "b", "label": None,
+        "token": None, "function_signature": None, "conditions": []}]})
+    edge = atg.edges[0]
+    assert (edge.label, edge.token, edge.function_signature) == ("verify", "UNKNOWN", "")
