@@ -6,6 +6,11 @@ Pipeline per invariant:
 2. Retrieve top-k similar exploits from the knowledge base (FAISS or numpy).
 3. Ask the LLM (OpenAI or NVIDIA NIM) for a concrete, fuzzer-executable
    action sequence, framed as a "rational adversary" (system prompt).
+   Grounded mode (``self.grounding`` set): the LLM instead sees the
+   comment-free source, ABI, deployment and relay rule of the fixture
+   (:mod:`.grounding`), answers with typed actions, and
+   :mod:`.seed_compiler` validates and ABI-encodes them; validation errors
+   are sent back for up to ``repair_rounds`` repairs.
 4. If the LLM is unavailable or returns an invalid response, pick a
    vulnerability-class-specific template from :mod:`.templates` instead of
    a single uniform fallback.
@@ -45,6 +50,11 @@ class AttackScenarioGenerator:
         self.kb = ExploitKnowledgeBase()
         self.embedder = ExploitEmbedder()
         self._kb_ready = False
+        # Grounded mode (C3b): a grounding.GroundingContext, or None for the
+        # original ATG-only prompt. grounding_log records every invariant.
+        self.grounding = None
+        self.repair_rounds = 2
+        self.grounding_log: list[dict[str, Any]] = []
 
     # -------------------------------------------------------------- public API
 
@@ -79,6 +89,8 @@ class AttackScenarioGenerator:
     def _try_llm_generate(
         self, atg: dict, invariant: dict, retrieved: list[dict]
     ) -> dict[str, Any] | None:
+        if self.grounding is not None:
+            return self._try_grounded_generate(invariant, retrieved)
         provider = get_llm_client()
         if provider is None:
             return None
@@ -212,6 +224,108 @@ class AttackScenarioGenerator:
             "confidence (0..1), actions (list of steps with chain/contract/function/params/description), "
             "retrieved_exploits. 2-6 actions max."
         )
+
+    # ------------------------------------------------- grounded generation
+    @staticmethod
+    def _parse_json_object(content: str | None) -> dict[str, Any] | None:
+        if not content:
+            return None
+        text = content.strip()
+        if text.startswith("```"):
+            text = text.strip("`")
+            text = text[4:] if text.lower().startswith("json") else text
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            start, end = text.find("{"), text.rfind("}")
+            if start < 0 or end <= start:
+                return None
+            try:
+                data = json.loads(text[start:end + 1])
+            except json.JSONDecodeError:
+                return None
+        if isinstance(data, dict) and isinstance(data.get("scenario"), dict):
+            data = data["scenario"]
+        return data if isinstance(data, dict) else None
+
+    def _build_grounded_prompt(self, invariant: dict, similar_exploits: list[dict]) -> str:
+        exploits_summary = [
+            {
+                "exploit_id": e.get("exploit_id", ""),
+                "vulnerability_class": e.get("vulnerability_class", ""),
+                "attack_stage": e.get("attack_stage", ""),
+                "summary": e.get("summary", "")[:400],
+            }
+            for e in similar_exploits[: self.top_k]
+        ]
+        incidents = json.dumps(exploits_summary, ensure_ascii=False, indent=2) if exploits_summary else "(none)"
+        return (
+            f"{self.grounding.prompt_block()}\n\n"
+            f"## Protocol invariant to violate\n{json.dumps(invariant, ensure_ascii=False, indent=2)}\n\n"
+            f"## Past incidents retrieved for this invariant\n{incidents}\n\n"
+            "## Answer format\n"
+            '{"scenario_id": "...", "target_invariant": "<invariant_id>", '
+            '"vulnerability_class": "...", "confidence": 0.5, '
+            '"retrieved_exploits": ["<ids of retrieved incidents you used>"], '
+            '"actions": [{"contract": "<deployed instance>", "function": "<signature from the list>", '
+            '"args": [<positional values>], "description": "..."}]}'
+        )
+
+    def _try_grounded_generate(self, invariant: dict, retrieved: list[dict]) -> dict[str, Any] | None:
+        """Typed generation + static validation + up to ``repair_rounds`` repairs.
+
+        Repairs see only compiler messages (unknown instance or function, arity,
+        value formats); no execution or oracle feedback is used.
+        """
+        from .seed_compiler import SeedCompiler
+
+        provider = get_llm_client()
+        entry: dict[str, Any] = {"invariant_id": invariant.get("invariant_id"), "rounds": []}
+        self.grounding_log.append(entry)
+        if provider is None:
+            entry["outcome"] = "no_llm"
+            return None
+        system = load_prompt("system_adversary_grounded.txt")
+        base = self._build_grounded_prompt(invariant, retrieved)
+        compiler = SeedCompiler(self.grounding)
+        user, data, compiled, errors = base, None, [], []
+        for rnd in range(self.repair_rounds + 1):
+            try:
+                content = chat_completion_json(provider, system=system, user=user, temperature=self.temperature)
+            except Exception as exc:  # noqa: BLE001
+                print(f"[ScenarioGen] grounded LLM call failed: {exc}")
+                entry["rounds"].append({"round": rnd, "llm_error": str(exc)[:300]})
+                break
+            data = self._parse_json_object(content)
+            if data is None:
+                compiled, errors = [], ["the response was not a single JSON object"]
+            else:
+                compiled, errors = compiler.compile_actions(data.get("actions"))
+            entry["rounds"].append({
+                "round": rnd,
+                "n_actions": len(data.get("actions") or []) if isinstance(data, dict) and isinstance(data.get("actions"), list) else 0,
+                "n_compiled": len(compiled),
+                "errors": errors[:20],
+            })
+            if not errors:
+                break
+            if rnd < self.repair_rounds:
+                previous = json.dumps(data, ensure_ascii=False) if data is not None else (content or "")[:4000]
+                user = (
+                    base
+                    + "\n\n## Your previous answer\n" + previous
+                    + "\n\n## Problems found when checking it against the deployment and ABI\n"
+                    + "\n".join(f"- {e}" for e in errors[:20])
+                    + "\n\nReturn the corrected JSON object only."
+                )
+        if data is None or not compiled:
+            entry["outcome"] = "unusable"
+            return None
+        entry["outcome"] = "compiled" if not errors else "partially_compiled"
+        entry["raw_actions"] = data.get("actions")
+        scenario = dict(data)
+        scenario["actions"] = compiled
+        return self._normalize_scenario(scenario, invariant, retrieved)
 
     # --------------------------------------------------------- fallback logic
 

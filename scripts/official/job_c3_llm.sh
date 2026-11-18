@@ -21,6 +21,9 @@
 # Usage, from the C3 repo copy on /datastore (logs/ must exist there):
 #   sbatch --export=ALL,REPO=$PWD scripts/official/job_c3_llm.sh vulnerable
 #   sbatch --export=ALL,REPO=$PWD scripts/official/job_c3_llm.sh patched
+# SEED_ALIAS selects the seed sets under llm_outputs/<alias>/<regime>/:
+# gpt-oss-or (C3, default) or gpt-oss-or-grounded (C3b, docs/C3b_protocol.md), e.g.
+#   sbatch --export=ALL,REPO=$PWD,SEED_ALIAS=gpt-oss-or-grounded scripts/official/job_c3_llm.sh vulnerable
 #
 # CPU-only (no --gres), partition=normal, qos=mig2-35 (max 8 cpu/job); many runs
 # batched into ONE job via xargs -P, per Huong_dan_HPC_dungtrt.pdf. Results are
@@ -34,11 +37,13 @@ export BIN="$BASE/bin/bridgesentry-fuzzer"
 export PATH="$BASE/bin:/cm/local/apps/python3/bin:$PATH"   # solc + python3
 cd "$REPO"
 
+SEED_ALIAS=${SEED_ALIAS:-gpt-oss-or}   # gpt-oss-or (C3) or gpt-oss-or-grounded (C3b)
+case "$SEED_ALIAS" in gpt-oss-or) RUN_PREFIX=c3_llm ;; *) RUN_PREFIX="c3_$SEED_ALIAS" ;; esac
 STAMP=$(date +%Y%m%d_%H%M%S)
-RUN="$BASE/runs/c3_llm_${VARIANT}_$STAMP"
+RUN="$BASE/runs/${RUN_PREFIX}_${VARIANT}_$STAMP"
 mkdir -p "$RUN" logs
 {
-  echo "job=${SLURM_JOB_ID:-none} variant=$VARIANT repo=$REPO commit=$(cat "$REPO/COMMIT" 2>/dev/null || echo unknown)"
+  echo "job=${SLURM_JOB_ID:-none} variant=$VARIANT seed_alias=$SEED_ALIAS repo=$REPO commit=$(cat "$REPO/COMMIT" 2>/dev/null || echo unknown)"
   echo "node=$(hostname) start=$(date -u +%FT%TZ)"
   sha256sum "$BIN"
 } > "$RUN/run_info.txt"
@@ -70,13 +75,15 @@ export RPC_URL="http://127.0.0.1:$PORT"
 # per-job name; the copies are checked byte-identical (cmp) and their sha256 is
 # logged in $RUN/seed_staging.sha256, with each set's provenance in
 # $RUN/seed_provenance/.
-TAG="seed_gpt-oss-or_${SLURM_JOB_ID:-local}"
+TAG="seed_${SEED_ALIAS}_${SLURM_JOB_ID:-local}"
+# remove this job's staged seed copies on exit (the staged files are logged above)
+trap 'kill "$RPC_PID" 2>/dev/null || true; rm -rf "$REPO"/benchmarks/*/".${TAG}_"*' EXIT
 : > "$RUN/jobs.txt"
 : > "$RUN/seed_staging.sha256"
 mkdir -p "$RUN/seed_provenance"
 for r in known exact temporal no_rag; do
   for b in ronin_2024 crosscurve verus feg_bridge_2024 polynetwork; do
-    src="$REPO/benchmarks/$b/official/llm_outputs/gpt-oss-or/$r"
+    src="$REPO/benchmarks/$b/official/llm_outputs/$SEED_ALIAS/$r"
     { test -s "$src/hypotheses.json" && test -s "$src/atg.json"; } || { echo "missing seeds $src" >&2; exit 4; }
     sd="$REPO/benchmarks/$b/.${TAG}_$r"
     mkdir -p "$sd"

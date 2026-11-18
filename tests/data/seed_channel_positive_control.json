@@ -1,0 +1,39 @@
+{
+  "_comment": "Positive control for the grounded seed channel. Each fixture's documented exploit, transcribed from the deterministic Rust tests in src/module3_fuzzing/src/official_mode.rs (fn <fixture>_official_exploit_and_patch), written in the grounded action format. Used only by tests/test_seed_compiler.py and scripts/official/seed_channel_control.py; never part of any LLM context.",
+  "qubit": [
+    {"contract": "QBridgeETH", "function": "deposit(address,uint256,address)",
+     "args": ["0x0000000000000000000000000000000000000000", "500e18", "attacker"]}
+  ],
+  "feg_bridge_2024": [
+    {"contract": "WormholeCore", "function": "publishMessage(bytes)",
+     "args": [{"abi_encode": {"types": ["uint8", "address", "uint256"], "values": [1, "attacker", 0]}}]},
+    {"contract": "WormholeCore", "function": "publishMessage(bytes)",
+     "args": [{"abi_encode": {"types": ["uint8", "address", "uint256"], "values": [2, "attacker", "500000e18"]}}]}
+  ],
+  "crosscurve": [
+    {"contract": "ReceiverAxelar", "function": "expressExecute(bytes32,address,bytes)",
+     "args": ["0x01", "PortalSrc", {"abi_encode": {"types": ["address", "uint256"], "values": ["attacker", "500000e18"]}}]}
+  ],
+  "ronin_2024": [
+    {"contract": "RoninGatewayV3", "function": "withdraw(address,uint256,address[])",
+     "args": ["attacker", "500000e18", []]}
+  ],
+  "polynetwork": [
+    {"contract": "SourceCrossChain", "function": "crossChain(address,string,bytes)",
+     "args": ["EthCrossChainData", "putCurEpochConPubKeyBytes(address)",
+              {"abi_encode": {"types": ["address"], "values": ["attacker"]}}]},
+    {"contract": "EthCrossChainManager", "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+     "args": ["LockProxy", "unlock(address,uint256)",
+              {"abi_encode": {"types": ["address", "uint256"], "values": ["attacker", "500000e18"]}}, "SrcDeposit"]}
+  ],
+  "verus": [
+    {"contract": "VerusExportSurrogate", "function": "export(bytes32,address,uint256)",
+     "args": ["0x0a", "attacker", "1e18"]},
+    {"contract": "VerusBridge", "function": "submitImports(address,uint256,bytes32)",
+     "args": ["attacker", "500000e18", "0x0a"]}
+  ],
+  "nomad": [
+    {"contract": "NomadBridgeRouter", "function": "processAndRelease((uint32,uint32,uint32,address,address,address,uint256))",
+     "args": [[2000, 1000, 1, "attacker", "attacker", "Representation", "500e18"]]}
+  ]
+}

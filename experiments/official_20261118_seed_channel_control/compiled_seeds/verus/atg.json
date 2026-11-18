@@ -1,0 +1,18 @@
+{
+  "bridge_name": "verus",
+  "version": "1.0",
+  "nodes": [
+    {"node_id": "VerusExportSurrogate", "node_type": "surrogate", "chain": "verus", "address": "", "functions": ["export"]},
+    {"node_id": "VerusBridge", "node_type": "bridge", "chain": "ethereum", "address": "", "functions": ["recordExport", "submitImports", "checkCCEValues"]},
+    {"node_id": "SrcVRSC", "node_type": "token", "chain": "verus", "address": "", "functions": []},
+    {"node_id": "DstToken", "node_type": "token", "chain": "ethereum", "address": "", "functions": []}
+  ],
+  "edges": [
+    {"edge_id": "e1", "src": "VerusExportSurrogate", "dst": "VerusBridge", "label": "export_relay", "token": "SrcVRSC", "conditions": ["notary_attested"], "function_signature": "recordExport(bytes32,uint256)"},
+    {"edge_id": "e2", "src": "VerusBridge", "dst": "DstToken", "label": "import_payout", "token": "DstToken", "conditions": ["payout<=committed"], "function_signature": "submitImports(address,uint256,bytes32)"}
+  ],
+  "invariants": [
+    {"invariant_id": "asset_conservation_total_balance", "category": "asset_conservation", "description": "No attacker address ends with a net positive balance in a paired asset.", "predicate": "sum(attacker_gain) <= 0", "solidity_assertion": "", "related_edges": ["e2"]},
+    {"invariant_id": "payout_matches_committed_source", "category": "asset_conservation", "description": "Cumulative import payout for an export may not exceed its committed source value.", "predicate": "claimed[exportId] + payout <= committedExport[exportId]", "solidity_assertion": "", "related_edges": ["e2"]}
+  ]
+}

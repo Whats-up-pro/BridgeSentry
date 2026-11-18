@@ -1,0 +1,39 @@
+{
+  "bridge_name": "verus",
+  "scenarios": [
+    {
+      "scenario_id": "verus_positive_control",
+      "target_invariant": "control",
+      "vulnerability_class": "control",
+      "confidence": 1.0,
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000a",
+            "recipient": "attacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Step 1"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000a"
+          },
+          "description": "Step 2"
+        }
+      ],
+      "waypoints": [],
+      "retrieved_exploits": []
+    }
+  ]
+}

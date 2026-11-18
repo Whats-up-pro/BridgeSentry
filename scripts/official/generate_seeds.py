@@ -19,6 +19,14 @@ Design rules (match AGENTS.md evidence policy):
     OpenAI client boundary (cache disabled), split per module.
   * Deterministic fallbacks can never masquerade as LLM output: every scenario
     is tagged ``llm`` or ``deterministic_fallback`` and the counts are logged.
+  * ``--grounded`` (C3b): Module 1 reads comment-free copies of the sources,
+    and Module 2 sees the comment-free source, ABI, deployment, relay rule and
+    pre-attack transactions of the fixture (src/module2_rag/grounding.py),
+    answers with typed actions, and src/module2_rag/seed_compiler.py validates
+    and ABI-encodes them (static repair loop, no execution feedback). The
+    fixture's notes, release entry points, victims and patched variant are
+    never shown. ``--deploy-log`` names a result JSON of the same fixture whose
+    ``deploy_log`` gives the deterministic deployed addresses.
 
 Usage:
   python -I scripts/official/generate_seeds.py \
@@ -27,6 +35,7 @@ Usage:
       [--contracts-dir benchmarks/nomad/official/vulnerable] \
       [--out benchmarks/nomad/official/llm_outputs/gpt-oss/exact] \
       [--ledger experiments/<run>/cost_ledger.csv]
+      [--grounded --deploy-log <result.json>]
 """
 from __future__ import annotations
 
@@ -41,6 +50,7 @@ import platform
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
@@ -145,7 +155,14 @@ def main() -> int:
     ap.add_argument("--contracts-dir", default=None)
     ap.add_argument("--out", default=None)
     ap.add_argument("--ledger", default=None)
+    ap.add_argument("--grounded", action="store_true",
+                    help="C3b: ground Module 2 in the comment-free source, ABI and deployment")
+    ap.add_argument("--deploy-log", default=None,
+                    help="result JSON of this fixture whose deploy_log gives deployed addresses")
+    ap.add_argument("--repair-rounds", type=int, default=2)
     args = ap.parse_args()
+    if args.grounded and not args.deploy_log:
+        ap.error("--grounded needs --deploy-log")
 
     from src.module2_rag.holdout import REGIMES
     if args.regime not in REGIMES:
@@ -210,6 +227,19 @@ def main() -> int:
     )
     from src.module2_rag.holdout import KB_AUDIT_EXCLUDED, audited_kb, regime_pool
 
+    grounding_ctx = None
+    m1_sols = sols
+    _tmp = None
+    if args.grounded:
+        from src.module2_rag.grounding import build_context, write_sanitized_tree
+        deploy_json = json.loads(pathlib.Path(args.deploy_log).read_text(encoding="utf-8"))
+        grounding_ctx = build_context(
+            args.bench, contracts_dir, pathlib.Path(f"benchmarks/{args.bench}/official/spec.json"),
+            deploy_json["deploy_log"], REPO, deploy_log_source=_repo_rel(pathlib.Path(args.deploy_log)),
+        )
+        _tmp = tempfile.TemporaryDirectory(prefix="bs_sanitized_")
+        m1_sols = write_sanitized_tree(contracts_dir, pathlib.Path(_tmp.name))
+
     usage, restore_meter = _install_usage_meter()
     try:
         # ---------------- Module 1 (optionally LLM-free for parser-only) ----
@@ -220,7 +250,7 @@ def main() -> int:
             ab = ATGBuilder()
             isy = InvariantSynthesizer()
             merged = {"entities": [], "functions": [], "asset_flows": [], "guards": []}
-            for p in sols:
+            for p in m1_sols:
                 sem = ex.extract_from_file(str(p))
                 for key in merged:
                     merged[key].extend(sem.get(key, []))
@@ -247,6 +277,9 @@ def main() -> int:
         # ---------------- Module 2 (LLM backend + injected regime KB) -------
         gen = AttackScenarioGenerator(top_k=args.top_k, temperature=args.temperature)
         gen.kb.exploits = list(pool)
+        if grounding_ctx is not None:
+            gen.grounding = grounding_ctx
+            gen.repair_rounds = args.repair_rounds
         gen._ensure_kb = lambda: None  # type: ignore[method-assign]  # we inject the KB ourselves
         if args.regime == "no_rag" or not pool:
             gen._kb_ready = False
@@ -304,6 +337,8 @@ def main() -> int:
         ]
     finally:
         restore_meter()
+        if _tmp is not None:
+            _tmp.cleanup()
 
     # ---------------- write artifacts ---------------------------------------
     (out_dir / "atg.json").write_text(
@@ -345,6 +380,13 @@ def main() -> int:
         "embedding_strict": os.environ.get("BRIDGESENTRY_REQUIRE_SEMANTIC_EMBEDDING"),
         "embedding_lib_versions": _lib_versions(),
         "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
+        "grounded": (None if grounding_ctx is None else {
+            **grounding_ctx.provenance(),
+            "system_prompt": "src/module2_rag/prompts/system_adversary_grounded.txt",
+            "repair_rounds_max": args.repair_rounds,
+            "module1_input": "comment-free copies (grounding.write_sanitized_tree)",
+            "per_invariant": gen.grounding_log,
+        }),
         "llm_cache": os.environ.get("BRIDGESENTRY_LLM_CACHE"),
         "module1": {
             "llm_used": not args.parser_only,

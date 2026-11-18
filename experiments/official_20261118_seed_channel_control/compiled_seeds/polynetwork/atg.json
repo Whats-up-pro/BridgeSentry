@@ -1,0 +1,23 @@
+{
+  "bridge_name": "polynetwork",
+  "version": "1.0",
+  "nodes": [
+    {"node_id": "SourceCrossChain", "node_type": "messaging", "chain": "bsc", "address": "", "functions": ["crossChain"]},
+    {"node_id": "SrcDeposit", "node_type": "router", "chain": "bsc", "address": "", "functions": ["deposit"]},
+    {"node_id": "EthCrossChainManager", "node_type": "manager", "chain": "ethereum", "address": "", "functions": ["verifyHeaderAndExecuteTx"]},
+    {"node_id": "EthCrossChainData", "node_type": "data", "chain": "ethereum", "address": "", "functions": ["putCurEpochConPubKeyBytes"]},
+    {"node_id": "LockProxy", "node_type": "vault", "chain": "ethereum", "address": "", "functions": ["unlock"]},
+    {"node_id": "SrcToken", "node_type": "token", "chain": "bsc", "address": "", "functions": []},
+    {"node_id": "EthToken", "node_type": "token", "chain": "ethereum", "address": "", "functions": []}
+  ],
+  "edges": [
+    {"edge_id": "e1", "src": "SrcDeposit", "dst": "SourceCrossChain", "label": "crossChain", "token": "SrcToken", "conditions": [], "function_signature": "deposit(address,uint256)"},
+    {"edge_id": "e2", "src": "SourceCrossChain", "dst": "EthCrossChainManager", "label": "relay", "token": "", "conditions": ["keeper_signed"], "function_signature": "verifyHeaderAndExecuteTx(address,string,bytes,address)"},
+    {"edge_id": "e3", "src": "EthCrossChainManager", "dst": "LockProxy", "label": "unlock", "token": "EthToken", "conditions": ["fromContract==registeredProxy"], "function_signature": "unlock(address,uint256,address)"},
+    {"edge_id": "e4", "src": "EthCrossChainManager", "dst": "EthCrossChainData", "label": "set_keeper", "token": "", "conditions": ["owner"], "function_signature": "putCurEpochConPubKeyBytes(address,address)"}
+  ],
+  "invariants": [
+    {"invariant_id": "asset_conservation_total_balance", "category": "asset_conservation", "description": "No attacker address ends with a net positive balance in a paired asset.", "predicate": "sum(attacker_gain) <= 0", "solidity_assertion": "", "related_edges": ["e2", "e3"]},
+    {"invariant_id": "no_privileged_target", "category": "authorization", "description": "A cross-chain message must not be able to invoke the privileged data contract that controls the keeper.", "predicate": "message.toContract != ECCD", "solidity_assertion": "", "related_edges": ["e2", "e4"]}
+  ]
+}
