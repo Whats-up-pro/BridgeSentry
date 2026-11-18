@@ -1,0 +1,537 @@
+{
+  "bridge_name": "ronin_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "RoninDeposit",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "RoninGatewayV3",
+      "node_type": "router",
+      "chain": "unknown",
+      "address": "this",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "unknown",
+      "address": "token",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "msg.sender",
+      "dst": "RoninDeposit",
+      "label": "lock",
+      "token": "OfficialToken",
+      "conditions": [
+        "a",
+        "m",
+        "o",
+        "u",
+        "n",
+        "t",
+        " ",
+        ">",
+        " ",
+        "0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ">"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "0"
+          }
+        }
+      ],
+      "function_signature": "deposit(uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "RoninGatewayV3",
+      "dst": "recipient",
+      "label": "withdraw",
+      "token": "token",
+      "conditions": [
+        "w",
+        " ",
+        ">",
+        "=",
+        " ",
+        "m",
+        "i",
+        "n",
+        "i",
+        "m",
+        "u",
+        "m",
+        "V",
+        "o",
+        "t",
+        "e",
+        "W",
+        "e",
+        "i",
+        "g",
+        "h",
+        "t",
+        "(",
+        ")"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "w"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ">"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "="
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "V"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "W"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "g"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "h"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "("
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ")"
+          }
+        }
+      ],
+      "function_signature": "withdraw(address,uint256,address[])"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_balance",
+      "category": "asset_conservation",
+      "description": "The total amount of OfficialToken locked by edge e1 must equal the total amount of token minted/withdrawn by edge e2.",
+      "predicate": "totalLocked == totalWithdrawn",
+      "solidity_assertion": "assert(totalLocked == totalWithdrawn);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_non_negative_deposit",
+      "category": "asset_conservation",
+      "description": "Deposit amount supplied to e1 must be strictly greater than zero.",
+      "predicate": "depositAmount > 0",
+      "solidity_assertion": "require(depositAmount > 0, \"Deposit amount must be > 0\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_non_negative_withdraw",
+      "category": "asset_conservation",
+      "description": "Withdraw amount supplied to e2 must be strictly greater than zero.",
+      "predicate": "withdrawAmount > 0",
+      "solidity_assertion": "require(withdrawAmount > 0, \"Withdraw amount must be > 0\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_deposit_updates_balance",
+      "category": "asset_conservation",
+      "description": "After a lock via e1, the OfficialToken balance of RoninDeposit decreases by the deposited amount.",
+      "predicate": "balanceAfter == balanceBefore - depositAmount",
+      "solidity_assertion": "assert(officialToken.balanceOf(address(RoninDeposit)) == balanceBefore - depositAmount);",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_withdraw_updates_balance",
+      "category": "asset_conservation",
+      "description": "After a withdraw via e2, the token balance of the recipient increases by the withdrawn amount.",
+      "predicate": "recipientBalanceAfter == recipientBalanceBefore + withdrawAmount",
+      "solidity_assertion": "assert(token.balanceOf(recipient) == recipientBalanceBefore + withdrawAmount);",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_overdraw",
+      "category": "asset_conservation",
+      "description": "The cumulative amount withdrawn through e2 can never exceed the cumulative amount locked through e1.",
+      "predicate": "totalWithdrawn <= totalLocked",
+      "solidity_assertion": "assert(totalWithdrawn <= totalLocked);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_per_nonce_balance",
+      "category": "asset_conservation",
+      "description": "For each unique nonce, the amount withdrawn cannot exceed the amount locked for that same nonce.",
+      "predicate": "withdrawnByNonce[nonce] <= lockedByNonce[nonce]",
+      "solidity_assertion": "assert(withdrawnByNonce[nonce] <= lockedByNonce[nonce]);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_token_address",
+      "category": "asset_conservation",
+      "description": "The token address used in the lock operation (e1) must be the OfficialToken contract address.",
+      "predicate": "e1.token == address(OfficialToken)",
+      "solidity_assertion": "require(tokenAddress == address(OfficialToken), \"Lock must use OfficialToken\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_withdraw_token_address",
+      "category": "asset_conservation",
+      "description": "The token address used in the withdraw operation (e2) must be the bridge's destination token contract.",
+      "predicate": "e2.token == address(DestinationToken)",
+      "solidity_assertion": "require(tokenAddress == address(DestinationToken), \"Withdraw must use DestinationToken\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_caller_is_gateway",
+      "category": "authorization",
+      "description": "Only the RoninGatewayV3 contract is authorized to invoke the withdraw function (edge e2).",
+      "predicate": "msg.sender == address(RoninGatewayV3)",
+      "solidity_assertion": "require(msg.sender == address(RoninGatewayV3), \"Caller must be RoninGatewayV3\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_requires_valid_signature",
+      "category": "authorization",
+      "description": "A withdraw (e2) must be accompanied by a valid signature from the source chain validator over the message hash.",
+      "predicate": "isValidSignature(messageHash, signature)",
+      "solidity_assertion": "require(isValidSignature(messageHash, signature), \"Invalid validator signature\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_requires_correct_nonce",
+      "category": "authorization",
+      "description": "The nonce supplied to withdraw (e2) must be unused and strictly increasing.",
+      "predicate": "!processedNonce[nonce] && nonce == lastProcessedNonce + 1",
+      "solidity_assertion": "require(!processedNonce[nonce] && nonce == lastProcessedNonce + 1, \"Invalid or replayed nonce\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_deposit_requires_approval",
+      "category": "authorization",
+      "description": "Before locking via e1, the depositor must have approved RoninDeposit to transfer at least the deposit amount of OfficialToken.",
+      "predicate": "OfficialToken.allowance(msg.sender, address(RoninDeposit)) >= depositAmount",
+      "solidity_assertion": "require(OfficialToken.allowance(msg.sender, address(RoninDeposit)) >= depositAmount, \"Insufficient allowance for lock\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_deposit_emits_event",
+      "category": "authorization",
+      "description": "A successful lock (e1) must emit a DepositLocked event containing the sender, amount, and nonce.",
+      "predicate": "eventEmitted(DepositLocked(msg.sender, depositAmount, nonce))",
+      "solidity_assertion": "emit DepositLocked(msg.sender, depositAmount, nonce);",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_nonce_processed_once",
+      "category": "uniqueness",
+      "description": "Each nonce can be processed by edge e2 at most once.",
+      "predicate": "!processedNonce[nonce]",
+      "solidity_assertion": "require(!processedNonce[nonce], \"Nonce already processed\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_deposit_nonce_unique",
+      "category": "uniqueness",
+      "description": "When a deposit is recorded via e1, its nonce must not have been used before.",
+      "predicate": "!nonceExists[nonce]",
+      "solidity_assertion": "require(!nonceExists[nonce], \"Deposit nonce already exists\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_withdraw_idempotent",
+      "category": "uniqueness",
+      "description": "Re‑executing withdraw with the same nonce must revert, ensuring idempotence.",
+      "predicate": "processedNonce[nonce] == false before call",
+      "solidity_assertion": "require(!processedNonce[nonce], \"Withdraw already executed for this nonce\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_no_duplicate_lock",
+      "category": "uniqueness",
+      "description": "A given nonce can be associated with only one lock amount; subsequent lock attempts with the same nonce must fail.",
+      "predicate": "lockedByNonce[nonce] == 0",
+      "solidity_assertion": "require(lockedByNonce[nonce] == 0, \"Lock already recorded for this nonce\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

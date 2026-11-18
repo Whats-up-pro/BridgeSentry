@@ -1,0 +1,416 @@
+{
+  "bridge_name": "polynetwork",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "EthCrossChainData",
+      "node_type": "router",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "EthCrossChainManager",
+      "node_type": "router",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "EthCrossChainData",
+      "node_type": "data",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "unknown",
+      "address": "OfficialToken(address)",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "address",
+      "chain": "unknown",
+      "address": "admin",
+      "functions": []
+    },
+    {
+      "node_id": "manager",
+      "node_type": "address",
+      "chain": "unknown",
+      "address": "manager",
+      "functions": []
+    },
+    {
+      "node_id": "registeredProxy",
+      "node_type": "address",
+      "chain": "unknown",
+      "address": "registeredProxy",
+      "functions": []
+    },
+    {
+      "node_id": "LockProxy",
+      "node_type": "contract",
+      "chain": "unknown",
+      "address": "this",
+      "functions": []
+    },
+    {
+      "node_id": "SourceCrossChain",
+      "node_type": "router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "ccm",
+      "node_type": "router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "destLockProxy",
+      "node_type": "address",
+      "chain": "destination",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "EthCrossChainManager",
+      "dst": "toContract",
+      "label": "execute",
+      "token": "UNKNOWN",
+      "conditions": [
+        "msg.sender == eccd.keeper()",
+        "call must succeed (require ok)"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == eccd.keeper()"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "call must succeed (require ok)"
+          }
+        }
+      ],
+      "function_signature": "verifyHeaderAndExecuteTx(address,string,bytes,address)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "LockProxy",
+      "dst": "recipient",
+      "label": "unlock",
+      "token": "token",
+      "conditions": [
+        "msg.sender == manager",
+        "ICrossChainContext(manager).fromContractContext() == registeredProxy"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == manager"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "ICrossChainContext(manager).fromContractContext() == registeredProxy"
+          }
+        }
+      ],
+      "function_signature": "unlock(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "msg.sender",
+      "dst": "SrcDeposit",
+      "label": "lock",
+      "token": "OfficialToken",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e4",
+      "src": "SrcDeposit",
+      "dst": "destLockProxy",
+      "label": "cross-chain lock",
+      "token": "OfficialToken",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "deposit(address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_locked_equals_unlocked",
+      "category": "asset_conservation",
+      "description": "The total amount of OfficialToken locked on the source chain must equal the total amount unlocked on the destination chain.",
+      "predicate": "totalLocked == totalUnlocked",
+      "solidity_assertion": "require(totalLocked == totalUnlocked, \"Locked amount mismatch with unlocked amount\");",
+      "related_edges": [
+        "e3",
+        "e2",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_per_nonce_balance_match",
+      "category": "asset_conservation",
+      "description": "For each transfer nonce, the amount locked must equal the amount unlocked.",
+      "predicate": "lockedAmount[nonce] == unlockedAmount[nonce]",
+      "solidity_assertion": "require(lockedAmount[nonce] == unlockedAmount[nonce], \"Per‑nonce balance mismatch\");",
+      "related_edges": [
+        "e3",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_negative_unlocked",
+      "category": "asset_conservation",
+      "description": "The unlocked amount for any nonce cannot exceed the amount that was locked.",
+      "predicate": "unlockedAmount[nonce] <= lockedAmount[nonce]",
+      "solidity_assertion": "require(unlockedAmount[nonce] <= lockedAmount[nonce], \"Unlocked exceeds locked\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_nonzero_lock_amount",
+      "category": "asset_conservation",
+      "description": "A lock operation must always lock a positive amount of tokens.",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Lock amount must be > 0\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_keeper_must_execute",
+      "category": "authorization",
+      "description": "Only the keeper defined in EthCrossChainData may call verifyHeaderAndExecuteTx.",
+      "predicate": "msg.sender == eccd.keeper()",
+      "solidity_assertion": "require(msg.sender == eccd.keeper(), \"Caller is not keeper\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_manager_must_unlock",
+      "category": "authorization",
+      "description": "Only the manager address may invoke the unlock function on LockProxy.",
+      "predicate": "msg.sender == manager",
+      "solidity_assertion": "require(msg.sender == manager, \"Caller is not manager\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_context_matches_registered_proxy",
+      "category": "authorization",
+      "description": "When manager calls unlock, the CrossChainContext must indicate that the call originated from the registered proxy.",
+      "predicate": "ICrossChainContext(manager).fromContractContext() == registeredProxy",
+      "solidity_assertion": "require(ICrossChainContext(manager).fromContractContext() == registeredProxy, \"Context mismatch\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_header_verification_success",
+      "category": "authorization",
+      "description": "The call to verifyHeaderAndExecuteTx must return true, indicating a valid relay header.",
+      "predicate": "verifyHeaderAndExecuteTx(_src,_method,_data,_dst) == true",
+      "solidity_assertion": "require(verifyHeaderAndExecuteTx(_src,_method,_data,_dst), \"Header verification failed\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_nonce_unused_before_lock",
+      "category": "uniqueness",
+      "description": "A transfer nonce must not have been processed before a lock operation is accepted.",
+      "predicate": "!processed[nonce]",
+      "solidity_assertion": "require(!processed[nonce], \"Nonce already processed\");",
+      "related_edges": [
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_mark_nonce_processed_after_lock",
+      "category": "uniqueness",
+      "description": "After a successful lock (or cross‑chain lock) the nonce is recorded as processed.",
+      "predicate": "processed[nonce] == true",
+      "solidity_assertion": "processed[nonce] = true; // state update, invariant ensures it is set",
+      "related_edges": [
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_single_unlock_per_nonce",
+      "category": "uniqueness",
+      "description": "Each nonce can trigger at most one unlock operation.",
+      "predicate": "!unlocked[nonce]",
+      "solidity_assertion": "require(!unlocked[nonce], \"Nonce already unlocked\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_no_double_lock_per_nonce",
+      "category": "uniqueness",
+      "description": "A nonce cannot be used for more than one lock operation.",
+      "predicate": "lockCount[nonce] == 0",
+      "solidity_assertion": "require(lockCount[nonce] == 0, \"Nonce already locked\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_contract_balance_sufficient",
+      "category": "asset_conservation",
+      "description": "The bridge contract must always hold at least the difference between total locked and total unlocked tokens.",
+      "predicate": "token.balanceOf(address(this)) >= totalLocked - totalUnlocked",
+      "solidity_assertion": "require(token.balanceOf(address(this)) >= totalLocked - totalUnlocked, \"Insufficient contract balance\");",
+      "related_edges": [
+        "e3",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply_unchanged",
+      "category": "asset_conservation",
+      "description": "The total supply of OfficialToken must remain constant; locking does not burn, unlocking does not mint extra tokens.",
+      "predicate": "token.totalSupply() == initialSupply",
+      "solidity_assertion": "require(token.totalSupply() == initialSupply, \"Total supply altered\");",
+      "related_edges": [
+        "e3",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_registered_proxy_can_initiate_cross_chain_lock",
+      "category": "authorization",
+      "description": "The cross‑chain lock edge (e4) may only be triggered by the registered proxy address.",
+      "predicate": "msg.sender == registeredProxy",
+      "solidity_assertion": "require(msg.sender == registeredProxy, \"Caller is not registered proxy\");",
+      "related_edges": [
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_relay_signature_must_be_valid",
+      "category": "authorization",
+      "description": "The relay message processed in e1 must carry a signature that verifies against the keeper's public key.",
+      "predicate": "isValidSignature(relayHash, signature, eccd.keeperPubKey())",
+      "solidity_assertion": "require(isValidSignature(relayHash, signature, eccd.keeperPubKey()), \"Invalid relay signature\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_id_derivation_consistent",
+      "category": "uniqueness",
+      "description": "The message identifier used in the relay must be a deterministic hash of the nonce and chain identifiers.",
+      "predicate": "messageId == keccak256(abi.encodePacked(nonce, srcChainId, dstChainId))",
+      "solidity_assertion": "require(messageId == keccak256(abi.encodePacked(nonce, srcChainId, dstChainId)), \"Message ID mismatch\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_fee_not_exceed_locked",
+      "category": "asset_conservation",
+      "description": "Any protocol fee collected during a lock must never exceed the amount locked for that nonce.",
+      "predicate": "feeCollected[nonce] <= lockedAmount[nonce]",
+      "solidity_assertion": "require(feeCollected[nonce] <= lockedAmount[nonce], \"Fee exceeds locked amount\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

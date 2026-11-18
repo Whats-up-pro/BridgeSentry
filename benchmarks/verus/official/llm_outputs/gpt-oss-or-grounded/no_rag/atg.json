@@ -1,0 +1,403 @@
+{
+  "bridge_name": "verus",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "VerusBridge",
+      "node_type": "bridge",
+      "chain": "unknown",
+      "address": "this",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "unknown",
+      "address": "token (constructor param)",
+      "functions": []
+    },
+    {
+      "node_id": "notary",
+      "node_type": "address",
+      "chain": "unknown",
+      "address": "notary (constructor param)",
+      "functions": []
+    },
+    {
+      "node_id": "VerusExportSurrogate",
+      "node_type": "router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "VerusBridge",
+      "dst": "recipient (parameter of submitImports)",
+      "label": "withdraw",
+      "token": "token",
+      "conditions": [
+        "committedExport[exportId] > 0",
+        "payout validated by checkCCEValues"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "committedExport[exportId] > 0"
+          }
+        },
+        {
+          "type": "balance",
+          "params": {
+            "expression": "payout validated by checkCCEValues"
+          }
+        }
+      ],
+      "function_signature": "submitImports(address,uint256,bytes32)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "msg.sender",
+      "dst": "VerusExportSurrogate",
+      "label": "lock",
+      "token": "OfficialToken",
+      "conditions": [
+        "a",
+        "m",
+        "o",
+        "u",
+        "n",
+        "t",
+        " ",
+        ">",
+        " ",
+        "0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ">"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "0"
+          }
+        }
+      ],
+      "function_signature": "export(bytes32,address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_supply_match",
+      "category": "asset_conservation",
+      "description": "The total amount minted on the destination chain for a given exportId must equal the amount locked on the source chain.",
+      "predicate": "totalMinted[exportId] == committedExport[exportId]",
+      "solidity_assertion": "require(totalMinted[exportId] == committedExport[exportId], \"Minted amount does not match locked amount\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_negative_bridge_balance",
+      "category": "asset_conservation",
+      "description": "The VerusBridge contract must never hold a negative balance of the bridged token after a withdrawal.",
+      "predicate": "token.balanceOf(address(this)) >= 0",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) >= 0);",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_amount_positive",
+      "category": "asset_conservation",
+      "description": "Locking operation must only accept a strictly positive amount.",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Lock amount must be > 0\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_submit_imports_by_notary",
+      "category": "authorization",
+      "description": "Only the designated notary address may call submitImports to trigger a withdrawal.",
+      "predicate": "msg.sender == notary",
+      "solidity_assertion": "require(msg.sender == notary, \"Caller is not authorized notary\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_export_id_must_exist",
+      "category": "authorization",
+      "description": "submitImports can only be executed for an exportId that has a committed export record.",
+      "predicate": "committedExport[exportId] > 0",
+      "solidity_assertion": "require(committedExport[exportId] > 0, \"ExportId not committed\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_check_cce_values_passed",
+      "category": "authorization",
+      "description": "The payout validation performed by checkCCEValues must return true before a withdrawal is allowed.",
+      "predicate": "checkCCEValues(exportId, payout) == true",
+      "solidity_assertion": "require(checkCCEValues(exportId, payout), \"CCE validation failed\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_export_processed_once",
+      "category": "uniqueness",
+      "description": "An exportId can be withdrawn at most once; after successful withdrawal the committed amount is cleared.",
+      "predicate": "committedExport[exportId] == 0 after e1 execution",
+      "solidity_assertion": "assert(committedExport[exportId] == 0 && \"ExportId reused after withdrawal\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_lock_once_per_export_id",
+      "category": "uniqueness",
+      "description": "A given exportId cannot be locked again while a previous commitment is still pending.",
+      "predicate": "committedExport[exportId] == 0 before e2 execution",
+      "solidity_assertion": "require(committedExport[exportId] == 0, \"ExportId already locked\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_nonce_monotonic_increase",
+      "category": "uniqueness",
+      "description": "Export nonces (exportId) must increase monotonically to prevent replay attacks.",
+      "predicate": "exportId > lastExportId",
+      "solidity_assertion": "require(exportId > lastExportId, \"Export nonce not monotonic\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_no_duplicate_withdraw",
+      "category": "uniqueness",
+      "description": "A withdrawal (e1) for a given exportId must not be executed if the exportId has already been marked as withdrawn.",
+      "predicate": "withdrawn[exportId] == false",
+      "solidity_assertion": "require(!withdrawn[exportId], \"Export already withdrawn\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_bridge_balance_decrements",
+      "category": "asset_conservation",
+      "description": "After a successful withdrawal, the bridge's token balance must decrease exactly by the payout amount.",
+      "predicate": "balanceAfter == balanceBefore - payout",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) == balanceBefore - payout && \"Bridge balance mismatch after withdraw\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_locked_equals_committed",
+      "category": "asset_conservation",
+      "description": "The sum of all locked amounts recorded in committedExport must equal the total amount the bridge is obligated to mint.",
+      "predicate": "sumCommitted == totalObligation",
+      "solidity_assertion": "assert(sumCommitted == totalObligation && \"Locked total mismatch\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_caller_is_notary_or_owner",
+      "category": "authorization",
+      "description": "submitImports may be called by the notary or the contract owner.",
+      "predicate": "msg.sender == notary || msg.sender == owner",
+      "solidity_assertion": "require(msg.sender == notary || msg.sender == owner, \"Caller not authorized\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_export_id_nonzero",
+      "category": "uniqueness",
+      "description": "Export identifiers must never be the zero bytes32 value.",
+      "predicate": "exportId != bytes32(0)",
+      "solidity_assertion": "require(exportId != bytes32(0), \"ExportId cannot be zero\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_mint_amount_matches_locked",
+      "category": "asset_conservation",
+      "description": "The amount transferred to the recipient in e1 must equal the amount originally locked in e2 for the same exportId.",
+      "predicate": "payout == committedExport[exportId]",
+      "solidity_assertion": "require(payout == committedExport[exportId], \"Payout does not match locked amount\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_signature_verified",
+      "category": "authorization",
+      "description": "The relay message accompanying submitImports must contain a valid signature from the notary.",
+      "predicate": "verifySignature(messageHash, signature, notary) == true",
+      "solidity_assertion": "require(verifySignature(messageHash, signature, notary), \"Invalid notary signature\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_withdrawal_event_emitted_once",
+      "category": "uniqueness",
+      "description": "Exactly one Withdrawal event must be emitted per exportId.",
+      "predicate": "eventCount[exportId] == 1 after e1",
+      "solidity_assertion": "assert(eventCount[exportId] == 1 && \"Multiple withdrawal events emitted\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_bridge_token_balance_consistency",
+      "category": "asset_conservation",
+      "description": "The bridge's internal accounting variable `lockedTotal` must always equal the contract's token balance.",
+      "predicate": "lockedTotal == token.balanceOf(address(this))",
+      "solidity_assertion": "assert(lockedTotal == token.balanceOf(address(this)) && \"Locked total mismatch with balance\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_export_caller_is_sender",
+      "category": "authorization",
+      "description": "The address that initiates the lock (e2) must be the same as the `msg.sender` recorded in the export record.",
+      "predicate": "exportSender[exportId] == msg.sender",
+      "solidity_assertion": "require(exportSender[exportId] == msg.sender, \"Lock caller mismatch\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

@@ -1,0 +1,443 @@
+{
+  "bridge_name": "feg_bridge_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "FEGBridgeSrc",
+      "node_type": "bridge_contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "feg",
+      "node_type": "token",
+      "chain": "source",
+      "address": "feg",
+      "functions": []
+    },
+    {
+      "node_id": "core",
+      "node_type": "relay",
+      "chain": "source",
+      "address": "core",
+      "functions": []
+    },
+    {
+      "node_id": "FEGSmartBridge",
+      "node_type": "bridge",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "feg",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "external",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "relayer",
+      "node_type": "external",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "WormholeCore",
+      "node_type": "relay",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "msg.sender",
+      "dst": "FEGBridgeSrc",
+      "label": "lock",
+      "token": "feg",
+      "conditions": [
+        "a",
+        "m",
+        "o",
+        "u",
+        "n",
+        "t",
+        " ",
+        ">",
+        " ",
+        "0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ">"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "FEGSmartBridge",
+      "dst": "account (decoded from payload)",
+      "label": "release",
+      "token": "feg",
+      "conditions": [
+        "msg.sender == relayer",
+        "trustedSource[sourceAddress] == true",
+        "op == OP_RELEASE"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == relayer"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "trustedSource[sourceAddress] == true"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "op == OP_RELEASE"
+          }
+        }
+      ],
+      "function_signature": "receiveMessage(address,bytes)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_locked_equals_total_released",
+      "category": "asset_conservation",
+      "description": "The cumulative amount of FEG tokens locked on the source chain must always equal the cumulative amount released (minted) on the destination chain.",
+      "predicate": "totalLocked == totalReleased",
+      "solidity_assertion": "assert(totalLocked == totalReleased);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_per_message_balance_match",
+      "category": "asset_conservation",
+      "description": "For every processed cross‑chain message, the amount locked in the source transfer equals the amount released to the recipient.",
+      "predicate": "lockedAmount[messageHash] == releasedAmount[messageHash]",
+      "solidity_assertion": "assert(lockedAmount[messageHash] == releasedAmount[messageHash]);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_release_caller_is_relayer",
+      "category": "authorization",
+      "description": "Only the designated relayer contract may invoke the release function on the smart bridge.",
+      "predicate": "msg.sender == relayer",
+      "solidity_assertion": "require(msg.sender == relayer, \"Only relayer can release\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_release_requires_trusted_source",
+      "category": "authorization",
+      "description": "The source address embedded in the incoming message must be marked as trusted before a release is allowed.",
+      "predicate": "trustedSource[sourceAddress] == true",
+      "solidity_assertion": "require(trustedSource[sourceAddress], \"Untrusted source\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_release_requires_op_release",
+      "category": "authorization",
+      "description": "The operation code in the payload must be OP_RELEASE for the release path to be executed.",
+      "predicate": "op == OP_RELEASE",
+      "solidity_assertion": "require(op == OP_RELEASE, \"Invalid operation\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_deposit_amount_positive",
+      "category": "authorization",
+      "description": "A deposit (lock) must specify a strictly positive token amount.",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Deposit amount must be > 0\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_processed_once",
+      "category": "uniqueness",
+      "description": "Each cross‑chain message hash can be processed at most once.",
+      "predicate": "!processedMessage[messageHash]",
+      "solidity_assertion": "require(!processedMessage[messageHash], \"Message already processed\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_nonce_not_reused",
+      "category": "uniqueness",
+      "description": "The nonce supplied with a deposit must never have been used before.",
+      "predicate": "!usedNonce[nonce]",
+      "solidity_assertion": "require(!usedNonce[nonce], \"Nonce already used\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_release_once_per_message",
+      "category": "uniqueness",
+      "description": "A given message hash may trigger a release only a single time.",
+      "predicate": "!releasedMessage[messageHash]",
+      "solidity_assertion": "require(!releasedMessage[messageHash], \"Release already executed for this message\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_no_double_lock_for_transfer_id",
+      "category": "uniqueness",
+      "description": "A transfer identifier cannot be locked more than once before it is released.",
+      "predicate": "!lockedTransfer[transferId]",
+      "solidity_assertion": "require(!lockedTransfer[transferId], \"Transfer already locked\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_amount_nonnegative",
+      "category": "asset_conservation",
+      "description": "The total amount locked must never be less than the total amount released.",
+      "predicate": "totalLocked >= totalReleased",
+      "solidity_assertion": "assert(totalLocked >= totalReleased);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_contract_balance_covers_pending_locks",
+      "category": "asset_conservation",
+      "description": "The bridge contract's token balance must be at least the net locked amount that has not yet been released.",
+      "predicate": "token.balanceOf(address(this)) >= (totalLocked - totalReleased)",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) >= (totalLocked - totalReleased));",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_admin_can_update_trusted_source",
+      "category": "authorization",
+      "description": "Only the admin address may add or remove entries in the trustedSource mapping.",
+      "predicate": "msg.sender == admin",
+      "solidity_assertion": "require(msg.sender == admin, \"Only admin can modify trusted sources\");",
+      "related_edges": [],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_signature_not_replayed",
+      "category": "uniqueness",
+      "description": "A signed payload hash used for a release must not have been used previously.",
+      "predicate": "!usedSignature[signatureHash]",
+      "solidity_assertion": "require(!usedSignature[signatureHash], \"Signature replay detected\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_release_amount_not_exceed_locked_for_message",
+      "category": "authorization",
+      "description": "The amount released for a given message cannot exceed the amount that was originally locked for that message.",
+      "predicate": "releaseAmount <= lockedAmount[messageHash]",
+      "solidity_assertion": "require(releaseAmount <= lockedAmount[messageHash], \"Release exceeds locked amount\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply_unchanged_across_bridge",
+      "category": "asset_conservation",
+      "description": "The sum of the source chain token supply and the minted supply on the destination chain must remain constant.",
+      "predicate": "sourceToken.totalSupply() + mintedSupply == initialTotalSupply",
+      "solidity_assertion": "assert(sourceToken.totalSupply() + mintedSupply == initialTotalSupply);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_no_release_without_corresponding_lock",
+      "category": "uniqueness",
+      "description": "A release operation must correspond to a previously recorded lock; otherwise it is rejected.",
+      "predicate": "lockedAmount[messageHash] > 0",
+      "solidity_assertion": "require(lockedAmount[messageHash] > 0, \"No corresponding lock for this release\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_owner_can_pause_bridge",
+      "category": "authorization",
+      "description": "Only the contract owner may invoke the pause function to halt bridge operations.",
+      "predicate": "msg.sender == owner",
+      "solidity_assertion": "require(msg.sender == owner, \"Only owner can pause\");",
+      "related_edges": [],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_pending_release_equals_locked_minus_released",
+      "category": "asset_conservation",
+      "description": "The amount pending release at any time equals totalLocked minus totalReleased.",
+      "predicate": "pendingRelease == totalLocked - totalReleased",
+      "solidity_assertion": "assert(pendingRelease == totalLocked - totalReleased);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_hash_derivation_consistency",
+      "category": "uniqueness",
+      "description": "The stored message hash must match the recomputed hash of its payload fields.",
+      "predicate": "messageHash == keccak256(abi.encodePacked(sourceChainId, sourceAddress, nonce, amount, recipient))",
+      "solidity_assertion": "assert(messageHash == keccak256(abi.encodePacked(sourceChainId, sourceAddress, nonce, amount, recipient)));",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

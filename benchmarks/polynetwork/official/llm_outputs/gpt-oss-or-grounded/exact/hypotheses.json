@@ -1,0 +1,773 @@
+{
+  "bridge_name": "polynetwork",
+  "scenarios": [
+    {
+      "scenario_id": "crosschain_bridge_asset_conservation_break",
+      "target_invariant": "asset_conservation_total_locked_equals_unlocked",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.6,
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "meterio_20220205",
+        "metpassport_20220206",
+        "orbit_20240101",
+        "chainswap_20210711"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker approves SrcDeposit to transfer their SrcToken."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker deposits 100 SrcToken, which triggers a cross‑chain unlock of 100 EthToken to the attacker. No corresponding accounting on the destination side, violating the asset‑conservation invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker approves SrcDeposit to transfer their SrcToken."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker deposits 100 SrcToken, which triggers a cross‑chain unlock of 100 EthToken to the attacker. No corresponding accounting on the destination side, violating the asset‑conservation invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "cross_chain_arbitrary_call_mint",
+      "target_invariant": "asset_conservation_per_transfer_amount_match",
+      "vulnerability_class": "arbitrary_cross_chain_call",
+      "confidence": 0.78,
+      "retrieved_exploits": [
+        "orbit_20240101",
+        "multichain_20220118"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "EthCrossChainData",
+            "method": "putCurEpochConPubKeyBytes(address)",
+            "args": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Forge a cross‑chain event that makes the keeper address become the attacker. The relayer forwards it to EthCrossChainManager, which calls EthCrossChainData.putCurEpochConPubKeyBytes(attacker) because the manager contract is the owner of EthCrossChainData."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "EthToken",
+            "method": "mint(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000021e19e0c9bab2400000",
+            "fromContract": "attacker"
+          },
+          "description": "As the new keeper, the attacker calls the manager directly to invoke EthToken.mint, creating new tokens out of thin air and breaking the per‑transfer amount conservation invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Forge a cross‑chain event that makes the keeper address become the attacker. The relayer forwards it to EthCrossChainManager, which calls EthCrossChainData.putCurEpochConPubKeyBytes(attacker) because the manager contract is the owner of EthCrossChainData."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "As the new keeper, the attacker calls the manager directly to invoke EthToken.mint, creating new tokens out of thin air and breaking the per‑transfer amount conservation invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "none",
+      "target_invariant": "asset_conservation_no_negative_bridge_balance",
+      "vulnerability_class": "none",
+      "confidence": 0.0,
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "chainswap_20210711",
+        "nomad_20220801",
+        "meterio_20220205",
+        "synapse_20211109"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "attacker",
+            "amount": "0"
+          },
+          "description": "No-op approval to satisfy non-empty actions requirement"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "No-op approval to satisfy non-empty actions requirement"
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_asset_conservation_break",
+      "target_invariant": "asset_conservation_locked_minus_unlocked_nonnegative",
+      "vulnerability_class": "privilege_escalation_via_keeper_change",
+      "confidence": 0.92,
+      "retrieved_exploits": [
+        "synapse_20211109",
+        "ronin_20240806",
+        "harmony_horizon_20220624",
+        "orbit_20240101",
+        "thorchain_20210723"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "EthCrossChainData",
+            "method": "putCurEpochConPubKeyBytes(address)",
+            "args": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Use the honest relayer to call EthCrossChainData.putCurEpochConPubKeyBytes and set the keeper to attacker, gaining privileged access to EthCrossChainManager."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000",
+            "fromContract": "SrcDeposit"
+          },
+          "description": "As the new keeper, invoke unlock on LockProxy with fromContract set to the registered proxy (SrcDeposit), extracting a large amount of bridged tokens without any corresponding lock."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Use the honest relayer to call EthCrossChainData.putCurEpochConPubKeyBytes and set the keeper to attacker, gaining privileged access to EthCrossChainManager."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "As the new keeper, invoke unlock on LockProxy with fromContract set to the registered proxy (SrcDeposit), extracting a large amount of bridged tokens without any corresponding lock."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_amount_mismatch",
+      "target_invariant": "asset_conservation_crosschain_message_amount_match",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker approves the deposit contract to spend their SrcToken."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker deposits 100 SrcToken, which triggers a cross‑chain message unlocking 100 EthToken to the attacker, violating the amount‑match invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker approves the deposit contract to spend their SrcToken."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker deposits 100 SrcToken, which triggers a cross‑chain message unlocking 100 EthToken to the attacker, violating the amount‑match invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_token_address_change_attack",
+      "target_invariant": "asset_conservation_token_address_immutable",
+      "vulnerability_class": "privileged_function_exploit",
+      "confidence": 0.62,
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "chainswap_20210711"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthCrossChainData",
+          "function": "putCurEpochConPubKeyBytes(address)",
+          "params": {
+            "newKeeper": "attacker"
+          },
+          "description": "Owner of EthCrossChainData is EthCrossChainManager (set by prior ownership transfer). Since EthCrossChainManager is a contract, the attacker can trigger a cross‑chain call (via the relayer) that invokes this function, effectively reassigning the keeper role to the attacker."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000",
+            "fromContract": "SrcDeposit"
+          },
+          "description": "As the new keeper, the attacker calls verifyHeaderAndExecuteTx directly, setting fromContractContext to SrcDeposit (the registered proxy). The unlock call passes the source‑proxy check and transfers an arbitrary large amount of EthToken to the attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Owner of EthCrossChainData is EthCrossChainManager (set by prior ownership transfer). Since EthCrossChainManager is a contract, the attacker can trigger a cross‑chain call (via the relayer) that invokes this function, effectively reassigning the keeper role to the attacker."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "As the new keeper, the attacker calls verifyHeaderAndExecuteTx directly, setting fromContractContext to SrcDeposit (the registered proxy). The unlock call passes the source‑proxy check and transfers an arbitrary large amount of EthToken to the attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_invariant_test",
+      "target_invariant": "authorization_unlock_caller_is_manager",
+      "vulnerability_class": "none",
+      "confidence": 0.0,
+      "retrieved_exploits": [
+        "qanxbridge_20220518",
+        "feg_bridge_20241229",
+        "multichain_20220118",
+        "pgala_20221103",
+        "socket_20240116"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "attacker",
+            "amount": "0"
+          },
+          "description": "No-op approval to satisfy non-empty actions list."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "No-op approval to satisfy non-empty actions list."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_invariant_break_001",
+      "target_invariant": "authorization_unlock_from_registered_proxy",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.45,
+      "retrieved_exploits": [
+        "crosscurve_20260131"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Attacker directly emits a CrossChainEvent with method unlock and a large amount. The relayer will forward the call to EthCrossChainManager.verifyHeaderAndExecuteTx, setting fromContractContext to attacker, which violates the invariant that it must equal the registered proxy."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker directly emits a CrossChainEvent with method unlock and a large amount. The relayer will forward the call to EthCrossChainManager.verifyHeaderAndExecuteTx, setting fromContractContext to attacker, which violates the invariant that it must equal the registered proxy."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crosschain_keeper_takeover_and_drain",
+      "target_invariant": "authorization_execute_crosschain_caller_is_keeper",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "crosscurve_20260131",
+        "chainswap_20210711",
+        "socket_20240116",
+        "wormhole_20220202",
+        "thorchain_1_xscope"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "EthCrossChainData",
+            "method": "putCurEpochConPubKeyBytes(address)",
+            "args": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Emit a CrossChainEvent that the relayer will forward to EthCrossChainManager. The manager (called by the keeper) will invoke EthCrossChainData.putCurEpochConPubKeyBytes(attacker), changing the keeper to the attacker address."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000",
+            "fromContract": "SrcDeposit"
+          },
+          "description": "Now that attacker is the keeper, call verifyHeaderAndExecuteTx directly. Set fromContract to SrcDeposit so that LockProxy.unlock passes its source‑proxy check, and request a huge token transfer from LockProxy to attacker, draining the minted tokens."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Emit a CrossChainEvent that the relayer will forward to EthCrossChainManager. The manager (called by the keeper) will invoke EthCrossChainData.putCurEpochConPubKeyBytes(attacker), changing the keeper to the attacker address."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Now that attacker is the keeper, call verifyHeaderAndExecuteTx directly. Set fromContract to SrcDeposit so that LockProxy.unlock passes its source‑proxy check, and request a huge token transfer from LockProxy to attacker, draining the minted tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_invariant_bypass",
+      "target_invariant": "authorization_deposit_amount_positive",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.3,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "0"
+          },
+          "description": "Attempt to call deposit with zero amount, which should be rejected by the require but demonstrates the invariant check."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attempt to call deposit with zero amount, which should be rejected by the require but demonstrates the invariant check."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_unlock_amount_mismatch",
+      "target_invariant": "authorization_unlock_amount_positive",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.3,
+      "retrieved_exploits": [
+        "ronin_20240806",
+        "nomad_20220801",
+        "bnbbridge_20221007",
+        "harmony_horizon_20220624",
+        "ronin_20220323"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000"
+          },
+          "description": "Attacker deposits a small amount of SrcToken, which triggers a cross‑chain event. The relayer will call LockProxy.unlock with the same amount, but we rely on a crafted mismatch between the transferred amount and the encoded amount to obtain extra tokens."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000",
+            "fromContract": "SrcDeposit"
+          },
+          "description": "Assuming the attacker can become the keeper (e.g., by acquiring ownership of EthCrossChainData), they invoke the manager directly, supplying a forged args payload that specifies a much larger unlock amount than was actually deposited, thereby extracting extra EthToken."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker deposits a small amount of SrcToken, which triggers a cross‑chain event. The relayer will call LockProxy.unlock with the same amount, but we rely on a crafted mismatch between the transferred amount and the encoded amount to obtain extra tokens."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Assuming the attacker can become the keeper (e.g., by acquiring ownership of EthCrossChainData), they invoke the manager directly, supplying a forged args payload that specifies a much larger unlock amount than was actually deposited, thereby extracting extra EthToken."
+        }
+      ]
+    },
+    {
+      "scenario_id": "no_viable_exploit",
+      "target_invariant": "authorization_crosschain_message_origin_registered",
+      "vulnerability_class": "none",
+      "confidence": 0.0,
+      "retrieved_exploits": [
+        "thorchain_20210629",
+        "chainswap_20210711",
+        "bnbbridge_20221007",
+        "metpassport_20220206",
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "0"
+          },
+          "description": "Attacker performs a harmless approval; no exploit is possible under the given constraints."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker performs a harmless approval; no exploit is possible under the given constraints."
+        }
+      ]
+    },
+    {
+      "scenario_id": "no_viable_attack",
+      "target_invariant": "authorization_message_sender_is_proxy_or_manager",
+      "vulnerability_class": "none",
+      "confidence": 0.1,
+      "retrieved_exploits": [
+        "socket_20240116",
+        "rubic_20221225",
+        "crosscurve_20260131",
+        "chainswap_20210711",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "LockProxy",
+            "amount": "0"
+          },
+          "description": "Attacker attempts a harmless approval; no exploit is possible under current contracts."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker attempts a harmless approval; no exploit is possible under current contracts."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_fake_deposit_attack",
+      "target_invariant": "uniqueness_deposit_nonce_used_once",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "qubit_20220127"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker approves the deposit contract to transfer its minted source tokens."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker deposits its source tokens, triggering a cross‑chain unlock that transfers the same amount of pre‑minted destination tokens from LockProxy to attacker, yielding more bridged tokens than deposited."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker approves the deposit contract to transfer its minted source tokens."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker deposits its source tokens, triggering a cross‑chain unlock that transfers the same amount of pre‑minted destination tokens from LockProxy to attacker, yielding more bridged tokens than deposited."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_duplicate_message_attack",
+      "target_invariant": "uniqueness_crosschain_message_idempotent",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "crosscurve_20260131"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker approves SrcDeposit to spend its entire SrcToken balance."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "50000000000000000000"
+          },
+          "description": "First deposit of 50 SrcToken, triggering a cross‑chain unlock of 50 EthToken to attacker."
+        },
+        {
+          "step": 3,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "50000000000000000000"
+          },
+          "description": "Second deposit of the same amount and recipient, emitting an identical cross‑chain message that is processed again, granting attacker another 50 EthToken."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker approves SrcDeposit to spend its entire SrcToken balance."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "First deposit of 50 SrcToken, triggering a cross‑chain unlock of 50 EthToken to attacker."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Second deposit of the same amount and recipient, emitting an identical cross‑chain message that is processed again, granting attacker another 50 EthToken."
+        }
+      ]
+    },
+    {
+      "scenario_id": "attack1",
+      "target_invariant": "uniqueness_unlock_cannot_exceed_locked",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.7,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "multichain_20220118",
+        "synapse_20211109",
+        "meterio_20220205",
+        "ronin_20220323"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker deposits 100 tokens on the source chain. The deposit triggers a cross‑chain call that makes the destination LockProxy unlock 100 tokens to the attacker, without any on‑chain accounting of the locked amount, thereby violating the uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker deposits 100 tokens on the source chain. The deposit triggers a cross‑chain call that makes the destination LockProxy unlock 100 tokens to the attacker, without any on‑chain accounting of the locked amount, thereby violating the uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_fake_crosschain_unlock",
+      "target_invariant": "uniqueness_execute_crosschain_once_per_header",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "anyswap_xscope",
+        "chainswap_20210711"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Emit a CrossChainEvent that the honest relayer will forward to EthCrossChainManager, causing it to call LockProxy.unlock and transfer the pre‑minted EthToken to the attacker without any source‑chain token lock."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Emit a CrossChainEvent that the honest relayer will forward to EthCrossChainManager, causing it to call LockProxy.unlock and transfer the pre‑minted EthToken to the attacker without any source‑chain token lock."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_nonce_misalignment_attack",
+      "target_invariant": "uniqueness_message_nonce_unique_across_chains",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.0,
+      "retrieved_exploits": [
+        "multichain_xscope",
+        "anyswap_20210710",
+        "verus_20260518",
+        "chainswap_20210711",
+        "pnetwork_20210919"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "attacker",
+            "amount": "0"
+          },
+          "description": "No-op approval to satisfy non‑empty actions list."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "No-op approval to satisfy non‑empty actions list."
+        }
+      ]
+    }
+  ]
+}

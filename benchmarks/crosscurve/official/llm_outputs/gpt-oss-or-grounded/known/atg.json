@@ -1,0 +1,1233 @@
+{
+  "bridge_name": "crosscurve",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "AxelarGateway",
+      "node_type": "router",
+      "chain": "unknown",
+      "address": "0x0",
+      "functions": []
+    },
+    {
+      "node_id": "PortalSrc",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "0x0",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "source",
+      "address": "token",
+      "functions": []
+    },
+    {
+      "node_id": "gateway",
+      "node_type": "relay",
+      "chain": "source",
+      "address": "gateway",
+      "functions": []
+    },
+    {
+      "node_id": "PortalV2",
+      "node_type": "router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "address",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "receiver",
+      "node_type": "address",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "ReceiverAxelar",
+      "node_type": "router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "AxelarGateway",
+      "node_type": "gateway",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "PortalV2",
+      "node_type": "token_vault",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "msg.sender",
+      "dst": "destination contract (via relay)",
+      "label": "contractCall",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "callContract(string,string,bytes)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "msg.sender",
+      "dst": "PortalSrc",
+      "label": "lock",
+      "token": "token",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "PortalSrc",
+      "dst": "Arbitrum:receiver",
+      "label": "relay",
+      "token": "token",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e4",
+      "src": "OfficialToken",
+      "dst": "to",
+      "label": "withdraw",
+      "token": "OfficialToken",
+      "conditions": [
+        "msg.sender == receiver"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == receiver"
+          }
+        }
+      ],
+      "function_signature": "release(address,uint256)"
+    },
+    {
+      "edge_id": "e5",
+      "src": "PortalV2",
+      "dst": "recipient (decoded from payload)",
+      "label": "withdraw",
+      "token": "ERC20 (unspecified)",
+      "conditions": [
+        "s",
+        "o",
+        "u",
+        "r",
+        "c",
+        "e",
+        "A",
+        "d",
+        "d",
+        "r",
+        "e",
+        "s",
+        "s",
+        " ",
+        "=",
+        "=",
+        " ",
+        "t",
+        "r",
+        "u",
+        "s",
+        "t",
+        "e",
+        "d",
+        "S",
+        "o",
+        "u",
+        "r",
+        "c",
+        "e",
+        " ",
+        "&",
+        "&",
+        " ",
+        "g",
+        "a",
+        "t",
+        "e",
+        "w",
+        "a",
+        "y",
+        ".",
+        "v",
+        "a",
+        "l",
+        "i",
+        "d",
+        "a",
+        "t",
+        "e",
+        "C",
+        "o",
+        "n",
+        "t",
+        "r",
+        "a",
+        "c",
+        "t",
+        "C",
+        "a",
+        "l",
+        "l",
+        "(",
+        "c",
+        "o",
+        "m",
+        "m",
+        "a",
+        "n",
+        "d",
+        "I",
+        "d",
+        ",",
+        " ",
+        "s",
+        "o",
+        "u",
+        "r",
+        "c",
+        "e",
+        "A",
+        "d",
+        "d",
+        "r",
+        "e",
+        "s",
+        "s",
+        ")"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "A"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "="
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "="
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "S"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "&"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "&"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "g"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "w"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "y"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "."
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "v"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "i"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "C"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "C"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "l"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "("
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "I"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ","
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "A"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ")"
+          }
+        }
+      ],
+      "function_signature": "release(address,uint256)"
+    },
+    {
+      "edge_id": "e6",
+      "src": "PortalV2",
+      "dst": "recipient (decoded from payload)",
+      "label": "withdraw",
+      "token": "ERC20 (unspecified)",
+      "conditions": [
+        "s",
+        "o",
+        "u",
+        "r",
+        "c",
+        "e",
+        "A",
+        "d",
+        "d",
+        "r",
+        "e",
+        "s",
+        "s",
+        " ",
+        "=",
+        "=",
+        " ",
+        "t",
+        "r",
+        "u",
+        "s",
+        "t",
+        "e",
+        "d",
+        "S",
+        "o",
+        "u",
+        "r",
+        "c",
+        "e"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "A"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "="
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "="
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "s"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "d"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "S"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "r"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "c"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "e"
+          }
+        }
+      ],
+      "function_signature": "release(address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_locked_equals_total_minted",
+      "category": "asset_conservation",
+      "description": "The total amount of source tokens locked via edge e2 must equal the total amount minted/released on the destination side via edges e3 and e4.",
+      "predicate": "totalLocked == totalMinted",
+      "solidity_assertion": "assert(totalLocked == totalMinted);",
+      "related_edges": [
+        "e2",
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_user_balance_decreases_on_lock",
+      "category": "asset_conservation",
+      "description": "When a user calls deposit on PortalSrc (edge e2) the user's token balance decreases by `amount` and PortalSrc's balance increases by the same `amount`.",
+      "predicate": "balanceBefore[user] - amount == balanceAfter[user] && balanceAfter[PortalSrc] - balanceBefore[PortalSrc] == amount",
+      "solidity_assertion": "require(token.balanceOf(msg.sender) == balanceBeforeUser - amount, \"User balance not decreased\"); require(token.balanceOf(address(PortalSrc)) == balanceBeforePortal + amount, \"PortalSrc balance not increased\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_relay_caller_must_be_gateway",
+      "category": "authorization",
+      "description": "The relay function on edge e3 can only be invoked by the authorized gateway contract.",
+      "predicate": "msg.sender == gateway",
+      "solidity_assertion": "require(msg.sender == address(gateway), \"Only gateway can relay\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_caller_is_receiver",
+      "category": "authorization",
+      "description": "The withdraw function on edge e4 can only be called by the designated receiver address.",
+      "predicate": "msg.sender == receiver",
+      "solidity_assertion": "require(msg.sender == receiver, \"Caller is not the receiver\");",
+      "related_edges": [
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_requires_corresponding_relay",
+      "category": "authorization",
+      "description": "A withdraw on edge e4 is allowed only if a relay event with the same `nonce` has been recorded on edge e3.",
+      "predicate": "processedNonces[nonce] == true",
+      "solidity_assertion": "require(processedNonces[nonce], \"Corresponding relay not processed\");",
+      "related_edges": [
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_nonce_processed_once",
+      "category": "uniqueness",
+      "description": "Each transfer `nonce` can be processed at most once across the whole bridge.",
+      "predicate": "processedNonces[nonce] == false",
+      "solidity_assertion": "require(!processedNonces[nonce], \"Nonce already processed\");",
+      "related_edges": [
+        "e3",
+        "e4",
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_deposit_cannot_be_locked_twice",
+      "category": "uniqueness",
+      "description": "A specific deposit (msg.sender, amount, nonce) cannot be locked more than once via edge e2.",
+      "predicate": "depositSeen[msg.sender][nonce] == false",
+      "solidity_assertion": "require(!depositSeen[msg.sender][nonce], \"Deposit already locked\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_portalV2_withdraw_not_exceed_locked",
+      "category": "asset_conservation",
+      "description": "The total amount withdrawn through PortalV2 (edge e5) for a given user must never exceed the total amount that user locked via edge e2.",
+      "predicate": "withdrawnByUser[user] <= totalLockedByUser[user]",
+      "solidity_assertion": "assert(withdrawnByUser[user] <= totalLockedByUser[user]);",
+      "related_edges": [
+        "e2",
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_portalV2_only_trusted_source",
+      "category": "authorization",
+      "description": "PortalV2 (edge e5) may release funds only after the gateway validates the contract call payload.",
+      "predicate": "gateway.validateContractCall(commandId, sourceAddress) == true",
+      "solidity_assertion": "require(gateway.validateContractCall(commandId, sourceAddress), \"Invalid contract call validation\");",
+      "related_edges": [
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply_constant",
+      "category": "asset_conservation",
+      "description": "The total supply of OfficialToken must remain constant; locking reduces supply on source chain and minting on destination does not change the overall supply.",
+      "predicate": "OfficialToken.totalSupply() == initialSupply",
+      "solidity_assertion": "assert(OfficialToken.totalSupply() == initialSupply);",
+      "related_edges": [
+        "e2",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_contractcall_sender_must_be_admin",
+      "category": "authorization",
+      "description": "The generic contract call represented by edge e1 can only be initiated by the admin address.",
+      "predicate": "msg.sender == admin",
+      "solidity_assertion": "require(msg.sender == admin, \"Only admin can call contract\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_contractcall_idempotent",
+      "category": "uniqueness",
+      "description": "A contract call with a given `commandId` (edge e1) may be executed only once.",
+      "predicate": "executedCommands[commandId] == false",
+      "solidity_assertion": "require(!executedCommands[commandId], \"Command already executed\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_double_mint",
+      "category": "asset_conservation",
+      "description": "The amount minted on the destination side (edge e3) must never exceed the amount previously locked on the source side (edge e2) for the same nonce.",
+      "predicate": "mintedAmount[nonce] <= lockedAmount[nonce]",
+      "solidity_assertion": "assert(mintedAmount[nonce] <= lockedAmount[nonce]);",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_relay_message_signature_verified",
+      "category": "authorization",
+      "description": "Edge e3 must verify the AxelarGateway signature on the relayed message before processing.",
+      "predicate": "AxelarGateway.verifySignature(messageHash, signature) == true",
+      "solidity_assertion": "require(AxelarGateway.verifySignature(messageHash, signature), \"Invalid Axelar signature\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_relay_message_processed_once",
+      "category": "uniqueness",
+      "description": "Each relayed message (identified by its hash) on edge e3 can be processed only a single time.",
+      "predicate": "processedMessages[messageHash] == false",
+      "solidity_assertion": "require(!processedMessages[messageHash], \"Message already processed\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_amount_nonzero",
+      "category": "asset_conservation",
+      "description": "Edge e2 must only lock a positive, non‑zero amount of tokens.",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Lock amount must be > 0\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_portalV2_withdraw_once_per_nonce",
+      "category": "uniqueness",
+      "description": "PortalV2 (edge e5) may withdraw funds for a given `nonce` only once.",
+      "predicate": "withdrawnNonces[nonce] == false",
+      "solidity_assertion": "require(!withdrawnNonces[nonce], \"Nonce already withdrawn\");",
+      "related_edges": [
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

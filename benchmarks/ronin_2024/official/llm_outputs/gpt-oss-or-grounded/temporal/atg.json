@@ -1,0 +1,291 @@
+{
+  "bridge_name": "ronin_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "RoninDeposit",
+      "node_type": "router",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
+      "node_type": "token",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    },
+    {
+      "node_id": "user",
+      "node_type": "user",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "roningatewayv3",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "user",
+      "dst": "RoninDeposit",
+      "label": "lock",
+      "token": "OfficialToken",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "bridge",
+      "dst": "user",
+      "label": "unlock",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "withdraw(address recipient,uint256 amount,address[] calldata signers)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_locked_equals_total_unlocked",
+      "category": "asset_conservation",
+      "description": "The cumulative amount locked via e1 must equal the cumulative amount unlocked via e2.",
+      "predicate": "totalLocked == totalUnlocked",
+      "solidity_assertion": "require(totalLocked == totalUnlocked, \"Locked amount must equal unlocked amount\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_contract_balance_increases_on_lock",
+      "category": "asset_conservation",
+      "description": "After executing e1 (deposit), the bridge contract's OfficialToken balance must increase by the deposited amount.",
+      "predicate": "balanceAfterLock == balanceBeforeLock + amount",
+      "solidity_assertion": "assert(OfficialToken.balanceOf(address(this)) == balanceBeforeLock + amount);",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_contract_balance_decreases_on_unlock",
+      "category": "asset_conservation",
+      "description": "After executing e2 (withdraw), the bridge contract's OfficialToken balance must decrease by the withdrawn amount.",
+      "predicate": "balanceAfterUnlock == balanceBeforeUnlock - amount",
+      "solidity_assertion": "assert(OfficialToken.balanceOf(address(this)) == balanceBeforeUnlock - amount);",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_negative_locked_amount",
+      "category": "asset_conservation",
+      "description": "The stored locked amount for any deposit must never become negative.",
+      "predicate": "locked[depositId] >= 0",
+      "solidity_assertion": "require(locked[depositId] >= 0, \"Locked amount cannot be negative\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_amount_nonzero_on_lock",
+      "category": "asset_conservation",
+      "description": "Edge e1 requires a strictly positive amount to be locked.",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Deposit amount must be > 0\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_unlocked_not_exceed_locked",
+      "category": "asset_conservation",
+      "description": "The total amount unlocked via e2 must never exceed the total amount locked via e1.",
+      "predicate": "totalUnlocked <= totalLocked",
+      "solidity_assertion": "require(totalUnlocked <= totalLocked, \"Unlocked exceeds locked\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_bridge_can_unlock",
+      "category": "authorization",
+      "description": "Only the bridge contract (roningatewayv3) may invoke e2 (withdraw).",
+      "predicate": "msg.sender == address(roningatewayv3)",
+      "solidity_assertion": "require(msg.sender == address(roningatewayv3), \"Caller must be bridge contract\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_requires_min_signers",
+      "category": "authorization",
+      "description": "Edge e2 must be accompanied by a quorum of at least 3 distinct signers.",
+      "predicate": "signers.length >= 3 && distinct(signers) == signers.length",
+      "solidity_assertion": "require(signers.length >= 3, \"Insufficient signers\"); require(_areDistinct(signers), \"Duplicate signers\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_signers_must_be_valid",
+      "category": "authorization",
+      "description": "All addresses in the signers array for e2 must be non‑zero.",
+      "predicate": "forall s in signers: s != address(0)",
+      "solidity_assertion": "for (uint i = 0; i < signers.length; i++) { require(signers[i] != address(0), \"Signer cannot be zero address\"); }",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_amount_must_match_locked",
+      "category": "authorization",
+      "description": "The amount specified in e2 must not exceed the locked amount for the corresponding depositId.",
+      "predicate": "amount <= locked[depositId]",
+      "solidity_assertion": "require(amount <= locked[depositId], \"Withdraw exceeds locked amount\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_deposit_nonce_unique",
+      "category": "uniqueness",
+      "description": "Each deposit via e1 must be assigned a unique nonce that has not been used before.",
+      "predicate": "!usedNonce[nonce]",
+      "solidity_assertion": "require(!usedNonce[nonce], \"Nonce already used\"); usedNonce[nonce] = true;",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_withdraw_processed_once",
+      "category": "uniqueness",
+      "description": "A deposit identified by depositId can be unlocked via e2 at most once.",
+      "predicate": "!processed[depositId]",
+      "solidity_assertion": "require(!processed[depositId], \"Deposit already processed\"); processed[depositId] = true;",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_no_replay_of_deposit",
+      "category": "uniqueness",
+      "description": "Replay of a previously processed e1 event must be rejected.",
+      "predicate": "msgHash not in processedHashes",
+      "solidity_assertion": "require(!processedHashes[msgHash], \"Replay detected\"); processedHashes[msgHash] = true;",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_signers_array_no_duplicates",
+      "category": "uniqueness",
+      "description": "The signers array supplied to e2 must contain no duplicate addresses.",
+      "predicate": "distinct(signers) == signers.length",
+      "solidity_assertion": "require(_areDistinct(signers), \"Duplicate signers not allowed\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_depositId_must_exist_for_withdraw",
+      "category": "uniqueness",
+      "description": "e2 can only be executed for a depositId that was previously created by e1.",
+      "predicate": "exists depositId in deposits",
+      "solidity_assertion": "require(deposits[depositId].exists, \"Unknown depositId\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply_unchanged",
+      "category": "asset_conservation",
+      "description": "The total supply of OfficialToken across source and destination chains remains constant; a lock on source is paired with a mint on destination.",
+      "predicate": "sourceLocked + destinationMinted == initialSupply",
+      "solidity_assertion": "require(sourceLocked + destinationMinted == initialSupply, \"Total supply mismatch\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_processed_flag_cleared_on_refund",
+      "category": "uniqueness",
+      "description": "If a refund mechanism (not present) were to clear a processed flag, the flag must be reset to allow future deposits with the same nonce.",
+      "predicate": "processed[depositId] == false after refund",
+      "solidity_assertion": "// Placeholder for refund logic: processed[depositId] = false;",
+      "related_edges": [],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

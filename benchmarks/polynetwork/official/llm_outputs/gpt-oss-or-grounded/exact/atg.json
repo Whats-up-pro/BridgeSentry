@@ -1,0 +1,484 @@
+{
+  "bridge_name": "polynetwork",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "EthCrossChainData",
+      "node_type": "contract",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "EthCrossChainManager",
+      "node_type": "contract",
+      "chain": "Ethereum",
+      "address": "this",
+      "functions": []
+    },
+    {
+      "node_id": "EthCrossChainData",
+      "node_type": "contract",
+      "chain": "Ethereum",
+      "address": "eccd",
+      "functions": []
+    },
+    {
+      "node_id": "LockProxy",
+      "node_type": "bridge",
+      "chain": "unknown",
+      "address": "this_contract_address",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "unknown",
+      "address": "token_address",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "address",
+      "chain": "unknown",
+      "address": "admin_address",
+      "functions": []
+    },
+    {
+      "node_id": "manager",
+      "node_type": "contract",
+      "chain": "unknown",
+      "address": "manager_address",
+      "functions": []
+    },
+    {
+      "node_id": "registeredProxy",
+      "node_type": "address",
+      "chain": "unknown",
+      "address": "registered_proxy_address",
+      "functions": []
+    },
+    {
+      "node_id": "SourceCrossChain",
+      "node_type": "router",
+      "chain": "source",
+      "address": "unknown",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "source",
+      "address": "token (immutable address set at deployment)",
+      "functions": []
+    },
+    {
+      "node_id": "ccm",
+      "node_type": "router",
+      "chain": "source",
+      "address": "ccm (immutable address set at deployment)",
+      "functions": []
+    },
+    {
+      "node_id": "destLockProxy",
+      "node_type": "router",
+      "chain": "destination",
+      "address": "destLockProxy (immutable address set at deployment)",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "EthCrossChainManager",
+      "dst": "toContract",
+      "label": "executeCrossChainCall",
+      "token": "UNKNOWN",
+      "conditions": [
+        "msg.sender == eccd.keeper()"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == eccd.keeper()"
+          }
+        }
+      ],
+      "function_signature": "verifyHeaderAndExecuteTx(address,string,bytes,address)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "LockProxy",
+      "dst": "recipient",
+      "label": "unlock",
+      "token": "token",
+      "conditions": [
+        "msg.sender == manager",
+        "ICrossChainContext(manager).fromContractContext() == registeredProxy"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == manager"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "ICrossChainContext(manager).fromContractContext() == registeredProxy"
+          }
+        }
+      ],
+      "function_signature": "unlock(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "msg.sender",
+      "dst": "toContract",
+      "label": "message",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "crossChain(address,string,bytes)"
+    },
+    {
+      "edge_id": "e4",
+      "src": "msg.sender",
+      "dst": "this",
+      "label": "lock",
+      "token": "token",
+      "conditions": [
+        "a",
+        "m",
+        "o",
+        "u",
+        "n",
+        "t",
+        " ",
+        ">",
+        " ",
+        "0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ">"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e5",
+      "src": "this",
+      "dst": "destLockProxy",
+      "label": "crossChainMessage",
+      "token": "token",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "unlock(address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_locked_equals_unlocked",
+      "category": "asset_conservation",
+      "description": "The cumulative amount of tokens locked via deposit (e4) must equal the cumulative amount unlocked via unlock (e2) plus any remaining balance held by the bridge contract.",
+      "predicate": "Σ_{e4}(deposit.amount) == Σ_{e2}(unlock.amount) + bridgeTokenBalance",
+      "solidity_assertion": "require(totalDeposited == totalUnlocked + token.balanceOf(address(this)), \"Asset conservation violation\");",
+      "related_edges": [
+        "e4",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_per_transfer_amount_match",
+      "category": "asset_conservation",
+      "description": "For each unique transfer identifier (e.g., nonce) the amount locked in e4 must equal the amount unlocked in e2.",
+      "predicate": "∀ id: lockedAmount[id] == unlockedAmount[id]",
+      "solidity_assertion": "require(lockedAmount[transferId] == unlockedAmount[transferId], \"Per‑transfer amount mismatch\");",
+      "related_edges": [
+        "e4",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_negative_bridge_balance",
+      "category": "asset_conservation",
+      "description": "The bridge contract's token balance can never become negative after processing any unlock.",
+      "predicate": "token.balanceOf(address(this)) >= 0",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) >= 0);",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_minus_unlocked_nonnegative",
+      "category": "asset_conservation",
+      "description": "The net locked amount (total locked minus total unlocked) must never be negative.",
+      "predicate": "totalLocked - totalUnlocked >= 0",
+      "solidity_assertion": "require(totalLocked >= totalUnlocked, \"Unlocked exceeds locked\");",
+      "related_edges": [
+        "e4",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_crosschain_message_amount_match",
+      "category": "asset_conservation",
+      "description": "The amount forwarded in the cross‑chain message (e5) must be exactly the amount that was deposited in the corresponding lock (e4).",
+      "predicate": "crossChainMessage.amount == lockedAmount[transferId]",
+      "solidity_assertion": "require(crossChainMessage.amount == lockedAmount[transferId], \"Cross‑chain amount mismatch\");",
+      "related_edges": [
+        "e4",
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_token_address_immutable",
+      "category": "asset_conservation",
+      "description": "The token contract address used by the bridge never changes after deployment.",
+      "predicate": "tokenAddress == immutableTokenAddress",
+      "solidity_assertion": "assert(tokenAddress == immutableTokenAddress);",
+      "related_edges": [
+        "e4",
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_unlock_caller_is_manager",
+      "category": "authorization",
+      "description": "Only the manager contract may invoke the unlock function on the LockProxy (edge e2).",
+      "predicate": "msg.sender == manager",
+      "solidity_assertion": "require(msg.sender == manager, \"Unlock caller not manager\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_unlock_from_registered_proxy",
+      "category": "authorization",
+      "description": "The manager must be invoked from the registered proxy context when calling unlock (edge e2).",
+      "predicate": "ICrossChainContext(manager).fromContractContext() == registeredProxy",
+      "solidity_assertion": "require(ICrossChainContext(manager).fromContractContext() == registeredProxy, \"Invalid proxy context\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_execute_crosschain_caller_is_keeper",
+      "category": "authorization",
+      "description": "The executeCrossChainCall function (edge e1) can only be called by the keeper address defined in the EthCrossChainData contract.",
+      "predicate": "msg.sender == eccd.keeper()",
+      "solidity_assertion": "require(msg.sender == eccd.keeper(), \"Caller not keeper\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_deposit_amount_positive",
+      "category": "authorization",
+      "description": "Deposits (edge e4) must specify a strictly positive token amount.",
+      "predicate": "deposit.amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Deposit amount must be > 0\");",
+      "related_edges": [
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_unlock_amount_positive",
+      "category": "authorization",
+      "description": "Unlock operations (edge e2) must release a strictly positive token amount.",
+      "predicate": "unlock.amount > 0",
+      "solidity_assertion": "require(_value > 0, \"Unlock amount must be > 0\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_crosschain_message_origin_registered",
+      "category": "authorization",
+      "description": "Cross‑chain messages sent via e5 must originate from a contract that previously performed a deposit (e4).",
+      "predicate": "depositRecorded[transferId] == true",
+      "solidity_assertion": "require(depositRecorded[transferId], \"No prior deposit for this message\");",
+      "related_edges": [
+        "e4",
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_message_sender_is_proxy_or_manager",
+      "category": "authorization",
+      "description": "The generic cross‑chain call (edge e3) must be invoked by either the registered proxy or the manager contract.",
+      "predicate": "msg.sender == registeredProxy || msg.sender == manager",
+      "solidity_assertion": "require(msg.sender == registeredProxy || msg.sender == manager, \"Invalid message sender\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_deposit_nonce_used_once",
+      "category": "uniqueness",
+      "description": "Each deposit nonce can be processed for unlocking at most once.",
+      "predicate": "processedNonce[nonce] == false",
+      "solidity_assertion": "require(!processedNonce[nonce], \"Nonce already processed\");",
+      "related_edges": [
+        "e4",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_crosschain_message_idempotent",
+      "category": "uniqueness",
+      "description": "A cross‑chain message (edge e5) identified by its hash must not be relayed more than once.",
+      "predicate": "processedMessage[msgHash] == false",
+      "solidity_assertion": "require(!processedMessage[msgHash], \"Message already processed\");",
+      "related_edges": [
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_unlock_cannot_exceed_locked",
+      "category": "uniqueness",
+      "description": "The cumulative unlocked amount for a given transfer identifier must never exceed the amount that was originally locked.",
+      "predicate": "unlockedAmount[id] <= lockedAmount[id]",
+      "solidity_assertion": "require(unlockedAmount[transferId] <= lockedAmount[transferId], \"Unlock exceeds locked amount\");",
+      "related_edges": [
+        "e4",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_execute_crosschain_once_per_header",
+      "category": "uniqueness",
+      "description": "The executeCrossChainCall function (e1) must not be invoked more than once for the same header hash.",
+      "predicate": "executedHeader[headerHash] == false",
+      "solidity_assertion": "require(!executedHeader[headerHash], \"Header already executed\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_nonce_unique_across_chains",
+      "category": "uniqueness",
+      "description": "The combination of source chain ID and nonce must be globally unique, preventing replay across different destination chains.",
+      "predicate": "globalNonceUsed[sourceChainId][nonce] == false",
+      "solidity_assertion": "require(!globalNonceUsed[srcChainId][nonce], \"Global nonce replay\");",
+      "related_edges": [
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

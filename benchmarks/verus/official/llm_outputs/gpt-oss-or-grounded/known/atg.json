@@ -1,0 +1,375 @@
+{
+  "bridge_name": "verus",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "VerusBridge",
+      "node_type": "router",
+      "chain": "this",
+      "address": "this",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "this",
+      "address": "token",
+      "functions": []
+    },
+    {
+      "node_id": "notary",
+      "node_type": "account",
+      "chain": "this",
+      "address": "notary",
+      "functions": []
+    },
+    {
+      "node_id": "VerusExportSurrogate",
+      "node_type": "router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "VerusBridge",
+      "dst": "recipient",
+      "label": "withdraw",
+      "token": "token",
+      "conditions": [
+        "committedExport[exportId] > 0",
+        "claimed[exportId] += payout"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "committedExport[exportId] > 0"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "claimed[exportId] += payout"
+          }
+        }
+      ],
+      "function_signature": "submitImports(address,uint256,bytes32)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "msg.sender",
+      "dst": "VerusExportSurrogate",
+      "label": "lock",
+      "token": "OfficialToken",
+      "conditions": [
+        "a",
+        "m",
+        "o",
+        "u",
+        "n",
+        "t",
+        " ",
+        ">",
+        " ",
+        "0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "a"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "m"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "o"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "u"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "n"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "t"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": ">"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": " "
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "0"
+          }
+        }
+      ],
+      "function_signature": "export(bytes32,address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_per_export",
+      "category": "asset_conservation",
+      "description": "For every exportId the total amount claimed by withdrawals must never exceed the amount that was locked on the source chain.",
+      "predicate": "claimed[exportId] <= committedExport[exportId]",
+      "solidity_assertion": "require(claimed[exportId] <= committedExport[exportId], \"claimed amount exceeds locked amount\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_overwithdraw",
+      "category": "asset_conservation",
+      "description": "A single withdrawal (edge e1) cannot withdraw more than the remaining unclaimed balance of the export.",
+      "predicate": "payout <= (committedExport[exportId] - claimed[exportId])",
+      "solidity_assertion": "require(payout <= committedExport[exportId] - claimed[exportId], \"withdrawal would overdraw export\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_locked_nonzero",
+      "category": "asset_conservation",
+      "description": "When a lock (edge e2) is performed, the amount transferred must be strictly greater than zero.",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, \"lock amount must be > 0\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_committed_nonzero",
+      "category": "asset_conservation",
+      "description": "An exportId must have a positive committed amount before any withdrawal can be processed.",
+      "predicate": "committedExport[exportId] > 0",
+      "solidity_assertion": "require(committedExport[exportId] > 0, \"export has no committed amount\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_only_notary_submit_imports",
+      "category": "authorization",
+      "description": "Only the designated notary account may call the submitImports function that triggers edge e1.",
+      "predicate": "msg.sender == notary",
+      "solidity_assertion": "require(msg.sender == notary, \"only notary can submit imports\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_lock_token_transfer_success",
+      "category": "authorization",
+      "description": "The lock operation (edge e2) must successfully transfer the OfficialToken from the sender to the bridge contract.",
+      "predicate": "OfficialToken.transferFrom(msg.sender, address(this), amount) == true",
+      "solidity_assertion": "require(OfficialToken.transferFrom(msg.sender, address(this), amount), \"token lock transfer failed\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_exportid_nonzero",
+      "category": "authorization",
+      "description": "Export identifiers used in both lock and withdraw steps must be non‑zero to prevent null‑identifier attacks.",
+      "predicate": "exportId != bytes32(0)",
+      "solidity_assertion": "require(exportId != bytes32(0), \"exportId cannot be zero\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_exportid_used_once_lock",
+      "category": "uniqueness",
+      "description": "A given exportId can be locked (edge e2) at most once; subsequent lock attempts must revert.",
+      "predicate": "committedExport[exportId] == 0",
+      "solidity_assertion": "require(committedExport[exportId] == 0, \"exportId already locked\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_exportid_used_once_withdraw",
+      "category": "uniqueness",
+      "description": "A given exportId can be withdrawn (edge e1) only while there remains unclaimed balance; once fully claimed, further withdrawals are prohibited.",
+      "predicate": "claimed[exportId] < committedExport[exportId]",
+      "solidity_assertion": "require(claimed[exportId] < committedExport[exportId], \"export fully claimed\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_claimed_before_increment",
+      "category": "uniqueness",
+      "description": "Before updating the claimed mapping in edge e1, the contract must verify that the exportId has not been claimed for the same payout amount already.",
+      "predicate": "claimed[exportId] + payout <= committedExport[exportId]",
+      "solidity_assertion": "require(claimed[exportId] + payout <= committedExport[exportId], \"duplicate or excess claim\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_no_duplicate_claim",
+      "category": "uniqueness",
+      "description": "The combination of exportId and recipient address may be used for a claim only once.",
+      "predicate": "claimedBy[exportId][recipient] == false",
+      "solidity_assertion": "require(!claimedBy[exportId][recipient], \"recipient already claimed this export\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_global_balance_consistency",
+      "category": "asset_conservation",
+      "description": "The sum of all committed export amounts across the contract must equal the sum of all tokens currently held plus the sum of all claimed amounts.",
+      "predicate": "totalCommitted == (token.balanceOf(address(this)) + totalClaimed)",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) + totalClaimed == totalCommitted);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_recipient_is_valid",
+      "category": "authorization",
+      "description": "The recipient address in a withdrawal (edge e1) must be a non‑zero address to avoid burning tokens unintentionally.",
+      "predicate": "recipient != address(0)",
+      "solidity_assertion": "require(recipient != address(0), \"recipient address cannot be zero\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_exportid_monotonic_nonce",
+      "category": "uniqueness",
+      "description": "Export identifiers must be generated from a monotonically increasing nonce to guarantee global uniqueness.",
+      "predicate": "exportId == keccak256(abi.encodePacked(currentNonce)) && currentNonce == previousNonce + 1",
+      "solidity_assertion": "require(exportId == keccak256(abi.encodePacked(currentNonce)) && currentNonce == previousNonce + 1, \"exportId nonce not monotonic\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_payout_matches_committed",
+      "category": "asset_conservation",
+      "description": "When the final withdrawal for an exportId occurs, the cumulative payout must exactly equal the originally committed amount.",
+      "predicate": "(claimed[exportId] + payout) == committedExport[exportId] => finalWithdrawal == true",
+      "solidity_assertion": "if (claimed[exportId] + payout == committedExport[exportId]) { /* final withdrawal logic */ }",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_lock_caller_has_allowance",
+      "category": "authorization",
+      "description": "The caller of the lock function (edge e2) must have approved the bridge contract to transfer at least the lock amount of OfficialToken.",
+      "predicate": "OfficialToken.allowance(msg.sender, address(this)) >= amount",
+      "solidity_assertion": "require(OfficialToken.allowance(msg.sender, address(this)) >= amount, \"insufficient token allowance for lock\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_exportid_cannot_be_reused_after_refund",
+      "category": "uniqueness",
+      "description": "If a refund mechanism existed, an exportId that has been refunded must be marked as invalid for any future lock or withdraw.",
+      "predicate": "refunded[exportId] == false",
+      "solidity_assertion": "require(!refunded[exportId], \"exportId already refunded\");",
+      "related_edges": [],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}
