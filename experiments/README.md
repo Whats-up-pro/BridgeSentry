@@ -13,5 +13,8 @@ a new directory.
 | `legacy_oracle_diagnosis_20261103/` | Diagnosis of the legacy (pre-official) oracle at `db20af7` + `diag_exec_only.patch`: 12 fixtures × {scenario-only, real bytecode, execution-only state} + patched Nomad; 3 seeds × 20 s; empty RPC. Shows the legacy oracle derives violations from scenario text. |
 | `official_20261114_a1_hpc/` | A-1 on HPC (Slurm job 30578): 7 on-chain fixtures × {vulnerable, patched} × random seeds, 20 seeds × 300 s; empty RPC; repo 5a6536d, binary d9cf542e. |
 | `official_20261115_c3_hpc/` | C3 on HPC (Slurm jobs 42012 vulnerable, 42013 patched): gpt-oss-120b seeds under 4 retrieval regimes (known, exact, temporal, no_rag) on ronin_2024, crosscurve, verus, feg_bridge_2024, polynetwork; 20 seeds × 300 s; empty RPC; repo 89c0dbe, binary d9cf542e; compared with official_20261114_a1_hpc. |
+| `official_20261118_c3b_seedgen/` | C3b seed generation: 20 grounded gpt-oss-120b seed sets (docs/C3b_protocol.md), ledgers, logs incl. the discarded 402 attempt, local smoke. |
+| `official_20261118_seed_channel_control/` | Positive control of the grounded seed channel (local WSL run): documented exploits compiled by seed_compiler give a valid exploit at the first execution on 7/7 fixtures, no alert on patched. |
+| `official_20261118_c3b_hpc/` | C3b on HPC (Slurm jobs 52245 vulnerable, 52246 patched): grounded gpt-oss-120b seeds under 4 retrieval regimes on 5 fixtures; 20 seeds × 300 s; empty RPC; repo 093e5ae, binary d9cf542e; F1-F3 comparisons with random (A-1) and C3. |
 
 New campaigns: `scripts/official/run_matrix.sh experiments/official_<YYYYMMDD> <budget_s> <jobs> <bench>...`
