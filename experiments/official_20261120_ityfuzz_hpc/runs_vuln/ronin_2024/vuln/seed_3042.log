@@ -1,0 +1,350 @@
+Compiling 4 files with Solc 0.8.20
+Solc 0.8.20 finished in 116.39ms
+Compiler run successful!
+warning[missing-zero-check]: address parameter is used in a state write or value transfer without a zero-address check
+   ╭▸ src/Harness.sol:11:34
+   │
+11 │     constructor(OfficialToken t, address h) { token = t; holder = h; leaked0 = t.totalSupply() - t.balanceOf(h); }
+   │                                  ━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/missing-zero-check
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/RoninDeposit.sol:22:9
+   │
+22 │         emit Deposited(msg.sender, amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[missing-events-access-control]: `minter` is changed without an event but is used for access control
+   ╭▸ src/OfficialToken.sol:27:9
+   │
+27 │         minter[m] = allowed;
+   │         ━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/missing-events-access-control
+
+warning[erc20-unchecked-transfer]: ERC20 `transfer` or `transferFrom` call does not check the return value
+   ╭▸ src/RoninDeposit.sol:20:9
+   │
+20 │         token.transferFrom(msg.sender, address(this), amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/erc20-unchecked-transfer
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/RoninGatewayV3.sol:72:9
+   │
+72 │         emit Withdrew(recipient, amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[erc20-unchecked-transfer]: ERC20 `transfer` or `transferFrom` call does not check the return value
+   ╭▸ src/RoninGatewayV3.sol:71:9
+   │
+71 │         token.transfer(recipient, amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/erc20-unchecked-transfer
+
+[32m INFO[0m 
+
+ ================ EVM Fuzzer Start ===================
+
+
+[32m INFO[0m Deploying contract: src/RoninGatewayV3.sol:RoninGatewayV3
+[32m INFO[0m Contract src/RoninGatewayV3.sol:RoninGatewayV3 deployed to: 0xbb4c009bb1ed035ced6da7a75e104db3d58ad454 -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Inv
+[32m INFO[0m Contract src/Harness.sol:Inv deployed to: 0x4b5c0011e4ea1015de9fe739bd1ceb5973fac741 -> balacne is 0
+[32m INFO[0m Deploying contract: src/RoninDeposit.sol:RoninDeposit
+[32m INFO[0m Contract src/RoninDeposit.sol:RoninDeposit deployed to: 0xa1eab5e20f7ed7daa6b810eced8b47c28b8f28d3 -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Harness
+[32m INFO[0m Contract src/Harness.sol:Harness deployed to: 0xe1a425f1ac34a8a441566f93c82dd730639c8510 -> balacne is 0
+[32m INFO[0m Deploying contract: src/RoninDeposit.sol:RoninDeposit
+[32m INFO[0m Contract src/RoninDeposit.sol:RoninDeposit deployed to: 0x4200000000000000000000000000000000000006 -> balacne is 0
+[32m INFO[0m Deploying contract: src/OfficialToken.sol:OfficialToken
+[32m INFO[0m Contract src/OfficialToken.sol:OfficialToken deployed to: 0xf0c50037780fa93c9c7be5623a7bd56f176a415c -> balacne is 0
+[32m INFO[0m Deploying contract: src/OfficialToken.sol:OfficialToken
+[32m INFO[0m Contract src/OfficialToken.sol:OfficialToken deployed to: 0xb6c3b55adb92456f5c97e235a55e479272d137e1 -> balacne is 0
+[32m INFO[0m Deployed all contracts
+
+Unable to liquidate token 20xf0c50037780fa93c9c7be5623a7bd56f176a415c
+Unable to liquidate token 20xb6c3b55adb92456f5c97e235a55e479272d137e1
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 0, objectives: 0, executions: 0, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xbB4C009BB1eD035cEd6dA7A75e104Db3D58AD454.initializeV3()
+   │  └─ ← 0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000062161646d696e0000000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 17, objectives: 0, executions: 1, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 17, objectives: 0, executions: 1, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   └─[1] 0xbB4C009BB1eD035cEd6dA7A75e104Db3D58AD454.initializeV3{value: 2726.9580 ether}()
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 18, objectives: 0, executions: 3, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.61% Instruction Covered, 2.08% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0xa1eab5e20f7ed7daa6b810eced8b47c28b8f28d3): 27.64% Instruction Covered, 18.75% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xb6c3b55adb92456f5c97e235a55e479272d137e1): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x4200000000000000000000000000000000000006): 8.67% Instruction Covered, 16.18% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xf0c50037780fa93c9c7be5623a7bd56f176a415c): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/RoninGatewayV3.sol:RoninGatewayV3(0xbb4c009bb1ed035ced6da7a75e104db3d58ad454): 37.41% Instruction Covered, 33.87% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 18, objectives: 0, executions: 3, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xbB4C009BB1eD035cEd6dA7A75e104Db3D58AD454.initializeV4()
+   │  └─ ← 0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000062161646d696e0000000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 19, objectives: 0, executions: 33, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x4200000000000000000000000000000000000006): 8.67% Instruction Covered, 16.18% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xb6c3b55adb92456f5c97e235a55e479272d137e1): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/RoninGatewayV3.sol:RoninGatewayV3(0xbb4c009bb1ed035ced6da7a75e104db3d58ad454): 37.41% Instruction Covered, 33.87% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.61% Instruction Covered, 2.08% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0xa1eab5e20f7ed7daa6b810eced8b47c28b8f28d3): 27.64% Instruction Covered, 18.75% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xf0c50037780fa93c9c7be5623a7bd56f176a415c): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 19, objectives: 0, executions: 33, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   └─[1] 0xbB4C009BB1eD035cEd6dA7A75e104Db3D58AD454.withdraw(0xbB4C009BB1eD035cEd6dA7A75e104Db3D58AD454, 0, (0x0000000000000000000000000000000000000000))
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 20, objectives: 0, executions: 67, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 20, objectives: 0, executions: 67, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   └─[1] 0xbB4C009BB1eD035cEd6dA7A75e104Db3D58AD454.withdraw(0xf0C50037780Fa93C9c7bE5623a7bD56f176A415C, 0, (0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000))
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 21, objectives: 0, executions: 70, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 21, objectives: 0, executions: 70, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xbB4C009BB1eD035cEd6dA7A75e104Db3D58AD454.withdraw(0x0000000000000000000000000000000000000000, 106529939636648934464310632279332652502453530966031696821539.9065 ether, (0x0000000000000000000000000000000000000000))
+   │  └─ ← 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000762616c616e636500000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 22, objectives: 0, executions: 71, exec/sec: 0.000
+
+
+
+😊😊 Found vulnerabilities! 
+
+
+================ Description ================
+[Invariant]: Invariant "invariant_bridgeSafe" violated, Err(FromUtf8Error { bytes: [8, 195, 121, 160, 32, 7, 100, 114, 97, 105, 110, 101, 100], error: Utf8Error { valid_up_to: 1, error_len: Some(1) } })
+================ Trace ================
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   └─[1] 0xbB4C009BB1eD035cEd6dA7A75e104Db3D58AD454.withdraw(0x0000000000000000000000000000000000000000, 295.1479 ether, (0x0000000000000000000000000000000000000000))
+
+
+corpus: 21, objectives: 0, executions: 74, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 401734511064747568885490523085290650630550.7484 ether)
+   │  └─ ← 0x01
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.transfer(0x0000000000000000000000000000000000000000, 0)
+   │  └─ ← 0x01
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 22, objectives: 0, executions: 97, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 22, objectives: 0, executions: 97, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 36.8938 ether)
+   │  └─ ← 0x01
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 115792089237316195423570985008665071890186689307464403303811.7577 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0xe1A425f1AC34A8a441566f93c82dD730639c8510, 9.2234 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.transfer(0x0000000000000000000000000000000000000000, 23945242826029513411849172299223580.9940 ether)
+   │  └─ ← 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000762616c616e636500000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 23, objectives: 0, executions: 98, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x2f50009e5370c0b45dcabd2085f5249242fd7d0a): 56.86% Instruction Covered, 41.94% Branch Covered
+[32m INFO[0m src/RoninGatewayV3.sol:RoninGatewayV3(0xea8700fc0cec7f4b60ccf38f32504349d4b907dd): 37.41% Instruction Covered, 33.87% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.61% Instruction Covered, 2.08% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x42ffb534f83a3f6e4fbf8771352a1e00477d7dcf): 27.64% Instruction Covered, 18.75% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e00dcb465c5ce81d0709ef84b098ef2660f3f): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x4200000000000000000000000000000000000006): 8.67% Instruction Covered, 16.18% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 23, objectives: 0, executions: 98, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 36.8938 ether)
+   │  └─ ← 0x01
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.transferFrom(0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0)
+   │  └─ ← 0x01
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 24, objectives: 0, executions: 129, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 24, objectives: 0, executions: 129, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x4200000000000000000000000000000000000006, 770822204420617691733273773930444811556507796.2833 ether)
+   │  └─ ← 0x01
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.transferFrom(0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 115792089237316143995286092973228473611038803692493904792419.3268 ether)
+   │  └─ ← 0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000009616c6c6f77616e63650000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 25, objectives: 0, executions: 130, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.61% Instruction Covered, 2.08% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e00dcb465c5ce81d0709ef84b098ef2660f3f): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x4200000000000000000000000000000000000006): 8.67% Instruction Covered, 16.18% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x2f50009e5370c0b45dcabd2085f5249242fd7d0a): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m src/RoninGatewayV3.sol:RoninGatewayV3(0xea8700fc0cec7f4b60ccf38f32504349d4b907dd): 37.41% Instruction Covered, 33.87% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x42ffb534f83a3f6e4fbf8771352a1e00477d7dcf): 27.64% Instruction Covered, 18.75% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 25, objectives: 0, executions: 130, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 36.8938 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 100433627767294093259160167425733827284285.6418 ether)
+   │  └─ ← 0x01
+   ├─[1] 0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd.initializeV3()
+   │  └─ ← 0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000062161646d696e0000000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 26, objectives: 0, executions: 161, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x4200000000000000000000000000000000000006): 8.67% Instruction Covered, 16.18% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x2f50009e5370c0b45dcabd2085f5249242fd7d0a): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.61% Instruction Covered, 2.08% Branch Covered
+[32m INFO[0m src/RoninGatewayV3.sol:RoninGatewayV3(0xea8700fc0cec7f4b60ccf38f32504349d4b907dd): 37.41% Instruction Covered, 33.87% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e00dcb465c5ce81d0709ef84b098ef2660f3f): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x42ffb534f83a3f6e4fbf8771352a1e00477d7dcf): 27.64% Instruction Covered, 18.75% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 26, objectives: 0, executions: 161, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd.initializeV4()
+   │  └─ ← 0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000062161646d696e0000000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 27, objectives: 0, executions: 193, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x42ffb534f83a3f6e4fbf8771352a1e00477d7dcf): 27.64% Instruction Covered, 18.75% Branch Covered
+[32m INFO[0m src/RoninDeposit.sol:RoninDeposit(0x4200000000000000000000000000000000000006): 8.67% Instruction Covered, 16.18% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.61% Instruction Covered, 2.08% Branch Covered
+[32m INFO[0m src/RoninGatewayV3.sol:RoninGatewayV3(0xea8700fc0cec7f4b60ccf38f32504349d4b907dd): 37.41% Instruction Covered, 33.87% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x2f50009e5370c0b45dcabd2085f5249242fd7d0a): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e00dcb465c5ce81d0709ef84b098ef2660f3f): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 27, objectives: 0, executions: 193, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 36.8938 ether)
+   │  └─ ← 0x01
+   ├─[1] 0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd.withdraw(0x0000000000000000000000000000000000000000, 55007232919241649073638514709910200405143610664177719405432.8259 ether, (0x0000000000000000000000000000000000000000))
+   │  └─ ← 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000762616c616e636500000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 28, objectives: 0, executions: 224, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 28, objectives: 0, executions: 224, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 36.8938 ether)
+   │  └─ ← 0x01
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 115792089237316195423570985008665071890186689307464403303811.7577 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0xe1A425f1AC34A8a441566f93c82dD730639c8510, 9.2234 ether)
+   │  └─ ← 0x01
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd.withdraw(0x0000000000000000000000000000000000000000, 53919893334301279589728619634683972383896347231932.5314 ether, (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000))
+   │  └─ ← 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000762616c616e636500000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 29, objectives: 0, executions: 226, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 29, objectives: 0, executions: 226, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x4200000000000000000000000000000000000006, 770822204420617691733273773930444811556507796.2833 ether)
+   │  └─ ← 0x01
+   └─[1] 0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd.withdraw(0xe1A425f1AC34A8a441566f93c82dD730639c8510, 0, (0x0000000000000000000000000000000000000000))
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 30, objectives: 0, executions: 230, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 30, objectives: 0, executions: 230, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 36.8938 ether)
+   │  └─ ← 0x01
+   └─[1] 0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd.withdraw(0x0000000000000000000000000000000000000000, 0, (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000))
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 31, objectives: 0, executions: 233, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 31, objectives: 0, executions: 233, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 102303149012009654315317268133385993973764732930443769251.6136 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0xe1A425f1AC34A8a441566f93c82dD730639c8510, 77557624124190713256019313080543157573946865658947301948488.1969 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 0)
+   │  └─ ← 0x01
+   └─[1] 0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd.withdraw(0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd, 0.4939 ether, (0x42ffB534F83A3f6E4fBF8771352a1E00477D7dcf))
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 32, objectives: 0, executions: 243, exec/sec: 0.000
+
+
+
+😊😊 Found vulnerabilities! 
+
+
+================ Description ================
+[Invariant]: Invariant "invariant_bridgeSafe" violated, Err(FromUtf8Error { bytes: [8, 195, 121, 160, 32, 7, 100, 114, 97, 105, 110, 101, 100], error: Utf8Error { valid_up_to: 1, error_len: Some(1) } })
+================ Trace ================
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   └─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 36.8938 ether)
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   └─[1] 0x2F50009E5370C0b45dcABd2085f5249242FD7d0a.approve(0x0000000000000000000000000000000000000000, 115792089237316195423570985008665071890186689307464403303811.7577 ether)
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   └─[1] 0xeA8700fC0cec7f4B60cCF38F32504349D4B907dd.withdraw(0x0000000000000000000000000000000000000000, 3487, (0x451E00Dcb465C5Ce81D0709EF84b098ef2660F3f))
+
+

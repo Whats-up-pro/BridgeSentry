@@ -1,0 +1,380 @@
+Compiling 4 files with Solc 0.8.20
+Solc 0.8.20 finished in 114.81ms
+Compiler run successful with warnings:
+Warning (2018): Function state mutability can be restricted to pure
+  --> src/VerusBridge.sol:43:5:
+   |
+43 |     function checkCCEValues(uint256 payout, bytes32 exportId) internal view {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+warning[missing-events-access-control]: `minter` is changed without an event but is used for access control
+   ╭▸ src/OfficialToken.sol:27:9
+   │
+27 │         minter[m] = allowed;
+   │         ━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/missing-events-access-control
+
+warning[missing-zero-check]: address parameter is used in a state write or value transfer without a zero-address check
+  ╭▸ src/Harness.sol:6:120
+  │
+6 │ contract Inv { OfficialToken public token; address public holder; uint256 public leaked0; constructor(OfficialToken t, address h){ toke…
+  │                                                                                                                        ━━━━━━━━━
+  │
+  ╰ help: https://getfoundry.sh/forge/linting/missing-zero-check
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/VerusExportSurrogate.sol:24:9
+   │
+24 │         emit ExportEvent(exportId, recipient, amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[erc20-unchecked-transfer]: ERC20 `transfer` or `transferFrom` call does not check the return value
+   ╭▸ src/VerusExportSurrogate.sol:23:9
+   │
+23 │         token.transferFrom(msg.sender, address(this), amount); // lock on the (surrogate) Verus side
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/erc20-unchecked-transfer
+
+warning[missing-zero-check]: address parameter is used in a state write or value transfer without a zero-address check
+   ╭▸ src/VerusBridge.sol:22:33
+   │
+22 │     constructor(address token_, address notary_) {
+   │                                 ━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/missing-zero-check
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/VerusBridge.sol:39:9
+   │
+39 │         emit Imported(recipient, payout, exportId);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[erc20-unchecked-transfer]: ERC20 `transfer` or `transferFrom` call does not check the return value
+   ╭▸ src/VerusBridge.sol:38:9
+   │
+38 │         token.transfer(recipient, payout);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/erc20-unchecked-transfer
+
+[32m INFO[0m 
+
+ ================ EVM Fuzzer Start ===================
+
+
+[32m INFO[0m Deploying contract: src/OfficialToken.sol:OfficialToken
+[32m INFO[0m Contract src/OfficialToken.sol:OfficialToken deployed to: 0xe12a0071c7356210a1c81184ff265e2950bc44da -> balacne is 0
+[32m INFO[0m Deploying contract: src/VerusExportSurrogate.sol:VerusExportSurrogate
+[32m INFO[0m Contract src/VerusExportSurrogate.sol:VerusExportSurrogate deployed to: 0x4c11b5f3d856434418c40eb56b0566a631bd6a5c -> balacne is 0
+[32m INFO[0m Deploying contract: src/OfficialToken.sol:OfficialToken
+[32m INFO[0m Contract src/OfficialToken.sol:OfficialToken deployed to: 0x451e0038b448d573aa15d05ec0baa978c5ae2ecc -> balacne is 0
+[32m INFO[0m Deploying contract: src/VerusExportSurrogate.sol:VerusExportSurrogate
+[32m INFO[0m Contract src/VerusExportSurrogate.sol:VerusExportSurrogate deployed to: 0x4200000000000000000000000000000000000006 -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Inv
+[32m INFO[0m Contract src/Harness.sol:Inv deployed to: 0x31bab54f84ad03a895e208fcd829109bc91162b6 -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Harness
+[32m INFO[0m Contract src/Harness.sol:Harness deployed to: 0xe1a425f1ac34a8a441566f93c82dd730639c8510 -> balacne is 0
+[32m INFO[0m Deploying contract: src/VerusBridge.sol:VerusBridge
+[32m INFO[0m Contract src/VerusBridge.sol:VerusBridge deployed to: 0x0693004a17c0d0a55f9de1774422a53dd4f8103f -> balacne is 0
+[32m INFO[0m Deployed all contracts
+
+Unable to liquidate token 20xe12a0071c7356210a1c81184ff265e2950bc44da
+Unable to liquidate token 20x451e0038b448d573aa15d05ec0baa978c5ae2ecc
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 0, objectives: 0, executions: 0, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x0000000000000000000000000000000000000000, 51336249204607340826412251469942753518608094.7036 ether)
+   │  └─ ← 0x01
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 16, objectives: 0, executions: 1, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 16, objectives: 0, executions: 1, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x0000000000000000000000000000000000000000, 51336249204607340826412251469942753518608094.7036 ether)
+   │  └─ ← 0x01
+   └─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve{value: 4052.9999 ether}(0x4C11b5F3d856434418c40EB56b0566A631Bd6A5c, 29506654796857688621542421369691510366895046214442000393452.3851 ether)
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 17, objectives: 0, executions: 8, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 52.97% Instruction Covered, 38.71% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 42.93% Instruction Covered, 31.25% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 17, objectives: 0, executions: 8, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.mint(0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd, 0)
+   │  └─ ← 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000a6e6f74206d696e74657200000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 18, objectives: 0, executions: 33, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 52.97% Instruction Covered, 38.71% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 42.93% Instruction Covered, 31.25% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 18, objectives: 0, executions: 33, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd, 1288183551039453453393067277222.5926 ether)
+   │  └─ ← 0x01
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   └─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.setMinter(0x0000000000000000000000000000000000000000, true)
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 19, objectives: 0, executions: 65, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 19, objectives: 0, executions: 65, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.setMinter(0x0000000000000000000000000000000000000000, false)
+   │  └─ ← 0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000096e6f74206f776e65720000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 20, objectives: 0, executions: 69, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 53.13% Instruction Covered, 40.32% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 42.93% Instruction Covered, 31.25% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 20, objectives: 0, executions: 69, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.transfer(0x4C11b5F3d856434418c40EB56b0566A631Bd6A5c, 0)
+   │  └─ ← 0x01
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 21, objectives: 0, executions: 97, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 21, objectives: 0, executions: 97, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.transfer(0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd, 36436733907865245694177814805462864904379916096852871441710.7929 ether)
+   │  └─ ← 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000762616c616e636500000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 22, objectives: 0, executions: 98, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 56.86% Instruction Covered, 41.94% Branch Covered
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 42.93% Instruction Covered, 31.25% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 22, objectives: 0, executions: 98, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.transferFrom(0x0000000000000000000000000000000000000000, 0xe1A425f1AC34A8a441566f93c82dD730639c8510, 6385626881876573519350866859883606298150435559386446625612.8713 ether)
+   │  └─ ← 0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000009616c6c6f77616e63650000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 23, objectives: 0, executions: 129, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 23, objectives: 0, executions: 129, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.transferFrom(0x4200000000000000000000000000000000000006, 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb, 0)
+   │  └─ ← 0x01
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 24, objectives: 0, executions: 133, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 42.93% Instruction Covered, 31.25% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 24, objectives: 0, executions: 133, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x0000000000000000000000000000000000000000, 51336249204607340826412251469942753518608094.7036 ether)
+   │  └─ ← 0x01
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc, 6983448352400883666560060937893901269665318561078741716.8752 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x4C11b5F3d856434418c40EB56b0566A631Bd6A5c.export(0x0000000000000000000000000000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0)
+   │  └─ ← 0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000047a65726f00000000000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 25, objectives: 0, executions: 161, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 25, objectives: 0, executions: 161, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x0000000000000000000000000000000000000000, 51336249204607340826412251469942753518608094.7036 ether)
+   │  └─ ← 0x01
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc, 6983448352400883666560060937893901269665318561078741716.8752 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x4C11b5F3d856434418c40EB56b0566A631Bd6A5c.export(0x0080000000000000000000000000000003e85ae0a63de286531000b224948a36, 0x4C11b5F3d856434418c40EB56b0566A631Bd6A5c, 5295432271303406214273522028617744873857802052119059844.9224 ether)
+   │  └─ ← 0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000009616c6c6f77616e63650000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 26, objectives: 0, executions: 163, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 59.38% Instruction Covered, 43.75% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 26, objectives: 0, executions: 163, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc.approve(0x4C11b5F3d856434418c40EB56b0566A631Bd6A5c, 98769868744303192394260529556928553957478437695650226683755.2566 ether)
+   │  └─ ← 0x01
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   └─[1] 0x4200000000000000000000000000000000000006.export(0x8ecc5b0080c3df4800000000000008e3f38522047d8000000000000000000228, 0x4200000000000000000000000000000000000006, 374144419156711147060143317177213.1274 ether)
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 27, objectives: 0, executions: 353, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 27, objectives: 0, executions: 353, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc.approve(0x0000000000000000000000000000000000000000, 2582520251194638613261021451383727080126259256772782628.9665 ether)
+   │  └─ ← 0x01
+   ├─[1] 0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc.approve(0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc, 428634321644408107207650858030359047905330917814970837824.3604 ether)
+   │  └─ ← 0x01
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   └─[1] 0x4200000000000000000000000000000000000006.export{value: 18.4107 ether}(0x0000fa000000800200000020013903000002009980ff37cdb37a3c6b55640bb4, 0xe1A425f1AC34A8a441566f93c82dD730639c8510, 0)
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 28, objectives: 0, executions: 354, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 59.38% Instruction Covered, 43.75% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 28, objectives: 0, executions: 354, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x0000000000000000000000000000000000000000, 51336249204607340826412251469942753518608094.7036 ether)
+   │  └─ ← 0x01
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc, 6983448352400883666560060937893901269665318561078741716.8752 ether)
+   │  └─ ← 0x01
+   ├─[1] 0xE12a0071C7356210a1c81184FF265e2950Bc44DA.approve(0x0000000000000000000000000000000000000000, 0)
+   │  └─ ← 0x01
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc.approve(0x451E0038B448D573aA15D05eC0baa978C5Ae2ECc, 11417981541647679048466287755.5959 ether)
+   │  └─ ← 0x01
+   ├─[1] 0xe1A425f1AC34A8a441566f93c82dD730639c8510.targetSenders()
+   │  └─ ← 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000008ef508aca04b32ff3ba5003177cb18bfa6cd79dd00000000000000000000000035c9dfd76bf02107ff4f7128bd69716612d31ddb
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 29, objectives: 0, executions: 387, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 59.38% Instruction Covered, 43.75% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 29, objectives: 0, executions: 387, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x0693004a17c0D0a55f9DE1774422a53DD4F8103F.recordExport(0x0000000000000000000000000000000000000000000000000000000000000000, 0)
+   │  └─ ← 0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000007216e6f7461727900000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 30, objectives: 0, executions: 417, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 59.38% Instruction Covered, 43.75% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 30, objectives: 0, executions: 417, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x0693004a17c0D0a55f9DE1774422a53DD4F8103F.submitImports(0x0000000000000000000000000000000000000000, 669120294390236201463458049783934557505205094076287363982.6213 ether, 0x0000000000000000000000000000000000000000000000000000000000000000)
+   │  └─ ← 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e756e6b6e6f776e206578706f7274000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 31, objectives: 0, executions: 449, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 40.26% Instruction Covered, 26.67% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 59.38% Instruction Covered, 43.75% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-1s, clients: 1, corpus: 31, objectives: 0, executions: 15188, exec/sec: 14.86k
+[32m INFO[0m [Stats #0] run time: 0h-0m-2s, clients: 1, corpus: 31, objectives: 0, executions: 30022, exec/sec: 14.79k
+[32m INFO[0m [Stats #0] run time: 0h-0m-3s, clients: 1, corpus: 31, objectives: 0, executions: 45433, exec/sec: 14.72k
+[32m INFO[0m [Stats #0] run time: 0h-0m-4s, clients: 1, corpus: 31, objectives: 0, executions: 61290, exec/sec: 14.93k
+[32m INFO[0m [Stats #0] run time: 0h-0m-5s, clients: 1, corpus: 31, objectives: 0, executions: 76471, exec/sec: 14.84k
+[32m INFO[0m [Stats #0] run time: 0h-0m-6s, clients: 1, corpus: 31, objectives: 0, executions: 92432, exec/sec: 14.79k
+[32m INFO[0m [Stats #0] run time: 0h-0m-6s, clients: 1, corpus: 31, objectives: 0, executions: 92432, exec/sec: 14.63k
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0x0693004a17c0D0a55f9DE1774422a53DD4F8103F.submitImports(0x0000000000000000000000000000000000000000, 669120294390236201463458049783934557505205094076287363982.6213 ether, 0x000000000000000000000000000000000000000000000000000000000000000b)
+   │  └─ ← 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000762616c616e636500000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-6s, clients: 1, corpus: 32, objectives: 0, executions: 93695, exec/sec: 14.83k
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4c11b5f3d856434418c40eb56b0566a631bd6a5c): 59.38% Instruction Covered, 43.75% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.89% Instruction Covered, 2.71% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x451e0038b448d573aa15d05ec0baa978c5ae2ecc): 56.70% Instruction Covered, 38.71% Branch Covered
+[32m INFO[0m src/VerusExportSurrogate.sol:VerusExportSurrogate(0x4200000000000000000000000000000000000006): 8.30% Instruction Covered, 15.15% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0xe12a0071c7356210a1c81184ff265e2950bc44da): 60.58% Instruction Covered, 43.55% Branch Covered
+[32m INFO[0m src/VerusBridge.sol:VerusBridge(0x0693004a17c0d0a55f9de1774422a53dd4f8103f): 55.20% Instruction Covered, 36.67% Branch Covered
+
+
+
+😊😊 Found vulnerabilities! 
+
+
+================ Description ================
+[Invariant]: Invariant "invariant_bridgeSafe" violated, Err(FromUtf8Error { bytes: [8, 195, 121, 160, 32, 7, 100, 114, 97, 105, 110, 101, 100], error: Utf8Error { valid_up_to: 1, error_len: Some(1) } })
+================ Trace ================
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   └─[1] 0x0693004a17c0D0a55f9DE1774422a53DD4F8103F.submitImports(0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb, 2643, 0x000000000000000000000000000000000000000000000000000000000000000b)
+
+

@@ -1,0 +1,173 @@
+Compiling 5 files with Solc 0.8.20
+Solc 0.8.20 finished in 88.69ms
+Compiler run successful!
+warning[missing-zero-check]: address parameter is used in a state write or value transfer without a zero-address check
+  ╭▸ src/Harness.sol:8:34
+  │
+8 │     constructor(OfficialToken t, address h){ token=t; holder=h; leaked0=t.totalSupply()-t.balanceOf(h); }
+  │                                  ━━━━━━━━━
+  │
+  ╰ help: https://getfoundry.sh/forge/linting/missing-zero-check
+
+warning[missing-events-access-control]: `minter` is changed without an event but is used for access control
+   ╭▸ src/OfficialToken.sol:27:9
+   │
+27 │         minter[m] = allowed;
+   │         ━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/missing-events-access-control
+
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/NomadHome.sol:25:9
+   │
+25 │         emit Dispatch(keccak256(message), nonce, recipient, amount, message);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[erc20-unchecked-transfer]: ERC20 `transfer` or `transferFrom` call does not check the return value
+   ╭▸ src/NomadHome.sol:22:9
+   │
+22 │         token.transferFrom(msg.sender, address(this), amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/erc20-unchecked-transfer
+
+warning[missing-zero-check]: address parameter is used in a state write or value transfer without a zero-address check
+   ╭▸ src/NomadReplica.sol:20:25
+   │
+20 │     function initialize(address updater_, bytes32 _committedRoot, uint256 _optimisticSeconds) external {
+   │                         ━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/missing-zero-check
+
+warning[block-timestamp]: usage of `block.timestamp` in a comparison may be manipulated by validators
+   ╭▸ src/NomadReplica.sol:41:16
+   │
+41 │         return block.timestamp >= _time;
+   │                ━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/block-timestamp
+
+[32m INFO[0m 
+
+ ================ EVM Fuzzer Start ===================
+
+
+[32m INFO[0m Deploying contract: src/NomadReplica.sol:NomadReplica
+[32m INFO[0m Contract src/NomadReplica.sol:NomadReplica deployed to: 0xa1ea008fa41f4868cc777cd670bc58f6f9ae21fd -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Harness
+[32m INFO[0m Contract src/Harness.sol:Harness deployed to: 0xe1a425f1ac34a8a441566f93c82dd730639c8510 -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Inv
+[32m INFO[0m Contract src/Harness.sol:Inv deployed to: 0x4200000000000000000000000000000000000006 -> balacne is 0
+[32m INFO[0m Deploying contract: src/NomadBridgeRouter.sol:NomadBridgeRouter
+[32m INFO[0m Contract src/NomadBridgeRouter.sol:NomadBridgeRouter deployed to: 0x451e00f9b4fc1f164789c16a5e7ab148fb19f737 -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Inv
+[32m INFO[0m Contract src/Harness.sol:Inv deployed to: 0xb82d002c00d21e81bd2f574973ffc0c270367480 -> balacne is 0
+[32m INFO[0m Deploying contract: src/OfficialToken.sol:OfficialToken
+[32m INFO[0m Contract src/OfficialToken.sol:OfficialToken deployed to: 0x0cd1b5d605a72b3dd3ee8dcf8d5647267a604d99 -> balacne is 0
+[32m INFO[0m Deployed all contracts
+
+Unable to liquidate token 20x0cd1b5d605a72b3dd3ee8dcf8d5647267a604d99
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 0, objectives: 0, executions: 0, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.initialize(0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD, 0x0005ffff05000000000000000010000000000080ffffff0000000000c1f0108a, 605768800288101752592112678648362446513582832976579117923.7233 ether)
+   │  └─ ← 0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000013616c726561647920696e697469616c697a656400000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 11, objectives: 0, executions: 1, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 11, objectives: 0, executions: 1, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   └─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.initialize{value: 505.2440 ether}(0x4200000000000000000000000000000000000006, 0x0000000000000000000000000000000000000000000000000000000000000000, 5444517870735015415413.9937 ether)
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 12, objectives: 0, executions: 4, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x0cd1b5d605a72b3dd3ee8dcf8d5647267a604d99): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.55% Instruction Covered, 2.14% Branch Covered
+[32m INFO[0m src/NomadReplica.sol:NomadReplica(0xa1ea008fa41f4868cc777cd670bc58f6f9ae21fd): 47.79% Instruction Covered, 34.48% Branch Covered
+[32m INFO[0m src/NomadBridgeRouter.sol:NomadBridgeRouter(0x451e00f9b4fc1f164789c16a5e7ab148fb19f737): 55.20% Instruction Covered, 32.14% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 12, objectives: 0, executions: 4, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.process(0x00000000000000000004a3)
+   │  └─ ← 0x01
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 13, objectives: 0, executions: 33, exec/sec: 0.000
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 13, objectives: 0, executions: 33, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.process("")
+   │  └─ ← 0x01
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.process(0x00e413ffffff80005048500150485000000080fd)
+   │  └─ ← 0x01
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.process("")
+   │  └─ ← 0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000011616c72656164792070726f636573736564000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 14, objectives: 0, executions: 46, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/NomadReplica.sol:NomadReplica(0xa1ea008fa41f4868cc777cd670bc58f6f9ae21fd): 59.06% Instruction Covered, 39.66% Branch Covered
+[32m INFO[0m src/NomadBridgeRouter.sol:NomadBridgeRouter(0x451e00f9b4fc1f164789c16a5e7ab148fb19f737): 55.20% Instruction Covered, 32.14% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.55% Instruction Covered, 2.14% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x0cd1b5d605a72b3dd3ee8dcf8d5647267a604d99): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 14, objectives: 0, executions: 46, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? true 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.process(0x00000000000000000004a3)
+   │  └─ ← 0x01
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.prove(0x000000000100000000000000000001000000ff7fff0000002000000000002021, 0x013ede39fd1364fc2936c643a9853e1c5084eb40b57859aa0b7db74e194ce1ff)
+   │  └─ ← 0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000082175706461746572000000000000000000000000000000000000000000000000
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 15, objectives: 0, executions: 65, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x0cd1b5d605a72b3dd3ee8dcf8d5647267a604d99): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/NomadReplica.sol:NomadReplica(0xa1ea008fa41f4868cc777cd670bc58f6f9ae21fd): 59.06% Instruction Covered, 39.66% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.55% Instruction Covered, 2.14% Branch Covered
+[32m INFO[0m src/NomadBridgeRouter.sol:NomadBridgeRouter(0x451e00f9b4fc1f164789c16a5e7ab148fb19f737): 55.20% Instruction Covered, 32.14% Branch Covered
+[32m INFO[0m [Stats #0] run time: 0h-0m-0s, clients: 1, corpus: 15, objectives: 0, executions: 65, exec/sec: 0.000
+[32m INFO[0m ============= New Corpus Item =============
+[32m INFO[0m Reverted? false 
+ Txn:
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.process(0x000005d3c3b98290749b1cc4f22ace6d2128be12)
+   │  └─ ← 0x01
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   ├─[1] 0xe1A425f1AC34A8a441566f93c82dD730639c8510.targetSenders()
+   │  └─ ← 0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000008ef508aca04b32ff3ba5003177cb18bfa6cd79dd00000000000000000000000035c9dfd76bf02107ff4f7128bd69716612d31ddb
+
+[32m INFO[0m ==========================================
+[32m INFO[0m [Testcase #0] run time: 0h-0m-0s, clients: 1, corpus: 16, objectives: 0, executions: 98, exec/sec: 0.000
+[32m INFO[0m ============= Coverage Summary =============
+[32m INFO[0m src/NomadReplica.sol:NomadReplica(0xa1ea008fa41f4868cc777cd670bc58f6f9ae21fd): 59.06% Instruction Covered, 39.66% Branch Covered
+[32m INFO[0m src/Harness.sol:Harness(0xe1a425f1ac34a8a441566f93c82dd730639c8510): 3.55% Instruction Covered, 2.14% Branch Covered
+[32m INFO[0m src/OfficialToken.sol:OfficialToken(0x0cd1b5d605a72b3dd3ee8dcf8d5647267a604d99): 52.97% Instruction Covered, 37.10% Branch Covered
+[32m INFO[0m src/NomadBridgeRouter.sol:NomadBridgeRouter(0x451e00f9b4fc1f164789c16a5e7ab148fb19f737): 55.20% Instruction Covered, 32.14% Branch Covered
+
+
+
+😊😊 Found vulnerabilities! 
+
+
+================ Description ================
+[Invariant]: Invariant "invariant_bridgeSafe" violated, Err(FromUtf8Error { bytes: [8, 195, 121, 160, 32, 7, 100, 114, 97, 105, 110, 101, 100], error: Utf8Error { valid_up_to: 1, error_len: Some(1) } })
+================ Trace ================
+[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd
+   ├─[1] 0xa1eA008fa41f4868cC777CD670BC58F6f9AE21FD.process("")
+   └─[1] 0x451e00F9b4fc1F164789C16a5e7Ab148FB19F737.processAndRelease((0, 0, 0, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000, 2695994666715063979466701508701963067363714442254057.2481 ether))
+
+

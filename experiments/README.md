@@ -16,5 +16,6 @@ a new directory.
 | `official_20261118_c3b_seedgen/` | C3b seed generation: 20 grounded gpt-oss-120b seed sets (docs/C3b_protocol.md), ledgers, logs incl. the discarded 402 attempt, local smoke. |
 | `official_20261118_seed_channel_control/` | Positive control of the grounded seed channel (local WSL run): documented exploits compiled by seed_compiler give a valid exploit at the first execution on 7/7 fixtures, no alert on patched. |
 | `official_20261118_c3b_hpc/` | C3b on HPC (Slurm jobs 52245 vulnerable, 52246 patched): grounded gpt-oss-120b seeds under 4 retrieval regimes on 5 fixtures; 20 seeds × 300 s; empty RPC; repo 093e5ae, binary d9cf542e; F1-F3 comparisons with random (A-1) and C3. |
+| `official_20261120_ityfuzz_hpc/` | ItyFuzz (ISSTA 2023) single-chain baseline on HPC (14 per-fixture Slurm jobs itf_*): 7 on-chain fixtures × {vulnerable, patched} × 20 seeds × 300 s under the same valid-exploit criterion; ityfuzz 80e3b441, forge 1.9.0, solc 0.8.20. Reaches Ronin/Nomad/Verus, misses the relay/keeper-gated Qubit/FEG/PolyNetwork (C2 evidence) and CrossCurve (structured input); 0/140 patched alerts. First run discarded for a forge build-info race (fixed f5e4b73). |
 
 New campaigns: `scripts/official/run_matrix.sh experiments/official_<YYYYMMDD> <budget_s> <jobs> <bench>...`

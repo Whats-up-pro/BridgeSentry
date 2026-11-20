@@ -1,0 +1,84 @@
+Compiling 5 files with Solc 0.8.20
+Solc 0.8.20 finished in 85.81ms
+Compiler run successful!
+warning[reentrancy-events]: event emitted after an external call; reentrancy can reorder or fabricate logs that off-chain consumers rely on
+   ╭▸ src/NomadHome.sol:25:9
+   │
+25 │         emit Dispatch(keccak256(message), nonce, recipient, amount, message);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/reentrancy-events
+
+warning[erc20-unchecked-transfer]: ERC20 `transfer` or `transferFrom` call does not check the return value
+   ╭▸ src/NomadHome.sol:22:9
+   │
+22 │         token.transferFrom(msg.sender, address(this), amount);
+   │         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/erc20-unchecked-transfer
+
+warning[missing-zero-check]: address parameter is used in a state write or value transfer without a zero-address check
+   ╭▸ src/NomadReplica.sol:20:25
+   │
+20 │     function initialize(address updater_, bytes32 _committedRoot, uint256 _optimisticSeconds) external {
+   │                         ━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/missing-zero-check
+
+warning[block-timestamp]: usage of `block.timestamp` in a comparison may be manipulated by validators
+   ╭▸ src/NomadReplica.sol:41:16
+   │
+41 │         return block.timestamp >= _time;
+   │                ━━━━━━━━━━━━━━━━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/block-timestamp
+
+warning[missing-events-access-control]: `minter` is changed without an event but is used for access control
+   ╭▸ src/OfficialToken.sol:27:9
+   │
+27 │         minter[m] = allowed;
+   │         ━━━━━━━━━
+   │
+   ╰ help: https://getfoundry.sh/forge/linting/missing-events-access-control
+
+warning[missing-zero-check]: address parameter is used in a state write or value transfer without a zero-address check
+  ╭▸ src/Harness.sol:8:34
+  │
+8 │     constructor(OfficialToken t, address h){ token=t; holder=h; leaked0=t.totalSupply()-t.balanceOf(h); }
+  │                                  ━━━━━━━━━
+  │
+  ╰ help: https://getfoundry.sh/forge/linting/missing-zero-check
+
+[32m INFO[0m 
+
+ ================ EVM Fuzzer Start ===================
+
+
+[32m INFO[0m Deploying contract: src/Harness.sol:Inv
+[32m INFO[0m Contract src/Harness.sol:Inv deployed to: 0x4200000000000000000000000000000000000006 -> balacne is 0
+[32m INFO[0m Deploying contract: src/NomadBridgeRouter.sol:NomadBridgeRouter
+[32m INFO[0m Contract src/NomadBridgeRouter.sol:NomadBridgeRouter deployed to: 0x451e004ab4fde1f3960387be7eff90108ee3fc97 -> balacne is 0
+[32m INFO[0m Deploying contract: src/OfficialToken.sol:OfficialToken
+[32m INFO[0m Contract src/OfficialToken.sol:OfficialToken deployed to: 0xd11a005ca93b7dc856d4ccacd0c7fd18b860827e -> balacne is 0
+[32m INFO[0m Deploying contract: src/NomadReplica.sol:NomadReplica
+[32m INFO[0m Contract src/NomadReplica.sol:NomadReplica deployed to: 0xa67300df42727985f55fe3b772644395dfeedb4c -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Harness
+[32m INFO[0m Contract src/Harness.sol:Harness deployed to: 0xe1a425f1ac34a8a441566f93c82dd730639c8510 -> balacne is 0
+[32m INFO[0m Deploying contract: src/Harness.sol:Inv
+[32m INFO[0m Contract src/Harness.sol:Inv deployed to: 0xe768008168552160a0d712244d5659818dbac1a4 -> balacne is 0
+[32m INFO[0m Deployed all contracts
+
+Unable to liquidate token 20xd11a005ca93b7dc856d4ccacd0c7fd18b860827e
+
+
+
+😊😊 Found vulnerabilities! 
+
+
+================ Description ================
+[Invariant]: Invariant "invariant_bridgeSafe" violated, Err(FromUtf8Error { bytes: [8, 195, 121, 160, 32, 7, 100, 114, 97, 105, 110, 101, 100], error: Utf8Error { valid_up_to: 1, error_len: Some(1) } })
+================ Trace ================
+[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb
+   └─[1] 0x451e004ab4fDE1f3960387BE7efF90108Ee3Fc97.processAndRelease((2130706447, 2147485375, 0, 0xD11A005CA93B7dc856D4ccaCd0c7fd18b860827e, 0xE768008168552160A0D712244D5659818dbaC1A4, 0xe1A425f1AC34A8a441566f93c82dD730639c8510, 736459722535839605513686906991.9523 ether))
+
+
