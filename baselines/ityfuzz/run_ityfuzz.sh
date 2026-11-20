@@ -30,7 +30,6 @@ cp "$PROJ/foundry.toml" "$WORK/" 2>/dev/null
 cp -r "$PROJ/src" "$WORK/src"
 cd "$WORK" || { echo "run_ityfuzz: cannot cd $WORK" >&2; exit 2; }
 
-forge build --offline >/dev/null 2>&1
 # ItyFuzz runs `forge build` itself (from_command) to load the build artifacts,
 # then fuzzes from Harness.setUp(). Invariant oracle flags a revert of
 # invariant_bridgeSafe (= a net adversary gain of a bridged asset).
