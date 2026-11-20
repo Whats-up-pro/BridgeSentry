@@ -6,6 +6,12 @@
 # ItyFuzz binary at $ITYFUZZ. Fairness: attacker senders are pinned by the
 # harness `targetSenders()`; --concolic-caller is NOT used.
 #
+# Each run executes in a private copy of the project under a mktemp -d dir, so
+# parallel runs of the same fixture never collide on forge's out/ or on
+# ItyFuzz's `.tmp-build-info-<seconds>` (which `from_command("forge build")`
+# creates and removes -- the cause of the src/evm/mod.rs:682 "Failed to build
+# the project" panic when 8 seeds ran in one shared dir).
+#
 # Writes <out>/seed_<seed>.log (full ItyFuzz output) and <out>/seed_<seed>.result
 # (one line: "<detected 0|1> <tte_s or -1> rc=<rc>").
 set -u
@@ -17,16 +23,23 @@ export PATH="$HOME/.foundry/bin:$PATH"
 export FOUNDRY_OFFLINE=true
 mkdir -p "$OUT"
 LOG="$OUT/seed_$SEED.log"
-cd "$PROJ" || exit 2
-# Compile once (idempotent; forge caches). Offline, uses the cached solc 0.8.20.
+
+# Private working copy so concurrent runs do not share forge build state.
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/itf_${VARIANT}_$(basename "$HARN")_${SEED}_XXXXXX")
+cp "$PROJ/foundry.toml" "$WORK/" 2>/dev/null
+cp -r "$PROJ/src" "$WORK/src"
+cd "$WORK" || { echo "run_ityfuzz: cannot cd $WORK" >&2; exit 2; }
+
 forge build --offline >/dev/null 2>&1
 # ItyFuzz runs `forge build` itself (from_command) to load the build artifacts,
 # then fuzzes from Harness.setUp(). Invariant oracle flags a revert of
 # invariant_bridgeSafe (= a net adversary gain of a bridged asset).
 timeout "$BUDGET" "$ITYFUZZ" evm \
   -m src/Harness.sol:Harness -f --detectors invariant --seed "$SEED" \
+  --work-dir "$WORK/wd" \
   forge build > "$LOG" 2>&1
 rc=$?
+
 det=0; tte=-1
 if grep -q "Found vulnerabilities!" "$LOG"; then
   det=1
@@ -44,4 +57,5 @@ if grep -q "Found vulnerabilities!" "$LOG"; then
 fi
 echo "$det $tte rc=$rc" > "$OUT/seed_$SEED.result"
 echo "$HARN $VARIANT seed=$SEED detected=$det tte=${tte}s rc=$rc"
+cd /; rm -rf "$WORK" 2>/dev/null
 exit 0
