@@ -1052,6 +1052,148 @@ fn mutate_seq(seq: &Seq, world: &World, dict: &Dict, rng: &mut StdRng) -> Seq {
 }
 
 // ---------------------------------------------------------------------------
+// ATG-aware mutation (Section 4 "ATG-aware mutation"): mutation biased by the
+// Atomic Transfer Graph so inserted calls follow functions that are adjacent in
+// the graph, instead of the uniform-random insertion of `mutate_seq`. Evaluated
+// as an ablation under the execution-only oracle; enable with
+// BRIDGESENTRY_ATG_MUTATION=1. The success criterion is unchanged.
+// ---------------------------------------------------------------------------
+
+/// Function name from an ATG `function_signature` or a node `functions` entry:
+/// the token before the first `(`, with any leading return type dropped
+/// ("deposit(address,uint256)" -> "deposit").
+fn atg_fn_name(sig: &str) -> String {
+    sig.split('(')
+        .next()
+        .unwrap_or("")
+        .trim()
+        .rsplit(' ')
+        .next()
+        .unwrap_or("")
+        .trim()
+        .to_string()
+}
+
+/// Adjacency over fixture function names derived from the ATG: a function is
+/// adjacent to another when an edge carrying the first ends at a node from which
+/// an edge carrying the second departs, or when both appear on the same node.
+fn build_atg_adjacency(atg: &crate::types::AtgGraph) -> HashMap<String, Vec<String>> {
+    let mut adj: HashMap<String, Vec<String>> = HashMap::new();
+    for e1 in &atg.edges {
+        let f1 = atg_fn_name(&e1.function_signature);
+        if f1.is_empty() {
+            continue;
+        }
+        for e2 in &atg.edges {
+            if e1.edge_id == e2.edge_id || e1.dst != e2.src {
+                continue;
+            }
+            let f2 = atg_fn_name(&e2.function_signature);
+            if !f2.is_empty() && f2 != f1 {
+                adj.entry(f1.clone()).or_default().push(f2);
+            }
+        }
+    }
+    for n in &atg.nodes {
+        let fns: Vec<String> =
+            n.functions.iter().map(|s| atg_fn_name(s)).filter(|s| !s.is_empty()).collect();
+        for a in &fns {
+            for b in &fns {
+                if a != b {
+                    adj.entry(a.clone()).or_default().push(b.clone());
+                }
+            }
+        }
+    }
+    for v in adj.values_mut() {
+        v.sort();
+        v.dedup();
+    }
+    adj
+}
+
+/// Pick a callable fixture function that is ATG-adjacent to one already present
+/// in `recent`; fall back to a uniform random call when the ATG offers no
+/// adjacent callable (sparse ATG, or none of the adjacent names is callable).
+fn random_call_atg(
+    world: &World,
+    dict: &Dict,
+    adj: &HashMap<String, Vec<String>>,
+    recent: &[String],
+    rng: &mut StdRng,
+) -> Option<AttackCall> {
+    let mut wanted: Vec<String> = Vec::new();
+    for r in recent {
+        if let Some(a) = adj.get(&atg_fn_name(r)) {
+            wanted.extend(a.iter().cloned());
+        }
+    }
+    if !wanted.is_empty() {
+        let all: Vec<(usize, Function)> = world
+            .contracts
+            .iter()
+            .enumerate()
+            .flat_map(|(i, c)| c.abi.functions().filter(|f| callable(f)).map(move |f| (i, f.clone())))
+            .filter(|(_, f)| wanted.iter().any(|w| norm(w) == norm(&f.name)))
+            .collect();
+        if !all.is_empty() {
+            let (idx, func) = all[rng.gen_range(0..all.len())].clone();
+            let args = func.inputs.iter().map(|p| random_arg(&p.kind, dict, rng)).collect();
+            return Some(AttackCall { idx, func, args });
+        }
+    }
+    random_call(world, dict, rng)
+}
+
+/// ATG-aware counterpart of [`mutate_seq`]: identical operators, but insertion
+/// prefers (70% of the time) a call that is ATG-adjacent to a call already in
+/// the sequence, so the mutant tends to follow the graph's causal flow.
+fn mutate_seq_atg(
+    seq: &Seq,
+    world: &World,
+    dict: &Dict,
+    adj: &HashMap<String, Vec<String>>,
+    rng: &mut StdRng,
+) -> Seq {
+    let mut s = seq.clone();
+    for _ in 0..rng.gen_range(1..=3) {
+        let recent: Vec<String> = s.iter().map(|c| c.func.name.clone()).collect();
+        match rng.gen_range(0..10) {
+            0 | 1 if s.len() < 8 => {
+                let c = if rng.gen_bool(0.7) {
+                    random_call_atg(world, dict, adj, &recent, rng)
+                } else {
+                    random_call(world, dict, rng)
+                };
+                if let Some(c) = c {
+                    let pos = rng.gen_range(0..=s.len());
+                    s.insert(pos, c);
+                }
+            }
+            2 if s.len() > 1 => {
+                let i = rng.gen_range(0..s.len());
+                s.remove(i);
+            }
+            3 if !s.is_empty() && s.len() < 8 => {
+                let i = rng.gen_range(0..s.len());
+                let c = s[i].clone();
+                s.insert(i, c);
+            }
+            _ if !s.is_empty() => {
+                let i = rng.gen_range(0..s.len());
+                if !s[i].args.is_empty() {
+                    let j = rng.gen_range(0..s[i].args.len());
+                    let k = s[i].func.inputs[j].kind.clone();
+                    s[i].args[j] = mutate_token(&s[i].args[j], &k, world, dict, rng);
+                }
+            }
+            _ => {}
+        }
+    }
+    s
+}
+
+// ---------------------------------------------------------------------------
 // Execution-derived oracle
 // ---------------------------------------------------------------------------
 
@@ -1219,6 +1361,12 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
     let setup_s = t_setup.elapsed().as_secs_f64();
 
     let strict_seeds = std::env::var("BRIDGESENTRY_OFFICIAL_STRICT_SEEDS").ok().as_deref() == Some("1");
+    let atg_aware_mutation = std::env::var("BRIDGESENTRY_ATG_MUTATION").ok().as_deref() == Some("1");
+    let atg_adj = if atg_aware_mutation {
+        build_atg_adjacency(&ctx.atg)
+    } else {
+        std::collections::HashMap::new()
+    };
     let InitialCorpus { seqs: mut corpus, stats: seed_stats, effective: seed_effective, fallback: seed_fallback } =
         build_initial_corpus(&world, ctx, &seed_mode, strict_seeds, &mut rng)?;
     let initial_corpus = corpus.len();
@@ -1250,7 +1398,11 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
             } else {
                 &corpus[rng.gen_range(0..corpus.len())]
             };
-            mutate_seq(base, &world, &dict, &mut rng)
+            if atg_aware_mutation {
+                mutate_seq_atg(base, &world, &dict, &atg_adj, &mut rng)
+            } else {
+                mutate_seq(base, &world, &dict, &mut rng)
+            }
         };
         let before = cov.unique_pc_count();
         let res = run_trace(&mut world, &spec, &seq, &mut cov);
@@ -1344,6 +1496,7 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
         "seed_source_requested": seed_mode,
         "seed_source_effective": seed_effective,
         "seed_fallback_to_random": seed_fallback,
+        "atg_aware_mutation": atg_aware_mutation,
         "seed": seed,
         "time_budget_s": budget,
         "setup_s": setup_s,
@@ -1947,5 +2100,28 @@ mod fixture_tests {
             return;
         };
         assert_exploit("nomad", &vuln, &patched);
+    }
+
+    #[test]
+    fn atg_fn_name_and_adjacency() {
+        assert_eq!(atg_fn_name("deposit(address,uint256)"), "deposit");
+        assert_eq!(atg_fn_name("unlock(address,uint256)"), "unlock");
+        // leading return type is dropped
+        assert_eq!(atg_fn_name("bytes4 foo(uint256)"), "foo");
+        let atg: crate::types::AtgGraph = serde_json::from_value(json!({
+            "bridge_name": "t", "version": "1", "invariants": [], "nodes": [],
+            "edges": [
+                {"edge_id": "e1", "src": "A", "dst": "B", "label": "relay", "token": "",
+                 "conditions": [], "function_signature": "crossChain(address,string,bytes)"},
+                {"edge_id": "e2", "src": "B", "dst": "C", "label": "unlock", "token": "",
+                 "conditions": [], "function_signature": "unlock(address,uint256)"}
+            ]
+        }))
+        .unwrap();
+        let adj = build_atg_adjacency(&atg);
+        assert!(
+            adj.get("crossChain").is_some_and(|v| v.contains(&"unlock".to_string())),
+            "crossChain should be ATG-adjacent to unlock, got {adj:?}"
+        );
     }
 }
