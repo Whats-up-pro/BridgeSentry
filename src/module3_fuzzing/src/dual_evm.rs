@@ -99,6 +99,32 @@ impl ChainVm {
         fund_account(&mut self.db, addr, balance);
     }
 
+    /// Override one storage slot (CacheDB write over the forked state).
+    fn set_storage(&mut self, addr: Address, slot: U256, value: U256) -> Result<(), String> {
+        self.db
+            .insert_account_storage(addr, slot, value)
+            .map_err(|e| format!("insert_account_storage {addr:?}[{slot}]: {e:?}"))
+    }
+
+    /// Overlay runtime bytecode at `addr`, preserving balance/nonce.
+    fn set_code(&mut self, addr: Address, code: Vec<u8>) -> Result<(), String> {
+        let mut info = self
+            .db
+            .basic(addr)
+            .map_err(|e| format!("basic {addr:?}: {e:?}"))?
+            .unwrap_or_else(|| AccountInfo {
+                balance: U256::ZERO,
+                nonce: 0,
+                code_hash: KECCAK_EMPTY,
+                code: None,
+            });
+        let bytecode = revm::primitives::Bytecode::new_raw(Bytes::copy_from_slice(&code));
+        info.code_hash = revm::primitives::keccak256(&code);
+        info.code = Some(bytecode);
+        self.db.insert_account_info(addr, info);
+        Ok(())
+    }
+
     fn prepare_deployer(&mut self, addr: Address, balance: U256) {
         let mut info = self
             .db
@@ -548,6 +574,24 @@ impl DualEvm {
     /// Destination-side counterpart of [`Self::fund_source`].
     pub fn fund_dest(&mut self, who: Address, balance: U256) {
         self.dest.fund(who, balance);
+    }
+
+    /// Write the corrected value into the one storage slot whose
+    /// misconfiguration is the vulnerability (minimal on-chain patch control).
+    pub fn set_storage_source(&mut self, addr: Address, slot: U256, value: U256) -> Result<(), String> {
+        self.source.set_storage(addr, slot, value)
+    }
+    /// Destination-side counterpart of [`Self::set_storage_source`].
+    pub fn set_storage_dest(&mut self, addr: Address, slot: U256, value: U256) -> Result<(), String> {
+        self.dest.set_storage(addr, slot, value)
+    }
+    /// Overlay patched runtime bytecode on the source fork (code-change fix).
+    pub fn set_code_source(&mut self, addr: Address, code: Vec<u8>) -> Result<(), String> {
+        self.source.set_code(addr, code)
+    }
+    /// Destination-side counterpart of [`Self::set_code_source`].
+    pub fn set_code_dest(&mut self, addr: Address, code: Vec<u8>) -> Result<(), String> {
+        self.dest.set_code(addr, code)
     }
 
     /// Read ETH balance of an address on the destination fork.

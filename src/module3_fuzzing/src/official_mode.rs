@@ -70,6 +70,69 @@ pub struct OfficialSpec {
     pub required_offchain_capability: Option<String>,
     #[serde(default)]
     pub notes: Option<String>,
+    /// On-chain fork mode: real deployed contracts/tokens, recorded
+    /// exploit calldata as seeds, and a minimal patch control. When set,
+    /// World::build forks the real bytecode instead of compile+deploy.
+    #[serde(default)]
+    pub onchain: Option<OnchainSpec>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OnchainSpec {
+    /// Real contracts/tokens, each at its deployed address on the fork.
+    pub contracts: Vec<OnchainContract>,
+    /// Recorded real exploit transactions, replayed as initial seeds.
+    #[serde(default)]
+    pub seeds: Vec<OnchainSeed>,
+    /// Minimal patch control applied only to the `patched` variant.
+    #[serde(default)]
+    pub patch: PatchSpec,
+    /// Extra addresses to fund with gas ETH (attacker/relayer always funded).
+    #[serde(default)]
+    pub fund: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OnchainContract {
+    pub name: String,
+    pub side: String,
+    pub address: String,
+    /// Human-readable signatures (e.g. `process(bytes)`); used to synthesize a
+    /// minimal ABI when `abi` is absent.
+    #[serde(default)]
+    pub signatures: Vec<String>,
+    /// Inline JSON ABI (preferred when events must be parsed for relay).
+    #[serde(default)]
+    pub abi: Option<Value>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OnchainSeed {
+    pub contract: String,
+    pub calldata: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct PatchSpec {
+    #[serde(default)]
+    pub storage: Vec<StorageOverride>,
+    #[serde(default)]
+    pub code: Vec<CodeOverride>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct StorageOverride {
+    pub side: String,
+    pub address: String,
+    pub slot: String,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CodeOverride {
+    pub side: String,
+    pub address: String,
+    pub runtime: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -226,6 +289,9 @@ fn compile_dir(dir: &Path, extra_allow: &[PathBuf]) -> Result<HashMap<String, (A
 
 impl World {
     fn build(ctx: &RuntimeContext, spec: &OfficialSpec, bench_dir: &Path, variant: &str) -> Result<Self> {
+        if spec.onchain.is_some() {
+            return Self::build_onchain(ctx, spec, variant);
+        }
         let rel = spec
             .variants
             .get(variant)
@@ -305,6 +371,129 @@ impl World {
 
         // Pre-incident setup is executed by the declared actor and relayed
         // faithfully, exactly like attack traffic.
+        let mut cov = CoverageTracker::default();
+        for st in &spec.setup {
+            let from = w.role_address(&st.from)?;
+            let idx = w
+                .contract_index(&st.to)
+                .ok_or_else(|| eyre!("setup: unknown contract `{}`", st.to))?;
+            let (func, toks) = w.function_call(idx, &st.function, &st.args, None)?;
+            let rec = w.execute_call(spec, idx, &func, &toks, from, &mut cov, Kind::Setup)?;
+            if rec.iter().any(|r| !r.success) {
+                return Err(eyre!(
+                    "setup call {}.{} reverted: {}",
+                    st.to,
+                    st.function,
+                    rec.iter().map(|r| r.status.clone()).collect::<Vec<_>>().join(" | ")
+                ));
+            }
+        }
+        w.base = Some(w.dual.capture_snapshot());
+        Ok(w)
+    }
+
+    /// On-chain fork build: contracts live at their real deployed addresses on
+    /// the forked chain(s); no compilation or mock deployment. The attacker is
+    /// funded with gas ETH only (never bridge assets). The `patched` variant
+    /// applies the declared minimal patch (storage/code override) over the same
+    /// forked state so the paired control shares identical addresses.
+    fn build_onchain(ctx: &RuntimeContext, spec: &OfficialSpec, variant: &str) -> Result<Self> {
+        let oc = spec
+            .onchain
+            .as_ref()
+            .ok_or_else(|| eyre!("build_onchain called without an `onchain` spec"))?;
+        let mut dual = crate::fuzz_loop::init_dual_evm(ctx).ok_or_else(|| {
+            eyre!("onchain mode requires a dual-EVM fork (set --source-rpc/--dest-rpc/--*-block)")
+        })?;
+        dual.reset_benchmark_deployer();
+        let big = U256::from(10u8).pow(U256::from(30u8));
+        let mut funded = vec![attacker(), relayer()];
+        funded.extend(oc.fund.iter().filter_map(|s| addr_from_hex(s)));
+        let victims: Vec<Address> = spec.victims.iter().filter_map(|s| addr_from_hex(s)).collect();
+        funded.extend(victims.iter().copied());
+        for a in &funded {
+            dual.fund_source(*a, big);
+            dual.fund_dest(*a, big);
+        }
+
+        let mut w = World {
+            dual,
+            contracts: Vec::new(),
+            base: None,
+            excluded: HashSet::new(),
+            asset_of: HashMap::new(),
+            deploy_log: Vec::new(),
+        };
+
+        for c in &oc.contracts {
+            let side = Side::parse(&c.side)?;
+            let addr = addr_from_hex(&c.address)
+                .ok_or_else(|| eyre!("onchain contract `{}`: bad address {}", c.name, c.address))?;
+            let abi: Abi = match &c.abi {
+                Some(j) => serde_json::from_value(j.clone())
+                    .map_err(|e| eyre!("onchain `{}` inline abi: {e}", c.name))?,
+                None => abi_from_signatures(&c.signatures)
+                    .map_err(|e| eyre!("onchain `{}`: {e}", c.name))?,
+            };
+            w.deploy_log.push(format!("{}={}@{} (onchain real)", c.name, addr, side.as_str()));
+            w.contracts.push(Deployed {
+                name: c.name.clone(),
+                contract: c.name.clone(),
+                side,
+                addr,
+                abi,
+            });
+        }
+
+        for c in &w.contracts {
+            w.excluded.insert(c.addr);
+        }
+        w.excluded.insert(deployer());
+        w.excluded.insert(relayer());
+        w.excluded.insert(Address::ZERO);
+        for v in &victims {
+            w.excluded.insert(*v);
+        }
+        for (gi, group) in spec.asset_pairs.iter().enumerate() {
+            let label = format!("asset{gi}:{}", group.join("+"));
+            for name in group {
+                if let Some(c) = w.contract(name) {
+                    w.asset_of.insert((c.side, c.addr), label.clone());
+                }
+            }
+        }
+
+        if variant == "patched" {
+            for sov in &oc.patch.storage {
+                let side = Side::parse(&sov.side)?;
+                let addr = addr_from_hex(&sov.address)
+                    .ok_or_else(|| eyre!("patch storage: bad address {}", sov.address))?;
+                let slot = u256_from_hex(&sov.slot)
+                    .ok_or_else(|| eyre!("patch storage: bad slot {}", sov.slot))?;
+                let value = u256_from_hex(&sov.value)
+                    .ok_or_else(|| eyre!("patch storage: bad value {}", sov.value))?;
+                match side {
+                    Side::Source => w.dual.set_storage_source(addr, slot, value),
+                    Side::Dest => w.dual.set_storage_dest(addr, slot, value),
+                }
+                .map_err(|e| eyre!("patch storage {}: {e}", sov.address))?;
+                w.deploy_log.push(format!("patch storage {}[{}]={} @{}", addr, sov.slot, sov.value, side.as_str()));
+            }
+            for cov in &oc.patch.code {
+                let side = Side::parse(&cov.side)?;
+                let addr = addr_from_hex(&cov.address)
+                    .ok_or_else(|| eyre!("patch code: bad address {}", cov.address))?;
+                let code = hex::decode(cov.runtime.trim_start_matches("0x"))
+                    .map_err(|e| eyre!("patch code hex: {e}"))?;
+                match side {
+                    Side::Source => w.dual.set_code_source(addr, code),
+                    Side::Dest => w.dual.set_code_dest(addr, code),
+                }
+                .map_err(|e| eyre!("patch code {}: {e}", cov.address))?;
+                w.deploy_log.push(format!("patch code {} ({}B) @{}", addr, cov.runtime.len() / 2, side.as_str()));
+            }
+        }
+
         let mut cov = CoverageTracker::default();
         for st in &spec.setup {
             let from = w.role_address(&st.from)?;
@@ -741,6 +930,92 @@ fn random_call(world: &World, dict: &Dict, rng: &mut StdRng) -> Option<AttackCal
     let (idx, func) = all[rng.gen_range(0..all.len())].clone();
     let args = func.inputs.iter().map(|p| random_arg(&p.kind, dict, rng)).collect();
     Some(AttackCall { idx, func, args })
+}
+
+/// Split a parameter list at top-level commas (depth-aware for () and []).
+fn split_top_level(s: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut depth = 0i32;
+    let mut cur = String::new();
+    for ch in s.chars() {
+        match ch {
+            '(' | '[' => { depth += 1; cur.push(ch); }
+            ')' | ']' => { depth -= 1; cur.push(ch); }
+            ',' if depth == 0 => { out.push(cur.trim().to_string()); cur.clear(); }
+            _ => cur.push(ch),
+        }
+    }
+    if !cur.trim().is_empty() { out.push(cur.trim().to_string()); }
+    out
+}
+
+/// Synthesize a minimal ABI from human-readable signatures (non-tuple params).
+fn abi_from_signatures(sigs: &[String]) -> Result<Abi> {
+    let mut items: Vec<Value> = Vec::new();
+    for sig in sigs {
+        let open = sig.find('(').ok_or_else(|| eyre!("signature `{sig}` has no `(`"))?;
+        let close = sig.rfind(')').ok_or_else(|| eyre!("signature `{sig}` has no `)`"))?;
+        let name = sig[..open].split_whitespace().last().unwrap_or("").to_string();
+        if name.is_empty() {
+            return Err(eyre!("signature `{sig}` has no function name"));
+        }
+        let mut inputs: Vec<Value> = Vec::new();
+        for (i, p) in split_top_level(&sig[open + 1..close]).into_iter().enumerate() {
+            let ty = p.split_whitespace().next().unwrap_or("").to_string();
+            if ty.is_empty() {
+                continue;
+            }
+            if ty.starts_with('(') {
+                return Err(eyre!("tuple param in `{sig}`; provide an inline `abi` instead"));
+            }
+            inputs.push(json!({"name": format!("p{i}"), "type": ty}));
+        }
+        items.push(json!({
+            "type": "function",
+            "name": name,
+            "stateMutability": "nonpayable",
+            "inputs": inputs,
+            "outputs": [],
+        }));
+    }
+    serde_json::from_value(Value::Array(items)).map_err(|e| eyre!("build abi from signatures: {e}"))
+}
+
+/// Parse a hex string (optionally `0x`-prefixed) into a revm U256.
+fn u256_from_hex(s: &str) -> Option<U256> {
+    let mut h = s.trim().trim_start_matches("0x").to_string();
+    if h.is_empty() {
+        return Some(U256::ZERO);
+    }
+    if h.len() % 2 == 1 {
+        h.insert(0, '0');
+    }
+    let bytes = hex::decode(&h).ok()?;
+    if bytes.len() > 32 {
+        return None;
+    }
+    let mut buf = [0u8; 32];
+    buf[32 - bytes.len()..].copy_from_slice(&bytes);
+    Some(U256::from_be_slice(&buf))
+}
+
+/// Decode recorded exploit calldata (onchain spec) into single-call seeds.
+fn onchain_seeds(world: &World, spec: &OfficialSpec) -> Vec<Seq> {
+    let Some(oc) = &spec.onchain else { return Vec::new() };
+    let mut seqs = Vec::new();
+    for sd in &oc.seeds {
+        let Some(idx) = world.contract_index(&sd.contract) else { continue };
+        let Ok(data) = hex::decode(sd.calldata.trim().trim_start_matches("0x")) else { continue };
+        if data.len() < 4 {
+            continue;
+        }
+        let sel = [data[0], data[1], data[2], data[3]];
+        let c = &world.contracts[idx];
+        let Some(func) = c.abi.functions().find(|f| f.short_signature() == sel).cloned() else { continue };
+        let Ok(args) = func.decode_input(&data[4..]) else { continue };
+        seqs.push(vec![AttackCall { idx, func, args }]);
+    }
+    seqs
 }
 
 fn random_seeds(world: &World, rng: &mut StdRng, n: usize) -> Vec<Seq> {
@@ -1342,7 +1617,8 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
         .benchmark_dir
         .clone()
         .ok_or_else(|| eyre!("official mode: cannot locate benchmark directory from --atg path"))?;
-    let spec_path = bench_dir.join("official").join("spec.json");
+    let spec_file = std::env::var("BRIDGESENTRY_OFFICIAL_SPEC").unwrap_or_else(|_| "spec.json".into());
+    let spec_path = bench_dir.join("official").join(&spec_file);
     let spec: OfficialSpec = serde_json::from_str(
         &std::fs::read_to_string(&spec_path).map_err(|e| eyre!("official mode needs {}: {e}", spec_path.display()))?,
     )?;
@@ -1369,6 +1645,12 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
     };
     let InitialCorpus { seqs: mut corpus, stats: seed_stats, effective: seed_effective, fallback: seed_fallback } =
         build_initial_corpus(&world, ctx, &seed_mode, strict_seeds, &mut rng)?;
+    // On-chain mode: prepend recorded real exploit calldata as seeds.
+    if spec.onchain.is_some() {
+        for sq in onchain_seeds(&world, &spec).into_iter().rev() {
+            corpus.insert(0, sq);
+        }
+    }
     let initial_corpus = corpus.len();
 
     let mut dict = Dict::from_world(&world);
@@ -2123,5 +2405,50 @@ mod fixture_tests {
             adj.get("crossChain").is_some_and(|v| v.contains(&"unlock".to_string())),
             "crossChain should be ATG-adjacent to unlock, got {adj:?}"
         );
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// Unit tests for the on-chain-mode pure helpers (hermetic; no network/solc).
+// ---------------------------------------------------------------------------
+#[cfg(test)]
+mod onchain_helper_tests {
+    use super::*;
+
+    #[test]
+    fn abi_from_signatures_process_bytes_selector() {
+        // The Nomad entrypoint; its selector must be the real 0x928bc4b2.
+        let abi = abi_from_signatures(&["process(bytes)".to_string()]).unwrap();
+        let f = abi.functions_by_name("process").unwrap();
+        assert_eq!(f.len(), 1);
+        assert_eq!(f[0].inputs.len(), 1);
+        assert_eq!(f[0].inputs[0].kind, ParamType::Bytes);
+        assert_eq!(f[0].short_signature(), [0x92, 0x8b, 0xc4, 0xb2]);
+    }
+
+    #[test]
+    fn abi_from_signatures_multi_arg_and_empty() {
+        let abi = abi_from_signatures(&["transfer(address,uint256)".to_string()]).unwrap();
+        let f = &abi.functions_by_name("transfer").unwrap()[0];
+        assert_eq!(f.inputs.len(), 2);
+        assert_eq!(f.inputs[0].kind, ParamType::Address);
+        assert!(matches!(f.inputs[1].kind, ParamType::Uint(256)));
+        assert_eq!(abi_from_signatures(&[]).unwrap().functions().count(), 0);
+    }
+
+    #[test]
+    fn u256_from_hex_parses() {
+        assert_eq!(u256_from_hex("0x1").unwrap(), U256::from(1u8));
+        assert_eq!(u256_from_hex("0x").unwrap(), U256::ZERO);
+        assert_eq!(u256_from_hex("ff").unwrap(), U256::from(255u16));
+        assert!(u256_from_hex("0xzz").is_none());
+    }
+
+    #[test]
+    fn split_top_level_respects_nesting() {
+        assert_eq!(split_top_level("address,uint256"), vec!["address", "uint256"]);
+        assert_eq!(split_top_level("uint256[],bytes"), vec!["uint256[]", "bytes"]);
+        assert!(split_top_level("").is_empty());
     }
 }
