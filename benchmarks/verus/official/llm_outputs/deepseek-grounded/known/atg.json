@@ -1,0 +1,280 @@
+{
+  "bridge_name": "verus",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "token",
+      "node_type": "token_contract",
+      "chain": "this",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "notary",
+      "node_type": "external_account",
+      "chain": "this",
+      "address": "notary_",
+      "functions": []
+    },
+    {
+      "node_id": "VerusBridge",
+      "node_type": "bridge_contract",
+      "chain": "this",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "local",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "VerusExportSurrogate",
+      "node_type": "bridge",
+      "chain": "local",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "VerusBridge",
+      "dst": "recipient",
+      "label": "withdraw",
+      "token": "token",
+      "conditions": [
+        "committedExport[exportId] > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "committedExport[exportId] > 0"
+          }
+        }
+      ],
+      "function_signature": "submitImports(address,uint256,bytes32)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "msg.sender",
+      "dst": "address(this)",
+      "label": "lock",
+      "token": "token",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "export(bytes32,address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_withdraw_matches_lock",
+      "category": "asset_conservation",
+      "description": "The amount withdrawn must match the amount locked in the source chain.",
+      "predicate": "committedExport[exportId] == amount",
+      "solidity_assertion": "require(committedExport[exportId] == amount, 'Withdraw amount must match locked amount');",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_requires_valid_export",
+      "category": "authorization",
+      "description": "Withdrawals must be authorized by a valid export commitment.",
+      "predicate": "committedExport[exportId] > 0",
+      "solidity_assertion": "require(committedExport[exportId] > 0, 'Withdrawal requires valid export commitment');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_export_id_unique",
+      "category": "uniqueness",
+      "description": "Each export ID must be unique and not reused.",
+      "predicate": "committedExport[exportId] == 0",
+      "solidity_assertion": "require(committedExport[exportId] == 0, 'Export ID must be unique');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_lock_requires_sufficient_balance",
+      "category": "authorization",
+      "description": "Locking tokens requires the sender to have sufficient balance.",
+      "predicate": "balanceOf(msg.sender) >= amount",
+      "solidity_assertion": "require(balanceOf(msg.sender) >= amount, 'Insufficient balance for lock');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply_constant",
+      "category": "asset_conservation",
+      "description": "The total supply of tokens must remain constant across the bridge.",
+      "predicate": "totalSupply == initialTotalSupply",
+      "solidity_assertion": "assert(totalSupply == initialTotalSupply, 'Total supply must remain constant');",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_withdraw_once_per_export",
+      "category": "uniqueness",
+      "description": "Each export ID can only be used for a single withdrawal.",
+      "predicate": "committedExport[exportId] == 0 after withdraw",
+      "solidity_assertion": "require(committedExport[exportId] == 0, 'Export ID already used for withdrawal');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_requires_valid_signature",
+      "category": "authorization",
+      "description": "Withdrawals must be authorized by a valid signature from the notary.",
+      "predicate": "isValidSignature(notary, signature)",
+      "solidity_assertion": "require(isValidSignature(notary, signature), 'Withdrawal requires valid notary signature');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_lock_increases_committed",
+      "category": "asset_conservation",
+      "description": "Locking tokens must increase the committed export amount.",
+      "predicate": "committedExport[exportId] += amount",
+      "solidity_assertion": "assert(committedExport[exportId] == committedExport[exportId] + amount, 'Lock must increase committed export amount');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_lock_once_per_export",
+      "category": "uniqueness",
+      "description": "Each export ID can only be used for a single lock.",
+      "predicate": "committedExport[exportId] == 0 before lock",
+      "solidity_assertion": "require(committedExport[exportId] == 0, 'Export ID already used for lock');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_requires_valid_recipient",
+      "category": "authorization",
+      "description": "Withdrawals must be authorized by a valid recipient address.",
+      "predicate": "recipient != address(0)",
+      "solidity_assertion": "require(recipient != address(0), 'Withdrawal requires valid recipient address');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_withdraw_decreases_committed",
+      "category": "asset_conservation",
+      "description": "Withdrawing tokens must decrease the committed export amount.",
+      "predicate": "committedExport[exportId] -= amount",
+      "solidity_assertion": "assert(committedExport[exportId] == committedExport[exportId] - amount, 'Withdraw must decrease committed export amount');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_lock_requires_valid_export_id",
+      "category": "authorization",
+      "description": "Locking tokens requires a valid export ID.",
+      "predicate": "exportId != bytes32(0)",
+      "solidity_assertion": "require(exportId != bytes32(0), 'Lock requires valid export ID');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_withdraw_once_per_recipient",
+      "category": "uniqueness",
+      "description": "Each recipient can only withdraw once per export ID.",
+      "predicate": "withdrawn[recipient][exportId] == false",
+      "solidity_assertion": "require(!withdrawn[recipient][exportId], 'Recipient already withdrew for this export ID');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_lock_balance_decrease",
+      "category": "asset_conservation",
+      "description": "Locking tokens must decrease the sender's balance.",
+      "predicate": "balanceOf(msg.sender) -= amount",
+      "solidity_assertion": "assert(balanceOf(msg.sender) == balanceOf(msg.sender) - amount, 'Lock must decrease sender balance');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_withdraw_requires_valid_import",
+      "category": "authorization",
+      "description": "Withdrawals must be authorized by a valid import.",
+      "predicate": "isValidImport(importId)",
+      "solidity_assertion": "require(isValidImport(importId), 'Withdrawal requires valid import');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

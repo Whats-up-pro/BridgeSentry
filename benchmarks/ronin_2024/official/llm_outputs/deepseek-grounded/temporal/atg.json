@@ -1,0 +1,245 @@
+{
+  "bridge_name": "ronin_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "RoninDeposit",
+      "node_type": "bridge_deposit",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token_contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "account",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "msg.sender",
+      "dst": "RoninDeposit",
+      "label": "lock",
+      "token": "token",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "RoninGatewayV3",
+      "dst": "recipient",
+      "label": "withdraw",
+      "token": "token",
+      "conditions": [
+        "w >= minimumVoteWeight()"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "w >= minimumVoteWeight()"
+          }
+        }
+      ],
+      "function_signature": "withdraw(address,uint256,address[])"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "deposit_amount_positive",
+      "category": "asset_conservation",
+      "description": "Deposit amount must be positive",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, 'Deposit amount must be positive');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_vote_weight",
+      "category": "authorization",
+      "description": "Withdrawal requires sufficient vote weight",
+      "predicate": "w >= minimumVoteWeight()",
+      "solidity_assertion": "require(w >= minimumVoteWeight(), 'Insufficient vote weight');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_token_balance",
+      "category": "asset_conservation",
+      "description": "Depositor must have sufficient token balance",
+      "predicate": "token.balanceOf(msg.sender) >= amount",
+      "solidity_assertion": "require(token.balanceOf(msg.sender) >= amount, 'Insufficient token balance');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_token_approval",
+      "category": "authorization",
+      "description": "Depositor must have approved token transfer",
+      "predicate": "token.allowance(msg.sender, address(this)) >= amount",
+      "solidity_assertion": "require(token.allowance(msg.sender, address(this)) >= amount, 'Insufficient token allowance');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_token_balance",
+      "category": "asset_conservation",
+      "description": "Bridge must have sufficient token balance for withdrawal",
+      "predicate": "token.balanceOf(address(this)) >= amount",
+      "solidity_assertion": "require(token.balanceOf(address(this)) >= amount, 'Insufficient bridge token balance');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_recipient_nonzero",
+      "category": "asset_conservation",
+      "description": "Withdrawal recipient must be a non-zero address",
+      "predicate": "recipient != address(0)",
+      "solidity_assertion": "require(recipient != address(0), 'Invalid recipient address');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_event_emission",
+      "category": "uniqueness",
+      "description": "Deposit must emit a corresponding event",
+      "predicate": "emit Deposit(msg.sender, amount)",
+      "solidity_assertion": "assert(emit Deposit(msg.sender, amount), 'Deposit event not emitted');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_event_emission",
+      "category": "uniqueness",
+      "description": "Withdrawal must emit a corresponding event",
+      "predicate": "emit Withdraw(recipient, amount)",
+      "solidity_assertion": "assert(emit Withdraw(recipient, amount), 'Withdraw event not emitted');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_token_transfer",
+      "category": "asset_conservation",
+      "description": "Deposit must transfer tokens to bridge",
+      "predicate": "token.transferFrom(msg.sender, address(this), amount)",
+      "solidity_assertion": "assert(token.transferFrom(msg.sender, address(this), amount), 'Token transfer failed');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_token_transfer",
+      "category": "asset_conservation",
+      "description": "Withdrawal must transfer tokens to recipient",
+      "predicate": "token.transfer(recipient, amount)",
+      "solidity_assertion": "assert(token.transfer(recipient, amount), 'Token transfer failed');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_non_reentrant",
+      "category": "uniqueness",
+      "description": "Deposit must be non-reentrant",
+      "predicate": "!locked",
+      "solidity_assertion": "require(!locked, 'Reentrant call');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_token_contract",
+      "category": "authorization",
+      "description": "Deposit must use a valid token contract",
+      "predicate": "address(token) != address(0)",
+      "solidity_assertion": "require(address(token) != address(0), 'Invalid token contract');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_sender_nonzero",
+      "category": "asset_conservation",
+      "description": "Deposit sender must be a non-zero address",
+      "predicate": "msg.sender != address(0)",
+      "solidity_assertion": "require(msg.sender != address(0), 'Invalid sender address');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

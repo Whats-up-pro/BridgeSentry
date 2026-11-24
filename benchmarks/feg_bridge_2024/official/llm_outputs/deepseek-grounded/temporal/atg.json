@@ -1,0 +1,269 @@
+{
+  "bridge_name": "feg_bridge_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "feg",
+      "node_type": "token",
+      "chain": "source",
+      "address": "feg_",
+      "functions": []
+    },
+    {
+      "node_id": "core",
+      "node_type": "bridge_core",
+      "chain": "source",
+      "address": "core_",
+      "functions": []
+    },
+    {
+      "node_id": "FEGBridgeSrc",
+      "node_type": "bridge_router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "feg",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "address",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "relayer",
+      "node_type": "address",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "trustedSource",
+      "node_type": "mapping",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "WormholeCore",
+      "node_type": "bridge_core",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "msg.sender",
+      "dst": "FEGBridgeSrc",
+      "label": "lock",
+      "token": "feg",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "FEGBridgeSrc",
+      "dst": "core",
+      "label": "message",
+      "token": "UNKNOWN",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "trustedSource",
+      "dst": "account",
+      "label": "transfer",
+      "token": "feg",
+      "conditions": [
+        "trustedSource[sourceAddress]"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "trustedSource[sourceAddress]"
+          }
+        }
+      ],
+      "function_signature": "receiveMessage(address,bytes)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_lock_mint",
+      "category": "asset_conservation",
+      "description": "The total amount locked on the source chain must equal the total amount minted on the destination chain.",
+      "predicate": "sum(locked_amounts) == sum(minted_amounts)",
+      "solidity_assertion": "require(totalLocked == totalMinted, 'Asset conservation violated');",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_lock",
+      "category": "authorization",
+      "description": "Only authorized users can lock tokens on the source chain.",
+      "predicate": "msg.sender == authorized_user",
+      "solidity_assertion": "require(authorized[msg.sender], 'Unauthorized lock attempt');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_message_relay",
+      "category": "authorization",
+      "description": "Only the bridge core can relay messages to the destination chain.",
+      "predicate": "msg.sender == bridge_core_address",
+      "solidity_assertion": "require(msg.sender == bridgeCoreAddress, 'Unauthorized message relay');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message",
+      "category": "uniqueness",
+      "description": "Each message can only be relayed once.",
+      "predicate": "!message_relayed[message_id]",
+      "solidity_assertion": "require(!messageRelayed[messageId], 'Message already relayed');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_transfer",
+      "category": "uniqueness",
+      "description": "Each transfer can only be executed once.",
+      "predicate": "!transfer_executed[transfer_id]",
+      "solidity_assertion": "require(!transferExecuted[transferId], 'Transfer already executed');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_transfer",
+      "category": "asset_conservation",
+      "description": "The total amount transferred must equal the total amount received.",
+      "predicate": "sum(transferred_amounts) == sum(received_amounts)",
+      "solidity_assertion": "require(totalTransferred == totalReceived, 'Asset conservation violated');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_transfer",
+      "category": "authorization",
+      "description": "Only trusted sources can initiate transfers.",
+      "predicate": "trusted_source[source_address]",
+      "solidity_assertion": "require(trustedSource[sourceAddress], 'Untrusted transfer source');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_lock_transfer",
+      "category": "asset_conservation",
+      "description": "The total amount locked must equal the total amount transferred.",
+      "predicate": "sum(locked_amounts) == sum(transferred_amounts)",
+      "solidity_assertion": "require(totalLocked == totalTransferred, 'Asset conservation violated');",
+      "related_edges": [
+        "e1",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_lock",
+      "category": "uniqueness",
+      "description": "Each lock operation can only be executed once.",
+      "predicate": "!lock_executed[lock_id]",
+      "solidity_assertion": "require(!lockExecuted[lockId], 'Lock already executed');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_mint_transfer",
+      "category": "asset_conservation",
+      "description": "The total amount minted must equal the total amount transferred.",
+      "predicate": "sum(minted_amounts) == sum(transferred_amounts)",
+      "solidity_assertion": "require(totalMinted == totalTransferred, 'Asset conservation violated');",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_refund",
+      "category": "uniqueness",
+      "description": "Each refund can only be executed once.",
+      "predicate": "!refund_executed[refund_id]",
+      "solidity_assertion": "require(!refundExecuted[refundId], 'Refund already executed');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

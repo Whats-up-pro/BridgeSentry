@@ -1,0 +1,330 @@
+{
+  "bridge_name": "polynetwork",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "owner",
+      "node_type": "EOA",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "keeper",
+      "node_type": "EOA",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "eccd",
+      "node_type": "contract",
+      "chain": "current",
+      "address": "parameter_eccd_",
+      "functions": []
+    },
+    {
+      "node_id": "fromContractContext",
+      "node_type": "variable",
+      "chain": "current",
+      "address": "n/a",
+      "functions": []
+    },
+    {
+      "node_id": "keeper",
+      "node_type": "role",
+      "chain": "current",
+      "address": "eccd.keeper()",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "local",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "EOA",
+      "chain": "local",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "manager",
+      "node_type": "contract",
+      "chain": "local",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "registeredProxy",
+      "node_type": "contract",
+      "chain": "remote",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "SourceCrossChain",
+      "node_type": "bridge_router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "source",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "ccm",
+      "node_type": "bridge_component",
+      "chain": "source",
+      "address": "ccm_",
+      "functions": []
+    },
+    {
+      "node_id": "destLockProxy",
+      "node_type": "bridge_component",
+      "chain": "destination",
+      "address": "destLockProxy_",
+      "functions": []
+    },
+    {
+      "node_id": "SrcDeposit",
+      "node_type": "router",
+      "chain": "source",
+      "address": "deployed_address",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "remote",
+      "dst": "local",
+      "label": "unlock",
+      "token": "token",
+      "conditions": [
+        "msg.sender == manager",
+        "ICrossChainContext(manager).fromContractContext() == registeredProxy"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == manager"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "ICrossChainContext(manager).fromContractContext() == registeredProxy"
+          }
+        }
+      ],
+      "function_signature": "unlock(address,uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "msg.sender",
+      "dst": "address(this)",
+      "label": "lock",
+      "token": "token",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "SrcDeposit",
+      "dst": "destLockProxy",
+      "label": "cross-chain_message",
+      "token": "token",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "deposit(address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_lock_unlock",
+      "category": "asset_conservation",
+      "description": "Total locked tokens on source chain must equal total unlocked tokens on destination chain",
+      "predicate": "sum(e2.amount) == sum(e1.amount)",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) == totalUnlockedAmount);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_unlock_manager",
+      "category": "authorization",
+      "description": "Unlock operation must be called by manager contract",
+      "predicate": "msg.sender == manager",
+      "solidity_assertion": "require(msg.sender == manager, \"Unauthorized unlock\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_unlock_proxy",
+      "category": "authorization",
+      "description": "Unlock operation must originate from registered proxy",
+      "predicate": "ICrossChainContext(manager).fromContractContext() == registeredProxy",
+      "solidity_assertion": "require(ICrossChainContext(manager).fromContractContext() == registeredProxy, \"Invalid origin\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_lock_amount",
+      "category": "authorization",
+      "description": "Lock operation must transfer positive amount",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Zero amount\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message_delivery",
+      "category": "uniqueness",
+      "description": "Each cross-chain message must be processed at most once",
+      "predicate": "∀m ∈ processed_messages: count(m) == 1",
+      "solidity_assertion": "require(!processedMessages[messageId], \"Duplicate message\"); processedMessages[messageId] = true;",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_message_value",
+      "category": "asset_conservation",
+      "description": "Cross-chain message value must match locked amount",
+      "predicate": "e3.amount == e2.amount",
+      "solidity_assertion": "require(crossChainAmount == lockedAmount, \"Amount mismatch\");",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_cross_chain_sender",
+      "category": "authorization",
+      "description": "Cross-chain message must come from source deposit contract",
+      "predicate": "msg.sender == SrcDeposit",
+      "solidity_assertion": "require(msg.sender == SrcDeposit, \"Invalid sender\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_escrow_balance",
+      "category": "asset_conservation",
+      "description": "Escrow contract balance must equal total locked minus total unlocked",
+      "predicate": "token.balanceOf(address(this)) == sum(e2.amount) - sum(e1.amount)",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) == totalLocked - totalUnlocked);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_keeper_access",
+      "category": "authorization",
+      "description": "Only keeper can execute certain privileged functions",
+      "predicate": "msg.sender == eccd.keeper()",
+      "solidity_assertion": "require(msg.sender == eccd.keeper(), \"Keeper only\");",
+      "related_edges": [],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_nonce_validation",
+      "category": "uniqueness",
+      "description": "Each cross-chain message must have unique nonce",
+      "predicate": "∀n ∈ used_nonces: count(n) == 1",
+      "solidity_assertion": "require(!usedNonces[nonce], \"Duplicate nonce\"); usedNonces[nonce] = true;",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_mint_burn",
+      "category": "asset_conservation",
+      "description": "Total minted tokens must equal total burned tokens across chains",
+      "predicate": "sum(minted) == sum(burned)",
+      "solidity_assertion": "assert(totalMinted == totalBurned);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_admin_access",
+      "category": "authorization",
+      "description": "Only admin can change critical parameters",
+      "predicate": "msg.sender == admin",
+      "solidity_assertion": "require(msg.sender == admin, \"Admin only\");",
+      "related_edges": [],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_owner_access",
+      "category": "authorization",
+      "description": "Only owner can execute privileged functions",
+      "predicate": "msg.sender == owner",
+      "solidity_assertion": "require(msg.sender == owner, \"Owner only\");",
+      "related_edges": [],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

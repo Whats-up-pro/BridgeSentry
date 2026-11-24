@@ -1,0 +1,413 @@
+{
+  "bridge_name": "crosscurve",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "AxelarGateway",
+      "node_type": "bridge_gateway",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    },
+    {
+      "node_id": "relayer",
+      "node_type": "relayer",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "source",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "gateway",
+      "node_type": "bridge_gateway",
+      "chain": "source",
+      "address": "gateway_",
+      "functions": []
+    },
+    {
+      "node_id": "PortalSrc",
+      "node_type": "bridge_router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "current",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "account",
+      "chain": "current",
+      "address": "admin",
+      "functions": []
+    },
+    {
+      "node_id": "receiver",
+      "node_type": "account",
+      "chain": "current",
+      "address": "receiver",
+      "functions": []
+    },
+    {
+      "node_id": "ReceiverAxelar",
+      "node_type": "bridge_receiver",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "AxelarGateway",
+      "node_type": "bridge_gateway",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "PortalV2",
+      "node_type": "bridge_portal",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "trustedSource",
+      "node_type": "trusted_source",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "unknown",
+      "dst": "unknown",
+      "label": "deposit",
+      "token": "unknown",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "callContract(string,string,bytes)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "unknown",
+      "dst": "unknown",
+      "label": "withdraw",
+      "token": "unknown",
+      "conditions": [
+        "approved[commandId] == true",
+        "approvedSource[commandId] == expectedSource"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "approved[commandId] == true"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "approvedSource[commandId] == expectedSource"
+          }
+        }
+      ],
+      "function_signature": "validateContractCall(bytes32,address)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "msg.sender",
+      "dst": "address(this)",
+      "label": "lock",
+      "token": "token",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e4",
+      "src": "token",
+      "dst": "to",
+      "label": "transfer",
+      "token": "token",
+      "conditions": [
+        "msg.sender == receiver"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == receiver"
+          }
+        }
+      ],
+      "function_signature": "release(address,uint256)"
+    },
+    {
+      "edge_id": "e5",
+      "src": "trustedSource",
+      "dst": "recipient",
+      "label": "withdraw",
+      "token": "UNKNOWN",
+      "conditions": [
+        "sourceAddress == trustedSource",
+        "gateway.validateContractCall(commandId, sourceAddress)"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "sourceAddress == trustedSource"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "gateway.validateContractCall(commandId, sourceAddress)"
+          }
+        }
+      ],
+      "function_signature": "execute(bytes32,address,bytes)"
+    },
+    {
+      "edge_id": "e6",
+      "src": "trustedSource",
+      "dst": "recipient",
+      "label": "withdraw",
+      "token": "UNKNOWN",
+      "conditions": [
+        "sourceAddress == trustedSource"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "sourceAddress == trustedSource"
+          }
+        }
+      ],
+      "function_signature": "expressExecute(bytes32,address,bytes)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_lock_mint_parity",
+      "category": "asset_conservation",
+      "description": "Amount locked on source chain must equal amount minted on destination chain",
+      "predicate": "sum(e3.amount) == sum(e4.amount)",
+      "solidity_assertion": "assert(totalLocked == totalMinted);",
+      "related_edges": [
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_valid_source_for_withdraw",
+      "category": "authorization",
+      "description": "Withdrawals must come from trusted source",
+      "predicate": "e5.sourceAddress == trustedSource",
+      "solidity_assertion": "require(sourceAddress == trustedSource, 'Invalid source');",
+      "related_edges": [
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_gateway_validation",
+      "category": "authorization",
+      "description": "Gateway must validate contract calls",
+      "predicate": "e5.gateway.validateContractCall(commandId, sourceAddress)",
+      "solidity_assertion": "require(gateway.validateContractCall(commandId, sourceAddress), 'Invalid gateway validation');",
+      "related_edges": [
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_command_id_single_use",
+      "category": "uniqueness",
+      "description": "Command IDs must be unique and not reused",
+      "predicate": "!approved[commandId]",
+      "solidity_assertion": "require(!approved[commandId], 'Command ID already used');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_receiver_only_transfer",
+      "category": "authorization",
+      "description": "Only receiver can initiate token transfers",
+      "predicate": "e4.msg.sender == receiver",
+      "solidity_assertion": "require(msg.sender == receiver, 'Unauthorized transfer');",
+      "related_edges": [
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_non_zero_lock",
+      "category": "asset_conservation",
+      "description": "Lock operations must have positive amount",
+      "predicate": "e3.amount > 0",
+      "solidity_assertion": "require(amount > 0, 'Amount must be positive');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_express_execute_source",
+      "category": "authorization",
+      "description": "Express execute must come from trusted source",
+      "predicate": "e6.sourceAddress == trustedSource",
+      "solidity_assertion": "require(sourceAddress == trustedSource, 'Invalid express source');",
+      "related_edges": [
+        "e6"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_approved_source_match",
+      "category": "uniqueness",
+      "description": "Approved source must match expected source for command ID",
+      "predicate": "e2.approvedSource[commandId] == expectedSource",
+      "solidity_assertion": "require(approvedSource[commandId] == expectedSource, 'Source mismatch');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_no_negative_balances",
+      "category": "asset_conservation",
+      "description": "Token balances must never be negative",
+      "predicate": "balanceOf[address] >= 0 for all addresses",
+      "solidity_assertion": "assert(balanceOf[address] >= 0);",
+      "related_edges": [
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_deposit_caller_restriction",
+      "category": "authorization",
+      "description": "Only authorized callers can deposit",
+      "predicate": "e3.msg.sender == authorizedDepositor",
+      "solidity_assertion": "require(msg.sender == authorizedDepositor, 'Unauthorized deposit');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_command_id_approval",
+      "category": "uniqueness",
+      "description": "Command ID must be approved before withdrawal",
+      "predicate": "e2.approved[commandId] == true",
+      "solidity_assertion": "require(approved[commandId], 'Command ID not approved');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_transfer_amount_match",
+      "category": "asset_conservation",
+      "description": "Transfer amount must match locked amount",
+      "predicate": "e4.amount == e3.amount",
+      "solidity_assertion": "require(transferAmount == lockedAmount, 'Amount mismatch');",
+      "related_edges": [
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_gateway_only_execute",
+      "category": "authorization",
+      "description": "Only gateway can execute withdrawals",
+      "predicate": "e5.msg.sender == gateway",
+      "solidity_assertion": "require(msg.sender == gateway, 'Unauthorized execute');",
+      "related_edges": [
+        "e5"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_single_execution_per_command",
+      "category": "uniqueness",
+      "description": "Each command can be executed only once",
+      "predicate": "!executed[commandId]",
+      "solidity_assertion": "require(!executed[commandId], 'Command already executed');",
+      "related_edges": [
+        "e5",
+        "e6"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_total_supply_consistency",
+      "category": "asset_conservation",
+      "description": "Total supply must equal sum of all balances",
+      "predicate": "totalSupply == sum(balanceOf[address] for all addresses)",
+      "solidity_assertion": "assert(totalSupply == sumBalances);",
+      "related_edges": [
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

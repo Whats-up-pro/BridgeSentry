@@ -1,0 +1,385 @@
+{
+  "bridge_name": "polynetwork",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "owner",
+      "node_type": "admin",
+      "chain": "source",
+      "address": "dynamic",
+      "functions": []
+    },
+    {
+      "node_id": "keeper",
+      "node_type": "relay",
+      "chain": "source",
+      "address": "dynamic",
+      "functions": []
+    },
+    {
+      "node_id": "EthCrossChainManager",
+      "node_type": "bridge_manager",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "EthCrossChainData",
+      "node_type": "data_store",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "keeper",
+      "node_type": "relayer",
+      "chain": "Ethereum",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "current",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "account",
+      "chain": "current",
+      "address": "admin",
+      "functions": []
+    },
+    {
+      "node_id": "manager",
+      "node_type": "account",
+      "chain": "current",
+      "address": "manager",
+      "functions": []
+    },
+    {
+      "node_id": "registeredProxy",
+      "node_type": "contract",
+      "chain": "other",
+      "address": "p",
+      "functions": []
+    },
+    {
+      "node_id": "SourceCrossChain",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "source",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "ccm",
+      "node_type": "bridge",
+      "chain": "source",
+      "address": "ccm_",
+      "functions": []
+    },
+    {
+      "node_id": "destLockProxy",
+      "node_type": "bridge",
+      "chain": "destination",
+      "address": "destLockProxy_",
+      "functions": []
+    },
+    {
+      "node_id": "SrcDeposit",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "current",
+      "dst": "recipient",
+      "label": "unlock",
+      "token": "token",
+      "conditions": [
+        "msg.sender == manager",
+        "ICrossChainContext(manager).fromContractContext() == registeredProxy"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "msg.sender == manager"
+          }
+        },
+        {
+          "type": "generic",
+          "params": {
+            "expression": "ICrossChainContext(manager).fromContractContext() == registeredProxy"
+          }
+        }
+      ],
+      "function_signature": "unlock(address,uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "msg.sender",
+      "dst": "address(this)",
+      "label": "lock",
+      "token": "token_",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "address(this)",
+      "dst": "destLockProxy",
+      "label": "relay",
+      "token": "token_",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "lock_before_unlock",
+      "category": "asset_conservation",
+      "description": "Unlock operation must be preceded by a corresponding lock operation",
+      "predicate": "exists e2: lock(msg.sender, address(this), token_, amount) => exists e1: unlock(current, recipient, token, amount)",
+      "solidity_assertion": "require(lockedAmounts[msg.sender] >= amount, \"Insufficient locked amount\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "non_negative_lock",
+      "category": "asset_conservation",
+      "description": "Lock operation must transfer a positive amount",
+      "predicate": "forall e2: lock(msg.sender, address(this), token_, amount) => amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Amount must be positive\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "non_negative_unlock",
+      "category": "asset_conservation",
+      "description": "Unlock operation must transfer a positive amount",
+      "predicate": "forall e1: unlock(current, recipient, token, amount) => amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Amount must be positive\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "manager_authorization",
+      "category": "authorization",
+      "description": "Only manager can execute unlock operation",
+      "predicate": "forall e1: unlock(current, recipient, token, amount) => msg.sender == manager",
+      "solidity_assertion": "require(msg.sender == manager, \"Only manager can unlock\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "proxy_verification",
+      "category": "authorization",
+      "description": "Unlock operation must verify the registered proxy",
+      "predicate": "forall e1: unlock(current, recipient, token, amount) => ICrossChainContext(manager).fromContractContext() == registeredProxy",
+      "solidity_assertion": "require(ICrossChainContext(manager).fromContractContext() == registeredProxy, \"Invalid proxy\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "relay_positive_amount",
+      "category": "asset_conservation",
+      "description": "Relay operation must transfer a positive amount",
+      "predicate": "forall e3: relay(address(this), destLockProxy, token_, amount) => amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Amount must be positive\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "lock_relay_sequence",
+      "category": "asset_conservation",
+      "description": "Relay operation must be preceded by a corresponding lock operation",
+      "predicate": "exists e2: lock(msg.sender, address(this), token_, amount) => exists e3: relay(address(this), destLockProxy, token_, amount)",
+      "solidity_assertion": "require(lockedAmounts[msg.sender] >= amount, \"Insufficient locked amount\");",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "unique_lock",
+      "category": "uniqueness",
+      "description": "Each lock operation must have a unique identifier",
+      "predicate": "forall e2: lock(msg.sender, address(this), token_, amount) => unique(nonce)",
+      "solidity_assertion": "require(!usedNonces[nonce], \"Nonce already used\"); usedNonces[nonce] = true;",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "unique_unlock",
+      "category": "uniqueness",
+      "description": "Each unlock operation must have a unique identifier",
+      "predicate": "forall e1: unlock(current, recipient, token, amount) => unique(nonce)",
+      "solidity_assertion": "require(!usedNonces[nonce], \"Nonce already used\"); usedNonces[nonce] = true;",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "unique_relay",
+      "category": "uniqueness",
+      "description": "Each relay operation must have a unique identifier",
+      "predicate": "forall e3: relay(address(this), destLockProxy, token_, amount) => unique(nonce)",
+      "solidity_assertion": "require(!usedNonces[nonce], \"Nonce already used\"); usedNonces[nonce] = true;",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "lock_unlock_amount_match",
+      "category": "asset_conservation",
+      "description": "Unlock amount must match the corresponding lock amount",
+      "predicate": "forall e1, e2: unlock(current, recipient, token, amount) && lock(msg.sender, address(this), token_, amount') => amount == amount'",
+      "solidity_assertion": "require(lockedAmounts[msg.sender] == amount, \"Amount mismatch\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "lock_relay_amount_match",
+      "category": "asset_conservation",
+      "description": "Relay amount must match the corresponding lock amount",
+      "predicate": "forall e2, e3: lock(msg.sender, address(this), token_, amount) && relay(address(this), destLockProxy, token_, amount') => amount == amount'",
+      "solidity_assertion": "require(lockedAmounts[msg.sender] == amount, \"Amount mismatch\");",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "relay_unlock_amount_match",
+      "category": "asset_conservation",
+      "description": "Unlock amount must match the corresponding relay amount",
+      "predicate": "forall e1, e3: unlock(current, recipient, token, amount) && relay(address(this), destLockProxy, token_, amount') => amount == amount'",
+      "solidity_assertion": "require(relayedAmounts[msg.sender] == amount, \"Amount mismatch\");",
+      "related_edges": [
+        "e1",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "no_double_spend_lock",
+      "category": "uniqueness",
+      "description": "Locked tokens cannot be locked again before being unlocked",
+      "predicate": "forall e2: lock(msg.sender, address(this), token_, amount) => !locked[msg.sender]",
+      "solidity_assertion": "require(!locked[msg.sender], \"Tokens already locked\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "no_double_spend_unlock",
+      "category": "uniqueness",
+      "description": "Unlocked tokens cannot be unlocked again",
+      "predicate": "forall e1: unlock(current, recipient, token, amount) => !unlocked[recipient]",
+      "solidity_assertion": "require(!unlocked[recipient], \"Tokens already unlocked\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "no_double_spend_relay",
+      "category": "uniqueness",
+      "description": "Relayed tokens cannot be relayed again",
+      "predicate": "forall e3: relay(address(this), destLockProxy, token_, amount) => !relayed[destLockProxy]",
+      "solidity_assertion": "require(!relayed[destLockProxy], \"Tokens already relayed\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

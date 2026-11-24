@@ -1,0 +1,249 @@
+{
+  "bridge_name": "feg_bridge_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "feg",
+      "node_type": "token",
+      "chain": "source",
+      "address": "feg_",
+      "functions": []
+    },
+    {
+      "node_id": "core",
+      "node_type": "bridge_core",
+      "chain": "source",
+      "address": "core_",
+      "functions": []
+    },
+    {
+      "node_id": "FEGBridgeSrc",
+      "node_type": "bridge_router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "feg",
+      "node_type": "token",
+      "chain": "local",
+      "address": "feg_",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "address",
+      "chain": "local",
+      "address": "msg.sender",
+      "functions": []
+    },
+    {
+      "node_id": "relayer",
+      "node_type": "address",
+      "chain": "local",
+      "address": "relayer_",
+      "functions": []
+    },
+    {
+      "node_id": "trustedSource",
+      "node_type": "mapping",
+      "chain": "local",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "WormholeCore",
+      "node_type": "core_bridge",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "msg.sender",
+      "dst": "address(this)",
+      "label": "lock",
+      "token": "feg",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "FEGBridgeSrc",
+      "dst": "WormholeCore",
+      "label": "message",
+      "token": "data",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "trustedSource",
+      "dst": "account",
+      "label": "release",
+      "token": "feg",
+      "conditions": [
+        "trustedSource[sourceAddress]"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "trustedSource[sourceAddress]"
+          }
+        }
+      ],
+      "function_signature": "receiveMessage(address,bytes)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_lock_release",
+      "category": "asset_conservation",
+      "description": "The amount of tokens locked on the source chain must equal the amount released on the destination chain.",
+      "predicate": "amount_locked == amount_released",
+      "solidity_assertion": "assert(amount_locked == amount_released);",
+      "related_edges": [
+        "e1",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_release",
+      "category": "authorization",
+      "description": "Tokens can only be released on the destination chain if the source address is trusted.",
+      "predicate": "trustedSource[sourceAddress]",
+      "solidity_assertion": "require(trustedSource[sourceAddress], 'Source address not trusted');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_message",
+      "category": "uniqueness",
+      "description": "Each message sent from the source chain to the destination chain must be unique and consumed at most once.",
+      "predicate": "!message_consumed[message_id]",
+      "solidity_assertion": "require(!message_consumed[message_id], 'Message already consumed');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_lock_message",
+      "category": "asset_conservation",
+      "description": "The amount of tokens locked on the source chain must equal the amount specified in the message sent to the destination chain.",
+      "predicate": "amount_locked == message_amount",
+      "solidity_assertion": "assert(amount_locked == message_amount);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_lock",
+      "category": "authorization",
+      "description": "Tokens can only be locked on the source chain by the sender.",
+      "predicate": "msg.sender == sender_address",
+      "solidity_assertion": "require(msg.sender == sender_address, 'Unauthorized lock');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_lock",
+      "category": "uniqueness",
+      "description": "Each lock operation on the source chain must be unique and processed at most once.",
+      "predicate": "!lock_processed[lock_id]",
+      "solidity_assertion": "require(!lock_processed[lock_id], 'Lock already processed');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_message_release",
+      "category": "asset_conservation",
+      "description": "The amount of tokens specified in the message must equal the amount released on the destination chain.",
+      "predicate": "message_amount == amount_released",
+      "solidity_assertion": "assert(message_amount == amount_released);",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "authorization_message",
+      "category": "authorization",
+      "description": "Messages can only be sent from the bridge router to the core bridge.",
+      "predicate": "msg.sender == FEGBridgeSrc",
+      "solidity_assertion": "require(msg.sender == FEGBridgeSrc, 'Unauthorized message sender');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "uniqueness_release",
+      "category": "uniqueness",
+      "description": "Each release operation on the destination chain must be unique and processed at most once.",
+      "predicate": "!release_processed[release_id]",
+      "solidity_assertion": "require(!release_processed[release_id], 'Release already processed');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "asset_conservation_lock_message_release",
+      "category": "asset_conservation",
+      "description": "The amount of tokens locked on the source chain must equal the amount specified in the message and released on the destination chain.",
+      "predicate": "amount_locked == message_amount && message_amount == amount_released",
+      "solidity_assertion": "assert(amount_locked == message_amount && message_amount == amount_released);",
+      "related_edges": [
+        "e1",
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

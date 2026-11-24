@@ -1,0 +1,307 @@
+{
+  "bridge_name": "feg_bridge_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "feg",
+      "node_type": "token",
+      "chain": "source",
+      "address": "feg_",
+      "functions": []
+    },
+    {
+      "node_id": "core",
+      "node_type": "bridge_core",
+      "chain": "source",
+      "address": "core_",
+      "functions": []
+    },
+    {
+      "node_id": "FEGBridgeSrc",
+      "node_type": "bridge_router",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "feg",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "admin",
+      "node_type": "address",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "relayer",
+      "node_type": "address",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "trustedSource",
+      "node_type": "mapping",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "WormholeCore",
+      "node_type": "bridge_core",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "msg.sender",
+      "dst": "address(this)",
+      "label": "lock",
+      "token": "feg",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "address(this)",
+      "dst": "core",
+      "label": "message",
+      "token": "UNKNOWN",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "deposit(address,uint256)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "trustedSource",
+      "dst": "account",
+      "label": "release",
+      "token": "feg",
+      "conditions": [
+        "trustedSource[sourceAddress]"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "trustedSource[sourceAddress]"
+          }
+        }
+      ],
+      "function_signature": "receiveMessage(address,bytes)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "lock_amount_positive",
+      "category": "asset_conservation",
+      "description": "Lock amount must be positive",
+      "predicate": "amount > 0",
+      "solidity_assertion": "require(amount > 0, 'Amount must be positive');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "trusted_source_required",
+      "category": "authorization",
+      "description": "Release requires trusted source",
+      "predicate": "trustedSource[sourceAddress] == true",
+      "solidity_assertion": "require(trustedSource[sourceAddress], 'Untrusted source');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "lock_balance_check",
+      "category": "asset_conservation",
+      "description": "Lock must not exceed sender balance",
+      "predicate": "balanceOf[msg.sender] >= amount",
+      "solidity_assertion": "require(balanceOf[msg.sender] >= amount, 'Insufficient balance');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "no_double_spend",
+      "category": "uniqueness",
+      "description": "Message must not be processed more than once",
+      "predicate": "!processedMessages[messageId]",
+      "solidity_assertion": "require(!processedMessages[messageId], 'Message already processed');",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "contract_balance_increase",
+      "category": "asset_conservation",
+      "description": "Contract balance must increase by lock amount",
+      "predicate": "balanceOf[address(this)]_after == balanceOf[address(this)]_before + amount",
+      "solidity_assertion": "assert(balanceOf[address(this)] == balanceOf[address(this)] + amount);",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "core_message_forwarded",
+      "category": "asset_conservation",
+      "description": "Core must receive message with correct amount",
+      "predicate": "message.amount == amount",
+      "solidity_assertion": "require(message.amount == amount, 'Amount mismatch');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "release_amount_match",
+      "category": "asset_conservation",
+      "description": "Release amount must match message amount",
+      "predicate": "releaseAmount == message.amount",
+      "solidity_assertion": "require(releaseAmount == message.amount, 'Amount mismatch');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "sender_not_contract",
+      "category": "authorization",
+      "description": "Sender must not be a contract",
+      "predicate": "msg.sender == tx.origin",
+      "solidity_assertion": "require(msg.sender == tx.origin, 'Contracts not allowed');",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "valid_message_format",
+      "category": "authorization",
+      "description": "Message must have valid format",
+      "predicate": "message.valid == true",
+      "solidity_assertion": "require(message.valid, 'Invalid message format');",
+      "related_edges": [
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "nonce_increment",
+      "category": "uniqueness",
+      "description": "Nonce must increment for each message",
+      "predicate": "nonce_after == nonce_before + 1",
+      "solidity_assertion": "assert(nonce == nonce + 1);",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "message_origin_chain",
+      "category": "authorization",
+      "description": "Message must come from correct origin chain",
+      "predicate": "message.originChain == expectedChain",
+      "solidity_assertion": "require(message.originChain == expectedChain, 'Wrong origin chain');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "account_not_zero",
+      "category": "authorization",
+      "description": "Account address must not be zero",
+      "predicate": "account != address(0)",
+      "solidity_assertion": "require(account != address(0), 'Zero address');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "source_address_not_zero",
+      "category": "authorization",
+      "description": "Source address must not be zero",
+      "predicate": "sourceAddress != address(0)",
+      "solidity_assertion": "require(sourceAddress != address(0), 'Zero source address');",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "message_id_unique",
+      "category": "uniqueness",
+      "description": "Message ID must be unique",
+      "predicate": "!messageIds[messageId]",
+      "solidity_assertion": "require(!messageIds[messageId], 'Duplicate message ID');",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

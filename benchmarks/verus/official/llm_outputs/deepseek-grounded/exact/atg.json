@@ -1,0 +1,279 @@
+{
+  "bridge_name": "verus",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "this",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "notary",
+      "node_type": "relay",
+      "chain": "this",
+      "address": "notary_",
+      "functions": []
+    },
+    {
+      "node_id": "VerusBridge",
+      "node_type": "bridge",
+      "chain": "this",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "VerusExportSurrogate",
+      "node_type": "bridge",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    },
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "external",
+      "dst": "this",
+      "label": "import",
+      "token": "token",
+      "conditions": [
+        "committedExport[exportId] > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "committedExport[exportId] > 0"
+          }
+        }
+      ],
+      "function_signature": "submitImports(address,uint256,bytes32)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "msg.sender",
+      "dst": "VerusExportSurrogate",
+      "label": "deposit",
+      "token": "token",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "export(bytes32,address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "import_requires_committed_export",
+      "category": "authorization",
+      "description": "Import can only be executed if there is a committed export with the same exportId",
+      "predicate": "∀ exportId, committedExport[exportId] > 0 → importAllowed(exportId)",
+      "solidity_assertion": "require(committedExport[exportId] > 0, \"No committed export for this exportId\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_requires_positive_amount",
+      "category": "asset_conservation",
+      "description": "Export must transfer a positive amount of tokens",
+      "predicate": "∀ amount, amount > 0 → exportAllowed(amount)",
+      "solidity_assertion": "require(amount > 0, \"Export amount must be positive\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_token_amount_matches_export",
+      "category": "asset_conservation",
+      "description": "Imported token amount must match the committed export amount",
+      "predicate": "∀ exportId, committedExport[exportId] == importedAmount[exportId]",
+      "solidity_assertion": "require(committedExport[exportId] == importedAmount[exportId], \"Imported amount does not match export\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_id_uniqueness",
+      "category": "uniqueness",
+      "description": "Each exportId must be unique and not reused",
+      "predicate": "∀ exportId, committedExport[exportId] can only be set once",
+      "solidity_assertion": "require(committedExport[exportId] == 0, \"ExportId already used\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_id_uniqueness",
+      "category": "uniqueness",
+      "description": "Each import with a given exportId can only be executed once",
+      "predicate": "∀ exportId, importExecuted[exportId] can only be set once",
+      "solidity_assertion": "require(!importExecuted[exportId], \"Import already executed for this exportId\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_token_balance_sufficient",
+      "category": "asset_conservation",
+      "description": "Exporter must have sufficient token balance for the export",
+      "predicate": "∀ amount, balanceOf(msg.sender) >= amount → exportAllowed(amount)",
+      "solidity_assertion": "require(balanceOf(msg.sender) >= amount, \"Insufficient balance for export\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_token_transfer",
+      "category": "asset_conservation",
+      "description": "Export must transfer tokens from sender to bridge",
+      "predicate": "∀ amount, balanceOf(msg.sender) decreases by amount ∧ balanceOf(bridge) increases by amount",
+      "solidity_assertion": "assert(balanceOf(msg.sender) == old(balanceOf(msg.sender)) - amount && balanceOf(address(this)) == old(balanceOf(address(this))) + amount, \"Token transfer failed\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_token_transfer",
+      "category": "asset_conservation",
+      "description": "Import must transfer tokens from bridge to recipient",
+      "predicate": "∀ amount, balanceOf(bridge) decreases by amount ∧ balanceOf(recipient) increases by amount",
+      "solidity_assertion": "assert(balanceOf(address(this)) == old(balanceOf(address(this))) - amount && balanceOf(recipient) == old(balanceOf(recipient)) + amount, \"Token transfer failed\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_emits_event",
+      "category": "authorization",
+      "description": "Export must emit an event with export details",
+      "predicate": "∀ exportId, amount, recipient, ExportEvent(exportId, amount, recipient) emitted",
+      "solidity_assertion": "assert(emit ExportEvent(exportId, amount, recipient), \"Export event not emitted\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_emits_event",
+      "category": "authorization",
+      "description": "Import must emit an event with import details",
+      "predicate": "∀ exportId, amount, recipient, ImportEvent(exportId, amount, recipient) emitted",
+      "solidity_assertion": "assert(emit ImportEvent(exportId, amount, recipient), \"Import event not emitted\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_commits_amount",
+      "category": "asset_conservation",
+      "description": "Export must commit the exact amount specified",
+      "predicate": "∀ exportId, amount, committedExport[exportId] == amount",
+      "solidity_assertion": "assert(committedExport[exportId] == amount, \"Committed amount does not match export\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_recipient_non_zero",
+      "category": "authorization",
+      "description": "Import recipient address must be non-zero",
+      "predicate": "∀ recipient, recipient != address(0) → importAllowed(recipient)",
+      "solidity_assertion": "require(recipient != address(0), \"Recipient cannot be zero address\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_recipient_non_zero",
+      "category": "authorization",
+      "description": "Export recipient address must be non-zero",
+      "predicate": "∀ recipient, recipient != address(0) → exportAllowed(recipient)",
+      "solidity_assertion": "require(recipient != address(0), \"Recipient cannot be zero address\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_id_non_zero",
+      "category": "authorization",
+      "description": "Export ID must be non-zero",
+      "predicate": "∀ exportId, exportId != bytes32(0) → exportAllowed(exportId)",
+      "solidity_assertion": "require(exportId != bytes32(0), \"ExportId cannot be zero\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_id_non_zero",
+      "category": "authorization",
+      "description": "Import ID must be non-zero",
+      "predicate": "∀ exportId, exportId != bytes32(0) → importAllowed(exportId)",
+      "solidity_assertion": "require(exportId != bytes32(0), \"ExportId cannot be zero\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}

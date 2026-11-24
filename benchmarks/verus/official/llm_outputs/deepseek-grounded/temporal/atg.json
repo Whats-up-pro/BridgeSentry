@@ -1,0 +1,302 @@
+{
+  "bridge_name": "verus",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "token",
+      "node_type": "token",
+      "chain": "this",
+      "address": "token_",
+      "functions": []
+    },
+    {
+      "node_id": "notary",
+      "node_type": "relay",
+      "chain": "this",
+      "address": "notary_",
+      "functions": []
+    },
+    {
+      "node_id": "VerusBridge",
+      "node_type": "bridge",
+      "chain": "this",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "VerusExportSurrogate",
+      "node_type": "bridge",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    },
+    {
+      "node_id": "OfficialToken",
+      "node_type": "token",
+      "chain": "unknown",
+      "address": "unknown",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "external",
+      "dst": "VerusBridge",
+      "label": "deposit",
+      "token": "token",
+      "conditions": [
+        "notary verification"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "notary verification"
+          }
+        }
+      ],
+      "function_signature": ""
+    },
+    {
+      "edge_id": "e2",
+      "src": "VerusBridge",
+      "dst": "recipient",
+      "label": "withdraw",
+      "token": "token",
+      "conditions": [
+        "committedExport[exportId] > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "generic",
+          "params": {
+            "expression": "committedExport[exportId] > 0"
+          }
+        }
+      ],
+      "function_signature": "submitImports(address,uint256,bytes32)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "msg.sender",
+      "dst": "address(this)",
+      "label": "lock",
+      "token": "OfficialToken",
+      "conditions": [
+        "amount > 0"
+      ],
+      "condition_objects": [
+        {
+          "type": "balance",
+          "params": {
+            "expression": "amount > 0"
+          }
+        }
+      ],
+      "function_signature": "export(bytes32,address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "deposit_withdraw_balance_match",
+      "category": "asset_conservation",
+      "description": "Total deposits must equal total withdrawals plus pending exports",
+      "predicate": "sum(deposits) == sum(withdrawals) + sum(pendingExports)",
+      "solidity_assertion": "assert(totalDeposits == totalWithdrawals + pendingExports);",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_requires_notary_verification",
+      "category": "authorization",
+      "description": "Exports require notary verification",
+      "predicate": "forall e: exports -> verifiedByNotary(e)",
+      "solidity_assertion": "require(notaryVerified[exportId], \"Notary verification required\");",
+      "related_edges": [
+        "e1"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_requires_export_commit",
+      "category": "authorization",
+      "description": "Imports require committed export",
+      "predicate": "forall i: imports -> committedExport[i.exportId] > 0",
+      "solidity_assertion": "require(committedExport[exportId] > 0, \"No committed export\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "unique_export_ids",
+      "category": "uniqueness",
+      "description": "Export IDs must be unique",
+      "predicate": "forall e1, e2: exports -> e1.id != e2.id",
+      "solidity_assertion": "require(!exportIds[exportId], \"Duplicate export ID\");",
+      "related_edges": [
+        "e1",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_amount_positive",
+      "category": "asset_conservation",
+      "description": "Export amounts must be positive",
+      "predicate": "forall e: exports -> e.amount > 0",
+      "solidity_assertion": "require(amount > 0, \"Amount must be positive\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_amount_matches_export",
+      "category": "asset_conservation",
+      "description": "Import amount must match committed export amount",
+      "predicate": "forall i: imports -> i.amount == committedExport[i.exportId].amount",
+      "solidity_assertion": "require(amount == committedExport[exportId].amount, \"Amount mismatch\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "token_lock_on_export",
+      "category": "asset_conservation",
+      "description": "Tokens must be locked when exporting",
+      "predicate": "forall e: exports -> token.balanceOf(address(this)) += e.amount",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) >= totalExported);",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "no_double_spend_imports",
+      "category": "uniqueness",
+      "description": "Imports cannot be processed more than once",
+      "predicate": "forall i: imports -> !importProcessed[i.exportId]",
+      "solidity_assertion": "require(!importProcessed[exportId], \"Import already processed\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_recipient_non_zero",
+      "category": "authorization",
+      "description": "Export recipient must be non-zero address",
+      "predicate": "forall e: exports -> e.recipient != address(0)",
+      "solidity_assertion": "require(recipient != address(0), \"Invalid recipient\");",
+      "related_edges": [
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_recipient_matches_export",
+      "category": "authorization",
+      "description": "Import recipient must match export recipient",
+      "predicate": "forall i: imports -> i.recipient == committedExport[i.exportId].recipient",
+      "solidity_assertion": "require(recipient == committedExport[exportId].recipient, \"Recipient mismatch\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "notary_verification_before_commit",
+      "category": "authorization",
+      "description": "Export must be notary verified before commit",
+      "predicate": "forall e: committedExports -> notaryVerified[e.id]",
+      "solidity_assertion": "require(notaryVerified[exportId], \"Notary verification required\");",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_id_not_reused",
+      "category": "uniqueness",
+      "description": "Export IDs cannot be reused after import",
+      "predicate": "forall i: imports -> !exportIds[i.exportId]",
+      "solidity_assertion": "require(!exportIds[exportId], \"Export ID already used\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "token_balance_non_negative",
+      "category": "asset_conservation",
+      "description": "Bridge token balance must never be negative",
+      "predicate": "token.balanceOf(address(this)) >= 0",
+      "solidity_assertion": "assert(token.balanceOf(address(this)) >= 0);",
+      "related_edges": [
+        "e1",
+        "e2",
+        "e3"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "export_commit_non_negative",
+      "category": "asset_conservation",
+      "description": "Committed export amounts must be non-negative",
+      "predicate": "forall e: committedExports -> e.amount >= 0",
+      "solidity_assertion": "assert(committedExport[exportId].amount >= 0);",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    },
+    {
+      "invariant_id": "import_amount_non_negative",
+      "category": "asset_conservation",
+      "description": "Import amounts must be non-negative",
+      "predicate": "forall i: imports -> i.amount >= 0",
+      "solidity_assertion": "require(amount >= 0, \"Negative amount\");",
+      "related_edges": [
+        "e2"
+      ],
+      "metadata": {
+        "lifecycle_stage": "schema_valid"
+      }
+    }
+  ]
+}
