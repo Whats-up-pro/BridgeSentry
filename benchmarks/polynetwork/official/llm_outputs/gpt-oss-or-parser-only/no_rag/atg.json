@@ -1,0 +1,131 @@
+{
+  "bridge_name": "polynetwork",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "ethcrosschaindata",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "ethcrosschaindata",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "ethcrosschainmanager",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "user",
+      "node_type": "user",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "lockproxy",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "sourcecrosschain",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "user",
+      "node_type": "user",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "srcdeposit",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "user",
+      "dst": "bridge",
+      "label": "lock",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "unlock(address recipient,uint256 amount)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "user",
+      "dst": "bridge",
+      "label": "lock",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "unlock(address recipient,uint256 amount)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "inv_authorization",
+      "category": "authorization",
+      "description": "Mint/unlock requires valid prior source-chain and relay evidence for the same canonical message.",
+      "predicate": "mint_or_unlock(kappa) -> valid_source_and_relay(kappa)",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    },
+    {
+      "invariant_id": "inv_uniqueness",
+      "category": "uniqueness",
+      "description": "Each canonical message/transfer key may be consumed at most once.",
+      "predicate": "consume_count(kappa) <= 1",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    },
+    {
+      "invariant_id": "inv_state_consistency",
+      "category": "state_consistency",
+      "description": "Observed cross-chain state transitions must correspond to an allowed protocol flow.",
+      "predicate": "observed_transition in allowed_transitions",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "bridge_name": "polynetwork",
+  "scenarios": [
+    {
+      "scenario_id": "bridge_exploit_001",
+      "target_invariant": "inv_authorization",
+      "vulnerability_class": "authorization",
+      "confidence": 0.45,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SourceCrossChain",
+          "function": "crossChain(address,string,bytes)",
+          "params": {
+            "toContract": "LockProxy",
+            "method": "unlock(address,uint256)",
+            "args": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Attacker emits a cross‑chain event directly, attempting to trigger Unlock on LockProxy for a large amount without a legitimate source deposit."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker emits a cross‑chain event directly, attempting to trigger Unlock on LockProxy for a large amount without a legitimate source deposit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "bridge_uniqueness_replay",
+      "target_invariant": "inv_uniqueness",
+      "vulnerability_class": "message replay / duplicate consumption",
+      "confidence": 0.6,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "source",
+          "contract": "SrcToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "SrcDeposit",
+            "amount": "100000000000000000000"
+          },
+          "description": "Attacker approves the deposit contract to spend its SrcToken balance."
+        },
+        {
+          "step": 2,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "10000000000000000000"
+          },
+          "description": "First deposit: transfers 10 SrcToken from attacker and triggers a cross‑chain unlock of 10 EthToken to attacker."
+        },
+        {
+          "step": 3,
+          "chain": "source",
+          "contract": "SrcDeposit",
+          "function": "deposit(address,uint256)",
+          "params": {
+            "recipient": "attacker",
+            "amount": "10000000000000000000"
+          },
+          "description": "Second deposit with identical parameters: triggers a second unlock of 10 EthToken to attacker, consuming the same canonical message key twice and violating the uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Attacker approves the deposit contract to spend its SrcToken balance."
+        },
+        {
+          "waypoint_id": "w2",
+          "after_step": 2,
+          "predicate": "step_2_executed",
+          "description": "First deposit: transfers 10 SrcToken from attacker and triggers a cross‑chain unlock of 10 EthToken to attacker."
+        },
+        {
+          "waypoint_id": "w3",
+          "after_step": 3,
+          "predicate": "step_3_executed",
+          "description": "Second deposit with identical parameters: triggers a second unlock of 10 EthToken to attacker, consuming the same canonical message key twice and violating the uniqueness invariant."
+        }
+      ]
+    },
+    {
+      "scenario_id": "no_exploit_possible",
+      "target_invariant": "inv_state_consistency",
+      "vulnerability_class": "none",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "EthToken",
+          "function": "approve(address,uint256)",
+          "params": {
+            "spender": "attacker",
+            "amount": "0"
+          },
+          "description": "Harmless approval to satisfy non‑empty actions requirement; no state inconsistency introduced."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Harmless approval to satisfy non‑empty actions requirement; no state inconsistency introduced."
+        }
+      ]
+    }
+  ]
+}

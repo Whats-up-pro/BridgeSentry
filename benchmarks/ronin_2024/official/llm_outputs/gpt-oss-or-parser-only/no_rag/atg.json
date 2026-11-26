@@ -1,0 +1,103 @@
+{
+  "bridge_name": "ronin_2024",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "user",
+      "node_type": "user",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "ronindeposit",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "user",
+      "node_type": "user",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "roningatewayv3",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "user",
+      "dst": "bridge",
+      "label": "lock",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "deposit(uint256 amount)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "bridge",
+      "dst": "user",
+      "label": "unlock",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "withdraw(address recipient,uint256 amount,address[] calldata signers)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "inv_asset_conservation",
+      "category": "asset_conservation",
+      "description": "Observed destination value must not exceed the corresponding supported source value under fixture-specific accounting.",
+      "predicate": "per_transfer(minted_or_unlocked <= supported_source_value)",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    },
+    {
+      "invariant_id": "inv_authorization",
+      "category": "authorization",
+      "description": "Mint/unlock requires valid prior source-chain and relay evidence for the same canonical message.",
+      "predicate": "mint_or_unlock(kappa) -> valid_source_and_relay(kappa)",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    },
+    {
+      "invariant_id": "inv_uniqueness",
+      "category": "uniqueness",
+      "description": "Each canonical message/transfer key may be consumed at most once.",
+      "predicate": "consume_count(kappa) <= 1",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    }
+  ]
+}

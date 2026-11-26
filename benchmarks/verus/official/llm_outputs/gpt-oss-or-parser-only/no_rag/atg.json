@@ -1,0 +1,129 @@
+{
+  "bridge_name": "verus",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "user",
+      "node_type": "user",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "verusbridge",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "user",
+      "node_type": "user",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    },
+    {
+      "node_id": "verusexportsurrogate",
+      "node_type": "contract",
+      "chain": "source",
+      "address": "",
+      "functions": []
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "bridge",
+      "dst": "bridge",
+      "label": "verify",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "recordExport(bytes32 exportId,uint256 sourceValue)"
+    },
+    {
+      "edge_id": "e2",
+      "src": "bridge",
+      "dst": "bridge",
+      "label": "verify",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "submitImports(address recipient,uint256 payout,bytes32 exportId)"
+    },
+    {
+      "edge_id": "e3",
+      "src": "bridge",
+      "dst": "bridge",
+      "label": "verify",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "checkCCEValues(uint256 payout,bytes32 exportId)"
+    },
+    {
+      "edge_id": "e4",
+      "src": "bridge",
+      "dst": "bridge",
+      "label": "verify",
+      "token": "UNKNOWN",
+      "conditions": [],
+      "condition_objects": [],
+      "function_signature": "export(bytes32 exportId,address recipient,uint256 amount)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "inv_authorization",
+      "category": "authorization",
+      "description": "Mint/unlock requires valid prior source-chain and relay evidence for the same canonical message.",
+      "predicate": "mint_or_unlock(kappa) -> valid_source_and_relay(kappa)",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2",
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    },
+    {
+      "invariant_id": "inv_uniqueness",
+      "category": "uniqueness",
+      "description": "Each canonical message/transfer key may be consumed at most once.",
+      "predicate": "consume_count(kappa) <= 1",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2",
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    },
+    {
+      "invariant_id": "inv_state_consistency",
+      "category": "state_consistency",
+      "description": "Observed cross-chain state transitions must correspond to an allowed protocol flow.",
+      "predicate": "observed_transition in allowed_transitions",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1",
+        "e2",
+        "e3",
+        "e4"
+      ],
+      "metadata": {
+        "generation_mode": "deterministic_fallback",
+        "lifecycle_stage": "semantically_admissible"
+      }
+    }
+  ]
+}
