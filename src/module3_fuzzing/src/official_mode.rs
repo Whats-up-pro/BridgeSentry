@@ -1533,6 +1533,54 @@ fn run_trace(world: &mut World, spec: &OfficialSpec, seq: &Seq, cov: &mut Covera
     TraceResult { records, gains, gain_entries, fixture_pcs }
 }
 
+/// Recompute the execution-only gain ledger over a set of records, optionally
+/// dropping every log committed on one chain side. Dropping the source side
+/// models a source-chain reorganization: the destination release remains while
+/// the matching source lock is rolled back, so a benign cross-chain transfer
+/// that nets to zero under synchronized execution becomes a positive gain. Used
+/// only by the reorg demonstration; the normal oracle keeps every record.
+fn gains_from_records(world: &World, records: &[TxRecord], skip: Option<Side>) -> BTreeMap<String, EU256> {
+    let topic = transfer_topic();
+    let mut inflow: BTreeMap<String, EU256> = BTreeMap::new();
+    let mut outflow: BTreeMap<String, EU256> = BTreeMap::new();
+    for r in records {
+        if Some(r.side) == skip {
+            continue;
+        }
+        for log in &r.logs {
+            let t = log.topics();
+            if t.len() != 3 || t[0].0 != topic || log.data.data.len() < 32 {
+                continue;
+            }
+            let from = Address::from_slice(&t[1].0[12..]);
+            let to = Address::from_slice(&t[2].0[12..]);
+            let val = EU256::from_big_endian(&log.data.data[..32]);
+            let asset = world
+                .asset_of
+                .get(&(r.side, log.address))
+                .cloned()
+                .unwrap_or_else(|| format!("{}:{:#x}", r.side.as_str(), log.address));
+            let fa = world.is_attacker(from);
+            let ta = world.is_attacker(to);
+            if ta && !fa {
+                let e = inflow.entry(asset).or_default();
+                *e = e.saturating_add(val);
+            } else if fa && !ta {
+                let e = outflow.entry(asset).or_default();
+                *e = e.saturating_add(val);
+            }
+        }
+    }
+    let mut gains = BTreeMap::new();
+    for (asset, inn) in &inflow {
+        let out = outflow.get(asset).copied().unwrap_or_default();
+        if *inn > out {
+            gains.insert(asset.clone(), *inn - out);
+        }
+    }
+    gains
+}
+
 fn status(b: bool) -> ObservationStatus {
     if b { ObservationStatus::Pass } else { ObservationStatus::Fail }
 }
@@ -1652,6 +1700,43 @@ pub fn run_official(ctx: &RuntimeContext) -> Result<Value> {
         }
     }
     let initial_corpus = corpus.len();
+
+    // A6: source-chain reorganization demonstration (gated, returns early).
+    // Runs the first corpus sequence (a legitimate transfer) once and compares
+    // the execution-only oracle under synchronized execution against a modeled
+    // source reorg that drops the source-committed transfers while the
+    // destination release stands. Exercises the per-chain snapshot primitive
+    // `restore_source_only`, which a single global snapshot cannot express.
+    if std::env::var("BRIDGESENTRY_OFFICIAL_REORG").as_deref() == Ok("source") {
+        let base = world.base.clone().expect("base snapshot");
+        let seq = corpus.first().cloned().unwrap_or_default();
+        world.dual.restore_snapshot(base.clone());
+        let mut rcov = CoverageTracker::default();
+        let mut records = Vec::new();
+        for call in &seq {
+            if let Ok(r) = world.execute_call(&spec, call.idx, &call.func, &call.args, attacker(), &mut rcov, Kind::Attack) {
+                records.extend(r);
+            }
+        }
+        let synchronized = gains_from_records(&world, &records, None);
+        let source_reorged = gains_from_records(&world, &records, Some(Side::Source));
+        // Roll back only the source chain: the source lock is undone while the
+        // destination release remains, the state that makes the reorg gain real.
+        world.dual.restore_source_only(&base);
+        let fmt = |m: &BTreeMap<String, EU256>| -> Value {
+            Value::Object(m.iter().map(|(k, v)| (k.clone(), json!(v.to_string()))).collect())
+        };
+        return Ok(json!({
+            "reorg_demo": "source",
+            "fixture_id": spec.fixture_id,
+            "evaluation_mode": "official",
+            "variant": variant,
+            "transfers_executed": records.len(),
+            "synchronized_gains": fmt(&synchronized),
+            "source_reorged_gains": fmt(&source_reorged),
+            "note": "Synchronized dual-chain execution nets the source lock against the destination release, so a legitimate transfer yields no gain. A source-chain reorganization that drops the source-committed transfers leaves the destination release unbacked, a positive gain that a single global snapshot cannot represent; restore_source_only rolls back only the source chain.",
+        }));
+    }
 
     let mut dict = Dict::from_world(&world);
     for seq in &corpus {

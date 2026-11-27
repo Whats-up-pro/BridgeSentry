@@ -838,6 +838,22 @@ impl DualEvm {
         self.dest.restore_vm_snapshot(s.dest);
         self.tracked = s.tracked;
     }
+
+    /// Restore **only the source** chain from a prior snapshot, leaving the
+    /// destination untouched. Models a source-chain reorganization that drops
+    /// already-executed source transactions while the destination chain, having
+    /// acted on the (now unfinalized) source event, keeps its state. The global
+    /// [`restore_snapshot`](Self::restore_snapshot) rolls back both chains
+    /// together and cannot express this asynchronous rollback.
+    pub fn restore_source_only(&mut self, s: &DualEvmSnapshot) {
+        self.source.restore_vm_snapshot(s.source.clone());
+    }
+
+    /// Restore **only the destination** chain from a prior snapshot, leaving the
+    /// source untouched (symmetric to [`restore_source_only`](Self::restore_source_only)).
+    pub fn restore_dest_only(&mut self, s: &DualEvmSnapshot) {
+        self.dest.restore_vm_snapshot(s.dest.clone());
+    }
 }
 
 fn parse_execute_payload(tx: &[u8]) -> Result<(Address, Address, Bytes), String> {
