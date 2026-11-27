@@ -1,0 +1,90 @@
+{
+  "fixture_id": "benign_bridge_unpaired",
+  "notes": "ABLATION of benign_bridge: the asset pairing is removed so SrcToken and DstToken count as distinct assets. A legitimate deposit-and-release then shows the destination release as a positive DstToken gain, which proves the benign flow genuinely moves value and that the cross-chain asset pairing is exactly what nets a correct bridge to zero.",
+  "variants": {
+    "vulnerable": "official/vulnerable",
+    "patched": "official/patched"
+  },
+  "cross_chain": true,
+  "deploy": [
+    {
+      "name": "SrcToken",
+      "contract": "OfficialToken",
+      "side": "source",
+      "args": [
+        "Benign bridged token"
+      ]
+    },
+    {
+      "name": "LockBridge",
+      "contract": "LockBridge",
+      "side": "source",
+      "args": [
+        "$SrcToken"
+      ]
+    },
+    {
+      "name": "DstToken",
+      "contract": "OfficialToken",
+      "side": "dest",
+      "args": [
+        "Benign wrapped token"
+      ]
+    },
+    {
+      "name": "MintBridge",
+      "contract": "MintBridge",
+      "side": "dest",
+      "args": [
+        "$DstToken",
+        "0x00000000000000000000000000000000000Be1a7"
+      ]
+    }
+  ],
+  "victims": [],
+  "setup": [
+    {
+      "from": "deployer",
+      "to": "$DstToken",
+      "fn": "mint",
+      "args": [
+        "$MintBridge",
+        "1000000e18"
+      ]
+    },
+    {
+      "from": "deployer",
+      "to": "$SrcToken",
+      "fn": "mint",
+      "args": [
+        "attacker",
+        "1000e18"
+      ]
+    },
+    {
+      "from": "attacker",
+      "to": "$SrcToken",
+      "fn": "approve",
+      "args": [
+        "$LockBridge",
+        "1000e18"
+      ]
+    }
+  ],
+  "relay": [
+    {
+      "emitter": "LockBridge",
+      "event": "Deposit",
+      "to": "MintBridge",
+      "fn": "release",
+      "args": [
+        "ev:recipient",
+        "ev:amount"
+      ]
+    }
+  ],
+  "asset_pairs": [],
+  "release_entrypoints": [
+    "MintBridge.release"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "bridge_name": "benign_bridge",
+  "version": "1.0",
+  "nodes": [
+    {
+      "node_id": "LockBridge",
+      "node_type": "router",
+      "chain": "source",
+      "address": "",
+      "functions": [
+        "deposit"
+      ]
+    },
+    {
+      "node_id": "MintBridge",
+      "node_type": "gateway",
+      "chain": "dest",
+      "address": "",
+      "functions": [
+        "release"
+      ]
+    },
+    {
+      "node_id": "SrcToken",
+      "node_type": "token",
+      "chain": "source",
+      "address": "",
+      "functions": [
+        "approve",
+        "transfer",
+        "transferFrom"
+      ]
+    },
+    {
+      "node_id": "DstToken",
+      "node_type": "token",
+      "chain": "dest",
+      "address": "",
+      "functions": [
+        "approve",
+        "transfer",
+        "transferFrom"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "e1",
+      "src": "LockBridge",
+      "dst": "MintBridge",
+      "label": "bridge",
+      "token": "SrcToken",
+      "conditions": [
+        "relayer_delivers"
+      ],
+      "function_signature": "release(address,uint256)"
+    }
+  ],
+  "invariants": [
+    {
+      "invariant_id": "asset_conservation_total_balance",
+      "category": "asset_conservation",
+      "description": "No attacker address ends with a net positive balance in a paired asset.",
+      "predicate": "sum(attacker_gain) <= 0",
+      "solidity_assertion": "",
+      "related_edges": [
+        "e1"
+      ]
+    }
+  ]
+}
