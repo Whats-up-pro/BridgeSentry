@@ -2175,8 +2175,10 @@ mod fixture_tests {
     }
 
     // ---- every official fixture has a deterministic test --------------------
-    const TESTED_FIXTURES: [&str; 7] =
-        ["nomad", "qubit", "feg_bridge_2024", "crosscurve", "ronin_2024", "polynetwork", "verus"];
+    const TESTED_FIXTURES: [&str; 8] = [
+        "nomad", "qubit", "feg_bridge_2024", "crosscurve", "ronin_2024", "polynetwork", "verus",
+        "benign_bridge",
+    ];
 
     #[test]
     fn every_official_fixture_has_a_deterministic_test() {
@@ -2190,6 +2192,96 @@ mod fixture_tests {
         let mut expected: Vec<String> = TESTED_FIXTURES.iter().map(|s| s.to_string()).collect();
         expected.sort();
         assert_eq!(found, expected, "official fixtures and deterministic tests diverged");
+    }
+
+    // ---- benign hard-negative (A3) and source-reorg demonstration (A6) -----
+    /// Build the benign bridge from `spec_file`, replay a legitimate transfer
+    /// (the caller locks 190 SrcToken naming itself as recipient; the faithful
+    /// relay releases 190 DstToken), and return the world, spec, and trace.
+    fn benign_trace(spec_file: &str, variant: &str) -> Option<(World, OfficialSpec, TraceResult)> {
+        if !require_solc("benign_bridge") {
+            return None;
+        }
+        let ctx = test_ctx();
+        let bench_dir = repo_root().join("benchmarks").join("benign_bridge");
+        let p = bench_dir.join("official").join(spec_file);
+        let spec: OfficialSpec = serde_json::from_str(
+            &std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("read {}: {e}", p.display())),
+        )
+        .unwrap_or_else(|e| panic!("parse {}: {e}", p.display()));
+        let mut w = World::build(&ctx, &spec, &bench_dir, variant).expect("build benign_bridge");
+        let seq = vec![ucall(&w, "LockBridge", "deposit", vec![u("190e18"), addr_tok(attacker())])];
+        let mut cov = CoverageTracker::default();
+        let r = run_trace(&mut w, &spec, &seq, &mut cov);
+        Some((w, spec, r))
+    }
+
+    /// Whether the adversary can move `amount` of `token` to the deployer from
+    /// the current world state (a state probe that needs no view call).
+    fn attacker_can_transfer(w: &mut World, spec: &OfficialSpec, token: &str, amount: &str) -> bool {
+        let c = ucall(w, token, "transfer", vec![addr_tok(deployer()), u(amount)]);
+        let mut cov = CoverageTracker::default();
+        w.execute_call(spec, c.idx, &c.func, &c.args, attacker(), &mut cov, Kind::Attack)
+            .map(|recs| recs.first().map_or(false, |r| r.success))
+            .unwrap_or(false)
+    }
+
+    #[test]
+    fn benign_bridge_official_no_alert() {
+        // A3: a correct lock->mint bridge. The legitimate transfer releases value
+        // on the destination yet nets to zero under the paired assets, so the
+        // oracle raises no alert on either variant (vulnerable == patched).
+        for variant in ["vulnerable", "patched"] {
+            let Some((w, _spec, r)) = benign_trace("spec.json", variant) else { return };
+            assert!(
+                r.gains.is_empty(),
+                "benign_bridge/{variant}: a legitimate transfer must raise no alert, got {:?}",
+                r.gains
+            );
+            let released = gains_from_records(&w, &r.records, Some(Side::Source));
+            assert!(!released.is_empty(), "benign_bridge/{variant}: the relay must release value on the destination");
+        }
+        // Without the cross-chain asset pairing the same release is a distinct asset.
+        let Some((_w, _spec, r)) = benign_trace("spec_unpaired.json", "vulnerable") else { return };
+        let want = parse_uint("190e18").unwrap();
+        assert!(
+            r.gains.values().any(|v| *v == want),
+            "benign_bridge unpaired: expected a 190e18 gain, got {:?}",
+            r.gains
+        );
+    }
+
+    #[test]
+    fn benign_bridge_source_reorg_leaves_release_unbacked() {
+        // A6: synchronized execution nets to zero; dropping the source-committed
+        // transfers (a source reorg) leaves the destination release unbacked, and
+        // the per-chain primitive rolls back the source while the release stands.
+        let Some((mut w, spec, r)) = benign_trace("spec.json", "vulnerable") else { return };
+        let want = parse_uint("190e18").unwrap();
+        assert!(gains_from_records(&w, &r.records, None).is_empty(), "synchronized ledger must be empty");
+        let reorged = gains_from_records(&w, &r.records, Some(Side::Source));
+        assert_eq!(reorged.values().copied().max(), Some(want), "source-reorged ledger: {reorged:?}");
+        // After the transfer 190 of the caller's 1000 SrcToken are locked.
+        assert!(
+            !attacker_can_transfer(&mut w, &spec, "SrcToken", "1000e18"),
+            "the deposit must have locked SrcToken"
+        );
+        let base = w.base.clone().expect("base snapshot");
+        w.dual.restore_source_only(&base);
+        assert!(
+            attacker_can_transfer(&mut w, &spec, "DstToken", "190e18"),
+            "the destination release must survive a source-only rollback"
+        );
+        assert!(
+            attacker_can_transfer(&mut w, &spec, "SrcToken", "1000e18"),
+            "a source-only rollback must undo the lock"
+        );
+        // A global rollback undoes both chains, so no released value remains.
+        w.dual.restore_snapshot(base);
+        assert!(
+            !attacker_can_transfer(&mut w, &spec, "DstToken", "190e18"),
+            "a global rollback must also undo the destination release"
+        );
     }
 
     // ---- seed-source honesty (requested vs effective) -----------------------
