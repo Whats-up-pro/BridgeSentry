@@ -35,5 +35,6 @@ a new directory.
 | `official_20261128_benign_bridge/` | A3 benign hard-negative re-run with the cluster build (binary `d9cf542e`, solc 0.8.20 `0479d44f`) at `9c21535`, on the workstation (WSL2, xargs -P 7): 40 paired runs (20 random + 20 llm) x 300 s, **0 with an alert** (exact 95% CI upper 8.8%), 0 runs with rc != 0, 17,245,122 executed traces; 2 unpaired runs, gain {"dest:0x9b137463d4e7986d7f535f9b79e28b4ef1938e9b": "190000000000000000000"}. Cluster job 182954 (same design) was queued behind the shared account's job limit. |
 | `official_20261128_reorg/` | A6 reorg demonstration with full provenance: commit `9c21535`, release build `89fdbeb9` (rustc 1.100.0), solc 0.8.20; deterministic test (cargo test 196 + 177 passed) + 3 runs. |
 | `official_20261128_a8_cost_latency/` | A8 analysis from committed ledgers/provenance (no new run): tokens, Module 1/2 latency, cost at OpenRouter list price (2026-11-28), seed-compiler repair rates. |
+| `official_20261128_a7_survival/` | A7 analysis from committed per-run timings (no new run): Kaplan-Meier survival of the time to the first valid exploit for FEG SmartBridge and PolyNetwork, random vs grounded (no-retrieval) seeds, censored at 300 s; produces fig_survival_ttve.png. |
 
 New campaigns: `scripts/official/run_matrix.sh experiments/official_<YYYYMMDD> <budget_s> <jobs> <bench>...`
