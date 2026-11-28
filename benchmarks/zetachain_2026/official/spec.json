@@ -1,0 +1,77 @@
+{
+  "fixture_id": "zetachain_2026",
+  "notes": "ZetaChain GatewayEVM, April 2026 (SolidityScan). Source GatewayZEVM.call is unauthenticated and carries isArbitraryCall from the caller; the faithful relay (the TSS) delivers it to the destination GatewayEVM.execute, whose arbitrary-call branch runs attacker calldata (transferFrom) against a token the victim had approved to the gateway, draining it. The adversary gain is on the destination chain through the relay. Patched variant removes the arbitrary-call branch (delivery only via onCall).",
+  "variants": {
+    "vulnerable": "official/vulnerable",
+    "patched": "official/patched"
+  },
+  "cross_chain": true,
+  "deploy": [
+    {
+      "name": "GatewayZEVM",
+      "contract": "GatewayZEVM",
+      "side": "source",
+      "args": []
+    },
+    {
+      "name": "Token",
+      "contract": "OfficialToken",
+      "side": "dest",
+      "args": [
+        "Bridged USD"
+      ]
+    },
+    {
+      "name": "GatewayEVM",
+      "contract": "GatewayEVM",
+      "side": "dest",
+      "args": [
+        "0x00000000000000000000000000000000000Be1a7"
+      ]
+    }
+  ],
+  "victims": [
+    "0x000000000000000000000000000000000000Ab01"
+  ],
+  "setup": [
+    {
+      "from": "deployer",
+      "to": "$Token",
+      "fn": "mint",
+      "args": [
+        "0x000000000000000000000000000000000000Ab01",
+        "1000000e18"
+      ]
+    },
+    {
+      "from": "0x000000000000000000000000000000000000Ab01",
+      "to": "$Token",
+      "fn": "approve",
+      "args": [
+        "$GatewayEVM",
+        "1000000e18"
+      ]
+    }
+  ],
+  "relay": [
+    {
+      "emitter": "GatewayZEVM",
+      "event": "Called",
+      "to": "GatewayEVM",
+      "fn": "execute",
+      "args": [
+        "ev:destination",
+        "ev:data",
+        "ev:isArbitraryCall"
+      ]
+    }
+  ],
+  "asset_pairs": [
+    [
+      "Token"
+    ]
+  ],
+  "release_entrypoints": [
+    "GatewayEVM.execute"
+  ]
+}
